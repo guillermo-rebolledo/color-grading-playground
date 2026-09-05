@@ -11,7 +11,9 @@ function NumericControl({
   min,
   max,
   onChange,
+  step = 0.01,
 }: {
+  step?: number;
   label: string;
   value: number;
   neutral: number;
@@ -36,7 +38,7 @@ function NumericControl({
         <input
           type="number"
           aria-label={label}
-          step="0.01"
+          step={step}
           value={draft}
           onFocus={() => {
             editing.current = true;
@@ -63,7 +65,7 @@ function NumericControl({
         aria-label={`Scrub ${label}`}
         min={min}
         max={max}
-        step="0.01"
+        step={step}
         value={value}
         onChange={(event) => onChange(event.target.valueAsNumber)}
         onPointerDown={(event) => {
@@ -202,16 +204,20 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
   if (
     node.type !== "cdl" &&
     node.type !== "contrast" &&
-    node.type !== "saturation"
+    node.type !== "saturation" &&
+    node.type !== "whiteBalance"
   )
     return null;
   const defaults = adjustmentDefaults[node.type];
   const title =
-    node.type === "cdl"
-      ? "CDL"
-      : node.type[0].toUpperCase() + node.type.slice(1);
+    node.type === "whiteBalance"
+      ? "White Balance"
+      : node.type === "cdl"
+        ? "CDL"
+        : node.type[0].toUpperCase() + node.type.slice(1);
   const scalar = (
-    key: "contrast" | "pivot" | "saturation" | "vibrance",
+    key:
+      "contrast" | "pivot" | "saturation" | "vibrance" | "temperature" | "tint",
     label: string,
     neutral: number,
     min: number,
@@ -224,6 +230,7 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
       neutral={neutral}
       min={min}
       max={max}
+      step={key === "temperature" ? 1 : 0.01}
       onChange={(value) => updateParameters(node.id, { [key]: value })}
     />
   );
@@ -238,16 +245,25 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
       >
         Reset {title}
       </button>
-      <p className="encoding-note">
-        {node.type === "cdl"
-          ? "Unbounded SOP + saturation · lower pre-power clamp at zero · Rec.709 luma."
-          : node.type === "contrast"
-            ? "Pivot-scaled power · positive amount and pivot. Inputs below 0.000001 are floored, even at amount 1."
-            : "Rec.709 luma saturation. Vibrance preferentially boosts less-saturated colours using normalized RGB chroma."}{" "}
-        Uses the current branch’s RGB code values; Rec.709 primaries recommended
-        for saturation. Insert CST nodes for a deliberate log or linear
-        response.
-      </p>
+      {node.type === "whiteBalance" ? (
+        <p className="encoding-note">
+          Linear-light CAT02 · 6500 K / zero tint preserves the declared branch
+          white. Source-relative temperature: lower is warmer, higher is cooler
+          (1667–25000 K). Tint shifts CIE 1960 v by 0.0001 per unit (−100 to
+          +100). Insert a CST first if the branch is encoded.
+        </p>
+      ) : (
+        <p className="encoding-note">
+          {node.type === "cdl"
+            ? "Unbounded SOP + saturation · lower pre-power clamp at zero · Rec.709 luma."
+            : node.type === "contrast"
+              ? "Pivot-scaled power · positive amount and pivot. Inputs below 0.000001 are floored, even at amount 1."
+              : "Rec.709 luma saturation. Vibrance preferentially boosts less-saturated colours using normalized RGB chroma."}{" "}
+          Uses the current branch’s RGB code values; Rec.709 primaries
+          recommended for saturation. Insert CST nodes for a deliberate log or
+          linear response.
+        </p>
+      )}
       {node.type === "cdl" && (
         <>
           <p id="wheel-help" className="encoding-note">
@@ -291,7 +307,12 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
           })}
         </>
       )}
-      {node.type === "contrast" ? (
+      {node.type === "whiteBalance" ? (
+        <>
+          {scalar("temperature", "Temperature (K)", 6500, 1667, 25000)}
+          {scalar("tint", "Tint", 0, -100, 100)}
+        </>
+      ) : node.type === "contrast" ? (
         <>
           {scalar("contrast", "Contrast amount", 1, 0.01, 3)}
           {scalar("pivot", "Pivot", 0.18, 0.01, 1)}
