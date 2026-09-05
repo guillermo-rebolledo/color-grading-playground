@@ -131,6 +131,7 @@ export const useGraph = create<GraphState>()((set, get) => ({
         type === "cdl" ||
         type === "contrast" ||
         type === "saturation" ||
+        type === "curves" ||
         type === "whiteBalance"
           ? structuredClone(adjustmentDefaults[type])
           : type === "cst"
