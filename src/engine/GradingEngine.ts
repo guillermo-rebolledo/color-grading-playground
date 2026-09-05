@@ -16,7 +16,21 @@ import {
 export { createGraph, createStarterGraph } from "./graph";
 export type { GradingGraph, GradingNode, GradingEdge, NodeType } from "./graph";
 import { previewSize } from "./previewSize";
-import { isCubeSize } from "./cube";
+import { isCubeSize, serializeCube } from "./cube";
+import {
+  fidelityDeclarations,
+  fidelityBody,
+  fidelityGraphRevision,
+  serializedLutValues,
+  summarizeFidelity,
+  type FidelityOptions,
+  type FidelityResult,
+} from "./fidelity";
+export type {
+  FidelityOptions,
+  FidelityResult,
+  LutInterpolation,
+} from "./fidelity";
 export {
   cubeSizes,
   cubeTitleLength,
@@ -82,6 +96,7 @@ export class GradingEngine {
   private target: WebGLTexture | null = null;
   private framebuffer: WebGLFramebuffer | null = null;
   private disposed = false;
+  private imageRevision = 0;
   private curveTextures: WebGLTexture[] = [];
   private latticeTarget: {
     format: LatticeFormat;
@@ -256,6 +271,7 @@ export class GradingEngine {
     gl.deleteTexture(this.target);
     gl.deleteFramebuffer(this.framebuffer);
     this.source = source;
+    this.imageRevision++;
     this.target = target;
     this.framebuffer = framebuffer;
     this.canvas.width = width;
@@ -284,22 +300,30 @@ export class GradingEngine {
     return encodingFlow(graph).warnings;
   }
 
-  private prepare(graph: GradingGraph, solo?: string): WebGLProgram {
+  private prepare(
+    graph: GradingGraph,
+    solo?: string,
+    fidelity = false,
+  ): WebGLProgram {
     const compiled = compileGraph(graph, solo);
     const gl = this.gl;
     if (
-      compiled.curves.length + 1 >
+      compiled.curves.length + 1 + Number(fidelity) >
       gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)
     )
       throw new Error(
         "This graph exceeds the device texture-unit limit. Remove a Curves node.",
       );
-    let program = this.programs.get(compiled.key);
+    const key = compiled.key + (fidelity ? ":fidelity" : "");
+    let program = this.programs.get(key);
     if (!program) {
       program = this.createProgram(
-        fragmentSource(compiled.declarations, compiled.body),
+        fragmentSource(
+          compiled.declarations + (fidelity ? fidelityDeclarations : ""),
+          compiled.body + (fidelity ? fidelityBody : ""),
+        ),
       );
-      this.programs.set(compiled.key, program);
+      this.programs.set(key, program);
     }
     gl.useProgram(program);
     gl.uniform1i(gl.getUniformLocation(program, "sourceImage"), 0);
@@ -398,6 +422,141 @@ export class GradingEngine {
       size,
       this.latticeTarget!.internalFormat,
       tileRows,
+    );
+  }
+
+  /** Compare the exact serialized artifact against the graph over the full capped image. */
+  measureFidelity(
+    graph: GradingGraph,
+    options: FidelityOptions,
+  ): FidelityResult {
+    this.assertAvailable();
+    if (!this.source)
+      throw new Error("Load an image before measuring LUT fidelity.");
+    if (!["trilinear", "tetrahedral"].includes(options.interpolation))
+      throw new Error("Choose trilinear or tetrahedral interpolation.");
+    const { size, interpolation } = options;
+    const cube = serializeCube({
+      title: options.title ?? "Grade",
+      size,
+      samples: this.renderLattice(graph, size),
+    });
+    const gl = this.gl;
+    if (size > gl.getParameter(gl.MAX_3D_TEXTURE_SIZE))
+      throw new Error("This LUT exceeds the device 3D texture limit.");
+    const program = this.prepare(graph, undefined, true);
+    const lut = gl.createTexture(),
+      target = gl.createTexture(),
+      framebuffer = gl.createFramebuffer();
+    const { width, height } = this.canvas;
+    const bottomUp = new Float32Array(width * height * 4);
+    const unit = this.curveTextures.length + 1;
+    gl.getError();
+    try {
+      if (!lut || !target || !framebuffer)
+        throw new Error("Could not allocate fidelity resources.");
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_3D, lut);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+      gl.texImage3D(
+        gl.TEXTURE_3D,
+        0,
+        gl.RGBA32F,
+        size,
+        size,
+        size,
+        0,
+        gl.RGBA,
+        gl.FLOAT,
+        serializedLutValues(cube, size),
+      );
+      gl.uniform1i(gl.getUniformLocation(program, "fidelityLut"), unit);
+      gl.uniform1i(
+        gl.getUniformLocation(program, "tetrahedral"),
+        Number(interpolation === "tetrahedral"),
+      );
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, target);
+      this.configureTexture();
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        this.latticeTarget!.internalFormat,
+        width,
+        height,
+        0,
+        gl.RGBA,
+        gl.FLOAT,
+        null,
+      );
+      gl.bindTexture(gl.TEXTURE_2D, this.source);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        target,
+        0,
+      );
+      if (
+        gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE ||
+        gl.getError() !== gl.NO_ERROR
+      )
+        throw new Error(
+          "This device could not allocate a floating-point fidelity target.",
+        );
+      gl.viewport(0, 0, width, height);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, bottomUp);
+      if (gl.getError() !== gl.NO_ERROR)
+        throw new Error(
+          "Floating-point fidelity readback failed on this device.",
+        );
+    } finally {
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_3D, null);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.deleteTexture(lut);
+      gl.deleteTexture(target);
+      gl.deleteFramebuffer(framebuffer);
+    }
+    const errors = new Float32Array(bottomUp.length);
+    for (let y = 0; y < height; y++)
+      errors.set(
+        bottomUp.subarray(y * width * 4, (y + 1) * width * 4),
+        (height - 1 - y) * width * 4,
+      );
+    return {
+      cube,
+      size,
+      interpolation,
+      precision: this.latticeTarget!.format,
+      graphRevision: fidelityGraphRevision(graph),
+      imageRevision: this.imageRevision,
+      width,
+      height,
+      ...summarizeFidelity(errors, graph, size),
+    };
+  }
+
+  isFidelityCurrent(
+    report: FidelityResult,
+    graph: GradingGraph,
+    options?: FidelityOptions,
+  ) {
+    return (
+      !this.disposed &&
+      !this.gl.isContextLost() &&
+      report.imageRevision === this.imageRevision &&
+      report.graphRevision === fidelityGraphRevision(graph) &&
+      (!options ||
+        (report.size === options.size &&
+          report.interpolation === options.interpolation))
     );
   }
 

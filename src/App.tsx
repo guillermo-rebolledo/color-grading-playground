@@ -14,6 +14,8 @@ import {
 import { AdjustmentControls } from "./AdjustmentControls";
 import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
+import { FidelityOverlay } from "./FidelityOverlay";
+import type { FidelityResult } from "./engine/GradingEngine";
 import { GradingEngine, encodingLabel } from "./engine/GradingEngine";
 import { loadImage } from "./engine/loadImage";
 import { createLogChart, isLogChart, logCharts } from "./logCharts";
@@ -169,6 +171,9 @@ function ExposureControl({
 export default function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const engine = useRef<GradingEngine | null>(null);
+  const [fidelityOverlay, setFidelityOverlay] = useState<FidelityResult | null>(
+    null,
+  );
   const fileInput = useRef<HTMLInputElement>(null);
   const request = useRef(0);
   const imageFile = useRef<File | null>(null);
@@ -677,6 +682,12 @@ export default function App() {
                 aria-label="Graded image preview"
                 className={image ? "" : "empty-canvas"}
               />
+              {fidelityOverlay &&
+                image &&
+                !capabilityError &&
+                engine.current?.isFidelityCurrent(fidelityOverlay, graph) && (
+                  <FidelityOverlay report={fidelityOverlay} />
+                )}
             </ViewerNavigation>
             {!image && !capabilityError && (
               <div className="empty-state">
@@ -836,6 +847,8 @@ export default function App() {
               output encoding.
             </p>
             <LutExport
+              hasImage={!!image}
+              onOverlay={setFidelityOverlay}
               engine={() => engine.current}
               support={
                 capabilityError ? { reason: capabilityError } : latticeSupport
