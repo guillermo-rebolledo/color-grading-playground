@@ -1,0 +1,1613 @@
+{
+  "schemaVersion": 1,
+  "issue": "MEM-208",
+  "releaseReady": false,
+  "releaseBlockers": [
+    "Acquire permissively redistributable photographic HDR skin-tone coverage",
+    "Acquire permissively redistributable photographic HDR neutral-chart coverage",
+    "Acquire photographic HDR interior with confirmed tungsten illumination"
+  ],
+  "assets": [
+    {
+      "id": "desk",
+      "title": "Desk by stained-glass window",
+      "scene": "interior",
+      "sourcePath": "ScanLines/Desk.exr",
+      "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/Desk.exr",
+      "sourceSha256": "2734d15e1ce157f73feaae5033b148bdabc98acb3084e9d892c6b01f23c24854",
+      "encoding": {
+        "transfer": "logc3",
+        "primaries": "arri-wide-gamut3"
+      },
+      "exposureStops": -3,
+      "file": "desk.png",
+      "sha256": "260bc2e4682417d7f1dcac4775135522f966d081f449233ff39fcd946436f89d",
+      "bytes": 3117781,
+      "width": 644,
+      "height": 874,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "license": "BSD-3-Clause",
+      "licenseFile": "licenses/OpenEXR.txt",
+      "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "16-bit HALF",
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "See collection copyright in licenses/OpenEXR.txt",
+        "captureDate": null
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.6313210225311373, 0.2708007272644512, 0.09787825020441142],
+          [0.03681993374460059, 0.7930369660262774, 0.1701431002291219],
+          [0.017369731859000155, 0.14878918490996326, 0.8338410832310369]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": -3,
+        "steps": [
+          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": -0.0119171142578125,
+        "sourceRgbMax": 233.75,
+        "preparedLinearMin": -0.0012157755686671879,
+        "preparedLinearMax": 28.516454596076027,
+        "linearChannelsAboveOne": 182742,
+        "codeMin": 5655,
+        "codeMax": 60905,
+        "distinctCodes": 52947,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            0.006122589111328126, 0.003433227539062499, 0.0010080337524414062
+          ]
+        },
+        {
+          "x": 0,
+          "y": 218,
+          "linearRec709": [
+            0.014053344726562502, 0.010772705078124998, 0.003732681274414063
+          ]
+        },
+        {
+          "x": 0,
+          "y": 436,
+          "linearRec709": [
+            0.009368896484375002, 0.006874084472656248, 0.0023174285888671875
+          ]
+        },
+        {
+          "x": 0,
+          "y": 654,
+          "linearRec709": [
+            0.017364501953125003, 0.016906738281249997, 0.011260986328125
+          ]
+        },
+        {
+          "x": 0,
+          "y": 873,
+          "linearRec709": [
+            0.0018444061279296875, 0.0005826950073242186, 0.0007462501525878906
+          ]
+        },
+        {
+          "x": 160,
+          "y": 0,
+          "linearRec709": [
+            0.09271240234375001, 0.07537841796874999, 0.021484375000000003
+          ]
+        },
+        {
+          "x": 160,
+          "y": 218,
+          "linearRec709": [
+            0.19567871093750003, 0.24438476562499994, 0.1790771484375
+          ]
+        },
+        {
+          "x": 160,
+          "y": 436,
+          "linearRec709": [0.7338867187500001, 0.8061523437499998, 0.435546875]
+        },
+        {
+          "x": 160,
+          "y": 654,
+          "linearRec709": [
+            0.03930664062500001, 0.050140380859374986, 0.044769287109375
+          ]
+        },
+        {
+          "x": 160,
+          "y": 873,
+          "linearRec709": [
+            0.005245208740234376, 0.003742218017578124, 0.0025234222412109375
+          ]
+        },
+        {
+          "x": 195,
+          "y": 864,
+          "linearRec709": [
+            0.006092071533203125, -0.00017666816711425779,
+            -0.0007467269897460938
+          ]
+        },
+        {
+          "x": 321,
+          "y": 0,
+          "linearRec709": [
+            0.021743774414062503, 0.015281677246093747, 0.006252288818359376
+          ]
+        },
+        {
+          "x": 321,
+          "y": 218,
+          "linearRec709": [
+            0.7036132812500001, 0.9062499999999998, 0.24768066406250003
+          ]
+        },
+        {
+          "x": 321,
+          "y": 436,
+          "linearRec709": [
+            1.6669921875000002, 1.0869140624999998, 0.16113281250000003
+          ]
+        },
+        {
+          "x": 321,
+          "y": 654,
+          "linearRec709": [
+            0.03649902343750001, 0.04016113281249999, 0.033660888671875
+          ]
+        },
+        {
+          "x": 321,
+          "y": 873,
+          "linearRec709": [
+            0.0029621124267578125, 0.0008039474487304685, 0.0011281967163085938
+          ]
+        },
+        {
+          "x": 425,
+          "y": 398,
+          "linearRec709": [10.164062500000004, 29.218749999999993, 28.3125]
+        },
+        {
+          "x": 425,
+          "y": 399,
+          "linearRec709": [10.539062500000004, 29.218749999999993, 28.765625]
+        },
+        {
+          "x": 466,
+          "y": 351,
+          "linearRec709": [24.203125, 2.0957031249999996, 0.7758789062500001]
+        },
+        {
+          "x": 482,
+          "y": 0,
+          "linearRec709": [
+            0.0667724609375, 0.04275512695312499, 0.0172882080078125
+          ]
+        },
+        {
+          "x": 482,
+          "y": 218,
+          "linearRec709": [2.06640625, 1.5302734374999996, 1.197265625]
+        },
+        {
+          "x": 482,
+          "y": 436,
+          "linearRec709": [
+            0.010955810546875002, 0.007156372070312498, 0.00415802001953125
+          ]
+        },
+        {
+          "x": 482,
+          "y": 654,
+          "linearRec709": [
+            0.005275726318359376, 0.003406524658203124, 0.0023059844970703125
+          ]
+        },
+        {
+          "x": 482,
+          "y": 873,
+          "linearRec709": [
+            0.0034389495849609375, 0.0005331039428710936, 0.0008378028869628906
+          ]
+        },
+        {
+          "x": 570,
+          "y": 832,
+          "linearRec709": [
+            3.6448240280151164e-5, -0.001489639282226562,
+            -0.00021028518676757818
+          ]
+        },
+        {
+          "x": 632,
+          "y": 827,
+          "linearRec709": [
+            -0.00010085105895996107, -0.0010023117065429685,
+            -1.4305114746094044e-6
+          ]
+        },
+        {
+          "x": 643,
+          "y": 0,
+          "linearRec709": [
+            0.00881195068359375, 0.005050659179687499, 0.0026531219482421875
+          ]
+        },
+        {
+          "x": 643,
+          "y": 218,
+          "linearRec709": [
+            0.013870239257812502, 0.010368347167968748, 0.00408172607421875
+          ]
+        },
+        {
+          "x": 643,
+          "y": 436,
+          "linearRec709": [
+            0.011848449707031252, 0.008888244628906248, 0.003652572631835938
+          ]
+        },
+        {
+          "x": 643,
+          "y": 654,
+          "linearRec709": [
+            0.004154205322265625, 0.0015420913696289058, 0.0008435249328613281
+          ]
+        },
+        {
+          "x": 643,
+          "y": 873,
+          "linearRec709": [
+            0.0013484954833984375, -0.0004968643188476561, -2.813339233398439e-5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mount-tamalpais",
+      "title": "Mount Tamalpais west",
+      "scene": "high-contrast-exterior",
+      "sourcePath": "ScanLines/MtTamWest.exr",
+      "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/MtTamWest.exr",
+      "sourceSha256": "95731ce474982e74e154e96a6d74afb1ba0da851b673bff592fa977f87adaae5",
+      "encoding": {
+        "transfer": "logc3",
+        "primaries": "arri-wide-gamut3"
+      },
+      "exposureStops": 0,
+      "file": "mount-tamalpais.png",
+      "sha256": "c16e49ce5bd364da24d28cd5996635890822fffec249e3c0c69b971287752fd8",
+      "bytes": 4792015,
+      "width": 1214,
+      "height": 732,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "license": "BSD-3-Clause",
+      "licenseFile": "licenses/OpenEXR.txt",
+      "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "16-bit HALF",
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "Copyright 2002 Industrial Light & Magic",
+        "captureDate": "2002:06:23 16:00:00"
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.6313210225311373, 0.2708007272644512, 0.09787825020441142],
+          [0.03681993374460059, 0.7930369660262774, 0.1701431002291219],
+          [0.017369731859000155, 0.14878918490996326, 0.8338410832310369]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": 0,
+        "steps": [
+          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": 0.0,
+        "sourceRgbMax": 4.87890625,
+        "preparedLinearMin": 0.00011375000889933683,
+        "preparedLinearMax": 4.671999356889917,
+        "linearChannelsAboveOne": 458382,
+        "codeMin": 6122,
+        "codeMax": 48190,
+        "distinctCodes": 40103,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [0.3840332031250001, 0.7001953124999999, 1.22265625]
+        },
+        {
+          "x": 0,
+          "y": 182,
+          "linearRec709": [0.8876953125000001, 1.2333984374999998, 1.552734375]
+        },
+        {
+          "x": 0,
+          "y": 365,
+          "linearRec709": [
+            0.002099990844726563, 0.0026397705078124996, 0.0024852752685546875
+          ]
+        },
+        {
+          "x": 0,
+          "y": 548,
+          "linearRec709": [
+            0.004226684570312501, 0.003906249999999999, 0.0028247833251953125
+          ]
+        },
+        {
+          "x": 0,
+          "y": 731,
+          "linearRec709": [
+            0.004917144775390626, 0.004714965820312499, 0.0034389495849609375
+          ]
+        },
+        {
+          "x": 91,
+          "y": 454,
+          "linearRec709": [
+            0.00018811225891113295, 0.0009908676147460935, 0.0012292861938476562
+          ]
+        },
+        {
+          "x": 220,
+          "y": 428,
+          "linearRec709": [
+            0.0005016326904296875, 0.00024354457855224604, 0.000972747802734375
+          ]
+        },
+        {
+          "x": 289,
+          "y": 226,
+          "linearRec709": [2.9550781250000004, 3.712890624999999, 4.87890625]
+        },
+        {
+          "x": 303,
+          "y": 0,
+          "linearRec709": [0.5444335937500001, 0.9355468749999998, 1.650390625]
+        },
+        {
+          "x": 303,
+          "y": 182,
+          "linearRec709": [1.1455078125000002, 1.5683593749999996, 1.630859375]
+        },
+        {
+          "x": 303,
+          "y": 365,
+          "linearRec709": [
+            0.011741638183593752, 0.014427185058593747, 0.011260986328125
+          ]
+        },
+        {
+          "x": 303,
+          "y": 548,
+          "linearRec709": [
+            0.004825592041015626, 0.0035190582275390616, 0.0023326873779296875
+          ]
+        },
+        {
+          "x": 303,
+          "y": 731,
+          "linearRec709": [
+            0.006546020507812501, 0.006401062011718748, 0.0048675537109375
+          ]
+        },
+        {
+          "x": 331,
+          "y": 224,
+          "linearRec709": [3.8847656250000004, 3.853515624999999, 4.21484375]
+        },
+        {
+          "x": 371,
+          "y": 228,
+          "linearRec709": [3.1015625000000004, 3.898437499999999, 4.4765625]
+        },
+        {
+          "x": 606,
+          "y": 0,
+          "linearRec709": [0.3781738281250001, 0.7788085937499998, 1.375]
+        },
+        {
+          "x": 606,
+          "y": 182,
+          "linearRec709": [0.9833984375000002, 1.4062499999999998, 1.6259765625]
+        },
+        {
+          "x": 606,
+          "y": 365,
+          "linearRec709": [
+            0.042419433593750014, 0.07989501953124999, 0.12274169921875
+          ]
+        },
+        {
+          "x": 606,
+          "y": 548,
+          "linearRec709": [
+            0.022430419921875003, 0.014709472656249997, 0.00864410400390625
+          ]
+        },
+        {
+          "x": 606,
+          "y": 731,
+          "linearRec709": [
+            0.00921630859375, 0.005928039550781248, 0.0035076141357421875
+          ]
+        },
+        {
+          "x": 909,
+          "y": 0,
+          "linearRec709": [
+            0.23071289062500008, 0.5166015624999999, 1.0283203125
+          ]
+        },
+        {
+          "x": 909,
+          "y": 182,
+          "linearRec709": [0.6542968750000001, 1.0380859374999998, 1.1318359375]
+        },
+        {
+          "x": 909,
+          "y": 365,
+          "linearRec709": [
+            0.12561035156250003, 0.11767578124999997, 0.137451171875
+          ]
+        },
+        {
+          "x": 909,
+          "y": 548,
+          "linearRec709": [
+            0.019241333007812503, 0.026062011718749993, 0.0162506103515625
+          ]
+        },
+        {
+          "x": 909,
+          "y": 731,
+          "linearRec709": [
+            0.005535125732421876, 0.0038204193115234366, 0.0034580230712890625
+          ]
+        },
+        {
+          "x": 1211,
+          "y": 606,
+          "linearRec709": [
+            0.00031566619873046886, 0.0007276535034179686, 2.134706370981526e-20
+          ]
+        },
+        {
+          "x": 1213,
+          "y": 0,
+          "linearRec709": [
+            0.11865234375000004, 0.30615234374999994, 0.76123046875
+          ]
+        },
+        {
+          "x": 1213,
+          "y": 182,
+          "linearRec709": [
+            0.29272460937500006, 0.5332031249999999, 0.76904296875
+          ]
+        },
+        {
+          "x": 1213,
+          "y": 365,
+          "linearRec709": [
+            0.03277587890625001, 0.06829833984374999, 0.046630859375
+          ]
+        },
+        {
+          "x": 1213,
+          "y": 548,
+          "linearRec709": [
+            0.001367568969726563, 0.0027084350585937496, 0.0010423660278320312
+          ]
+        },
+        {
+          "x": 1213,
+          "y": 731,
+          "linearRec709": [
+            0.006469726562500001, 0.004711151123046874, 0.003292083740234375
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tree",
+      "title": "Sunlit tree",
+      "scene": "high-contrast-exterior",
+      "sourcePath": "ScanLines/Tree.exr",
+      "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/Tree.exr",
+      "sourceSha256": "8397741de996ab16ab94005fd0f0327bd29ab448163160a608c0b26e26864712",
+      "encoding": {
+        "transfer": "slog3",
+        "primaries": "sgamut3-cine"
+      },
+      "exposureStops": 0,
+      "file": "tree.png",
+      "sha256": "b346e2c5e9b57915758e46ada3e18b4bb286c11f1662d5128eb6ef186130ada8",
+      "bytes": 4827813,
+      "width": 928,
+      "height": 906,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "license": "BSD-3-Clause",
+      "licenseFile": "licenses/OpenEXR.txt",
+      "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "16-bit HALF",
+        "range": "unbounded floating point",
+        "chromaticities": [
+          0.6295499801635742, 0.3409999907016754, 0.2867000102996826,
+          0.61080002784729, 0.14890000224113464, 0.07124999910593033,
+          0.3154999911785126, 0.3316499888896942
+        ],
+        "primariesEvidence": "EXR chromaticities attribute",
+        "owner": "Copyright 2002 Industrial Light & Magic",
+        "captureDate": "2002:06:23 15:00:00"
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.7122710777340414, 0.19899473065618295, 0.088734191609776],
+          [0.11297581013792136, 0.7166077284008585, 0.17041646146121972],
+          [0.041886536601142235, 0.12168612034130244, 0.8364273430575554]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": 0,
+        "steps": [
+          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": 0.0,
+        "sourceRgbMax": 16.296875,
+        "preparedLinearMin": 0.0,
+        "preparedLinearMax": 15.077351861990788,
+        "linearChannelsAboveOne": 529520,
+        "codeMin": 6086,
+        "codeMax": 58733,
+        "distinctCodes": 52051,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            0.004750200578344221, 0.019501985715765325, 0.00015849670010300592
+          ]
+        },
+        {
+          "x": 0,
+          "y": 226,
+          "linearRec709": [
+            0.04197205795978375, 0.04150357237900256, 0.008626071997130646
+          ]
+        },
+        {
+          "x": 0,
+          "y": 452,
+          "linearRec709": [
+            0.028558120888235283, 0.05687463048195576, 0.02124067150823792
+          ]
+        },
+        {
+          "x": 0,
+          "y": 678,
+          "linearRec709": [
+            0.02278877065922546, 0.04337647992825172, 0.0044845722694761515
+          ]
+        },
+        {
+          "x": 0,
+          "y": 905,
+          "linearRec709": [0.0, 0.0, 0.0]
+        },
+        {
+          "x": 8,
+          "y": 16,
+          "linearRec709": [
+            -0.0006002725568189771, 0.007730813725682557, 1.3762680226588657e-5
+          ]
+        },
+        {
+          "x": 52,
+          "y": 617,
+          "linearRec709": [
+            0.11091522511005762, 0.028318764012471527, -0.00014274676509393785
+          ]
+        },
+        {
+          "x": 200,
+          "y": 582,
+          "linearRec709": [
+            9.695140029754095, 6.149086093511122, 2.290588313793229
+          ]
+        },
+        {
+          "x": 231,
+          "y": 0,
+          "linearRec709": [
+            0.024806780791683206, 0.032908801810493785, 0.020841357504521516
+          ]
+        },
+        {
+          "x": 231,
+          "y": 226,
+          "linearRec709": [
+            0.2029481891947867, 0.3016836948379752, 0.2626174241562788
+          ]
+        },
+        {
+          "x": 231,
+          "y": 452,
+          "linearRec709": [
+            0.28355808104414604, 0.43592726604114207, 0.09862860759149665
+          ]
+        },
+        {
+          "x": 231,
+          "y": 678,
+          "linearRec709": [
+            0.048802022713867375, 0.05710101957383143, 0.022488289943360315
+          ]
+        },
+        {
+          "x": 231,
+          "y": 905,
+          "linearRec709": [0.0, 0.0, 0.0]
+        },
+        {
+          "x": 427,
+          "y": 340,
+          "linearRec709": [
+            3.8995789136932215, 10.057527775017938, 16.307765206004238
+          ]
+        },
+        {
+          "x": 463,
+          "y": 0,
+          "linearRec709": [
+            0.19802810055025763, 0.2202525132917236, 0.22623459765315918
+          ]
+        },
+        {
+          "x": 463,
+          "y": 226,
+          "linearRec709": [
+            0.03063622254688097, 0.03301070466293714, 0.028995512808777588
+          ]
+        },
+        {
+          "x": 463,
+          "y": 452,
+          "linearRec709": [
+            0.02540650934110991, 0.021397692221981558, 0.014961640487159557
+          ]
+        },
+        {
+          "x": 463,
+          "y": 678,
+          "linearRec709": [
+            0.04476520990110265, 0.04009367681150395, 0.013662311704931106
+          ]
+        },
+        {
+          "x": 463,
+          "y": 905,
+          "linearRec709": [0.0, 0.0, 0.0]
+        },
+        {
+          "x": 510,
+          "y": 598,
+          "linearRec709": [0.0, 0.0, 0.0]
+        },
+        {
+          "x": 675,
+          "y": 384,
+          "linearRec709": [
+            5.049940848768612, 12.108445808121465, 12.355817679707316
+          ]
+        },
+        {
+          "x": 695,
+          "y": 0,
+          "linearRec709": [
+            0.1678642762979086, 0.12888757749692029, 0.10552286288455644
+          ]
+        },
+        {
+          "x": 695,
+          "y": 226,
+          "linearRec709": [
+            0.02353307931950357, 0.03009523842476194, 0.038402817179197205
+          ]
+        },
+        {
+          "x": 695,
+          "y": 452,
+          "linearRec709": [
+            5.559595583472097, 3.5366791352056026, 1.4485688581049132
+          ]
+        },
+        {
+          "x": 695,
+          "y": 678,
+          "linearRec709": [
+            0.015539739154023716, 0.008346566850880885, -1.2784499230009132e-5
+          ]
+        },
+        {
+          "x": 695,
+          "y": 905,
+          "linearRec709": [0.0, 0.0, 0.0]
+        },
+        {
+          "x": 927,
+          "y": 0,
+          "linearRec709": [
+            0.7121043951096294, 2.274016935943717, 4.280131215513697
+          ]
+        },
+        {
+          "x": 927,
+          "y": 226,
+          "linearRec709": [
+            0.08930565982882559, 0.15401838915204516, 0.06638942133070586
+          ]
+        },
+        {
+          "x": 927,
+          "y": 452,
+          "linearRec709": [
+            0.5214456681215043, 0.9296642686854648, 0.16691104497643633
+          ]
+        },
+        {
+          "x": 927,
+          "y": 678,
+          "linearRec709": [
+            3.4480878978895575, 2.10018604098916, 0.8120741891794372
+          ]
+        },
+        {
+          "x": 927,
+          "y": 905,
+          "linearRec709": [0.0, 0.0, 0.0]
+        }
+      ]
+    },
+    {
+      "id": "golden-gate",
+      "title": "Golden Gate at dusk",
+      "scene": "exterior",
+      "sourcePath": "Tiles/GoldenGate.exr",
+      "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/Tiles/GoldenGate.exr",
+      "sourceSha256": "8790ad440e8708a05044d646082e876327ceba759052dffa7adf8eb7c170bca0",
+      "encoding": {
+        "transfer": "slog3",
+        "primaries": "sgamut3-cine"
+      },
+      "exposureStops": -5,
+      "file": "golden-gate.png",
+      "sha256": "ef47844b97835c421f562a5a1dcd18892af1ee0acdd48e320e7653e9fb8e350d",
+      "bytes": 5126267,
+      "width": 1262,
+      "height": 860,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "license": "BSD-3-Clause",
+      "licenseFile": "licenses/OpenEXR.txt",
+      "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "16-bit HALF",
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "Copyright 2004 Industrial Light & Magic",
+        "captureDate": "2004:01:04 18:10:00"
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.6456794776099917, 0.25911454699971503, 0.09520597539029335],
+          [0.08752999151186003, 0.7596995625540705, 0.1527704459340693],
+          [0.036957419887523664, 0.12928090476633827, 0.8337616753461382]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": -5,
+        "steps": [
+          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": 0.0,
+        "sourceRgbMax": 685.5,
+        "preparedLinearMin": 5.520541738463902e-6,
+        "preparedLinearMax": 15.59729758057206,
+        "linearChannelsAboveOne": 104,
+        "codeMin": 6088,
+        "codeMax": 58979,
+        "distinctCodes": 12222,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            0.001913070678710938, 0.0027885437011718746, 0.0084991455078125
+          ]
+        },
+        {
+          "x": 0,
+          "y": 214,
+          "linearRec709": [
+            0.002164840698242188, 0.003219604492187499, 0.01117706298828125
+          ]
+        },
+        {
+          "x": 0,
+          "y": 429,
+          "linearRec709": [
+            0.0012521743774414065, 0.0017805099487304683, 0.00562286376953125
+          ]
+        },
+        {
+          "x": 0,
+          "y": 644,
+          "linearRec709": [
+            0.00018250942230224612, 0.00020039081573486323,
+            0.0004839897155761719
+          ]
+        },
+        {
+          "x": 0,
+          "y": 859,
+          "linearRec709": [
+            7.677078247070312e-5, 4.184246063232421e-5, 1.2275261078219456e-21
+          ]
+        },
+        {
+          "x": 3,
+          "y": 859,
+          "linearRec709": [
+            5.1379203796386726e-5, 2.8014183044433587e-5, 8.2184796392637385e-22
+          ]
+        },
+        {
+          "x": 4,
+          "y": 847,
+          "linearRec709": [
+            4.1723251342773444e-5, 3.468990325927734e-5, 1.0176925851173394e-21
+          ]
+        },
+        {
+          "x": 315,
+          "y": 0,
+          "linearRec709": [
+            0.003952026367187501, 0.005363464355468749, 0.016357421875
+          ]
+        },
+        {
+          "x": 315,
+          "y": 214,
+          "linearRec709": [
+            0.003879547119140626, 0.005626678466796874, 0.01800537109375
+          ]
+        },
+        {
+          "x": 315,
+          "y": 429,
+          "linearRec709": [
+            0.002805709838867188, 0.003353118896484374, 0.00949859619140625
+          ]
+        },
+        {
+          "x": 315,
+          "y": 644,
+          "linearRec709": [
+            0.001193046569824219, 0.001301765441894531, 0.0030059814453125
+          ]
+        },
+        {
+          "x": 315,
+          "y": 859,
+          "linearRec709": [
+            0.0003721714019775391, 0.00040841102600097645, 0.0005908012390136719
+          ]
+        },
+        {
+          "x": 407,
+          "y": 760,
+          "linearRec709": [
+            6.61611557006836e-5, 2.551078796386718e-5, 3.6656856536865234e-5
+          ]
+        },
+        {
+          "x": 630,
+          "y": 0,
+          "linearRec709": [
+            0.004955291748046876, 0.006591796874999998, 0.02105712890625
+          ]
+        },
+        {
+          "x": 630,
+          "y": 214,
+          "linearRec709": [
+            0.004924774169921876, 0.006649017333984373, 0.021209716796875
+          ]
+        },
+        {
+          "x": 630,
+          "y": 429,
+          "linearRec709": [
+            0.0028991699218750004, 0.003925323486328124, 0.0105743408203125
+          ]
+        },
+        {
+          "x": 630,
+          "y": 644,
+          "linearRec709": [
+            0.00015985965728759768, 0.00022828578948974604,
+            0.0004367828369140625
+          ]
+        },
+        {
+          "x": 630,
+          "y": 859,
+          "linearRec709": [
+            0.000337362289428711, 0.00039649009704589833, 0.0004935264587402344
+          ]
+        },
+        {
+          "x": 945,
+          "y": 0,
+          "linearRec709": [
+            0.0035457611083984384, 0.004867553710937499, 0.014984130859375
+          ]
+        },
+        {
+          "x": 945,
+          "y": 214,
+          "linearRec709": [
+            0.0033416748046875004, 0.004642486572265624, 0.01496124267578125
+          ]
+        },
+        {
+          "x": 945,
+          "y": 429,
+          "linearRec709": [
+            0.0005941390991210939, 0.0008177757263183592, 0.002590179443359375
+          ]
+        },
+        {
+          "x": 945,
+          "y": 644,
+          "linearRec709": [
+            0.0011186599731445315, 0.0014610290527343748, 0.0034961700439453125
+          ]
+        },
+        {
+          "x": 945,
+          "y": 859,
+          "linearRec709": [
+            0.00021469593048095706, 0.0002508163452148437, 0.0004222393035888672
+          ]
+        },
+        {
+          "x": 1033,
+          "y": 474,
+          "linearRec709": [21.421875, 6.246093749999998, 1.5458984375000002]
+        },
+        {
+          "x": 1076,
+          "y": 462,
+          "linearRec709": [5.98828125, 2.0605468749999996, 3.5859375]
+        },
+        {
+          "x": 1080,
+          "y": 448,
+          "linearRec709": [17.203125, 6.249999999999998, 3.203125]
+        },
+        {
+          "x": 1261,
+          "y": 0,
+          "linearRec709": [
+            0.0015335083007812502, 0.0020523071289062496, 0.006313323974609375
+          ]
+        },
+        {
+          "x": 1261,
+          "y": 214,
+          "linearRec709": [
+            0.0021133422851562504, 0.002813339233398437, 0.0089569091796875
+          ]
+        },
+        {
+          "x": 1261,
+          "y": 429,
+          "linearRec709": [
+            0.0002235174179077149, 0.00038504600524902333, 0.0010776519775390625
+          ]
+        },
+        {
+          "x": 1261,
+          "y": 644,
+          "linearRec709": [
+            0.000701427459716797, 0.000878334045410156, 0.0018453598022460938
+          ]
+        },
+        {
+          "x": 1261,
+          "y": 859,
+          "linearRec709": [
+            0.00011098384857177736, 0.00010359287261962888,
+            0.00019419193267822266
+          ]
+        }
+      ]
+    },
+    {
+      "id": "still-life",
+      "title": "Oil-lamp still life",
+      "scene": "interior",
+      "sourcePath": "ScanLines/StillLife.exr",
+      "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/StillLife.exr",
+      "sourceSha256": "86a04a36ec10983780d47ae33b2fba0dde269dd687bf53decf5ec0a726e50756",
+      "encoding": {
+        "transfer": "davinci-intermediate",
+        "primaries": "davinci-wide-gamut"
+      },
+      "exposureStops": -3,
+      "file": "still-life.png",
+      "sha256": "e8b4b554db0d804d5ba31aa9a016a4f31f9703d7d57fa5c429e0ed703674b276",
+      "bytes": 3917131,
+      "width": 1240,
+      "height": 846,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "license": "BSD-3-Clause",
+      "licenseFile": "licenses/OpenEXR.txt",
+      "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "16-bit HALF",
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "Copyright 2002 Industrial Light & Magic",
+        "captureDate": "2002:06:23 21:30:10"
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.5627674560071075, 0.3235165887039595, 0.1137159552889327],
+          [0.07775463528504588, 0.749577346163222, 0.17266801855173206],
+          [0.0646691999163282, 0.19199869204629902, 0.7433321080373732]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": -3,
+        "steps": [
+          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": 0.0,
+        "sourceRgbMax": 491.5,
+        "preparedLinearMin": 0.0,
+        "preparedLinearMax": 51.810313584570046,
+        "linearChannelsAboveOne": 2954,
+        "codeMin": 0,
+        "codeMax": 60979,
+        "distinctCodes": 31222,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            8.106231689453128e-6, 2.217292785644531e-5, 4.482269287109375e-5
+          ]
+        },
+        {
+          "x": 0,
+          "y": 211,
+          "linearRec709": [
+            2.3126602172851562e-5, 3.0994415283203117e-6, 9.092785983866264e-23
+          ]
+        },
+        {
+          "x": 0,
+          "y": 422,
+          "linearRec709": [3.528594970703125e-5, 0.0, 0.0]
+        },
+        {
+          "x": 0,
+          "y": 633,
+          "linearRec709": [
+            4.00543212890625e-5, 1.0251998901367186e-5, 4.76837158203125e-6
+          ]
+        },
+        {
+          "x": 0,
+          "y": 845,
+          "linearRec709": [
+            0.0016508102416992188, 0.00025606155395507807, 7.512040112824898e-21
+          ]
+        },
+        {
+          "x": 20,
+          "y": 0,
+          "linearRec709": [2.1457672119140625e-6, 0.0, 4.76837158203125e-6]
+        },
+        {
+          "x": 41,
+          "y": 0,
+          "linearRec709": [3.3855438232421875e-5, 0.0, 0.0]
+        },
+        {
+          "x": 79,
+          "y": 0,
+          "linearRec709": [0.0, 0.0, 2.09808349609375e-5]
+        },
+        {
+          "x": 309,
+          "y": 0,
+          "linearRec709": [
+            4.625320434570313e-5, 3.5524368286132806e-5, 0.00016808509826660156
+          ]
+        },
+        {
+          "x": 309,
+          "y": 211,
+          "linearRec709": [
+            0.00013971328735351562, 6.437301635742186e-6, 1.8885017043414548e-22
+          ]
+        },
+        {
+          "x": 309,
+          "y": 422,
+          "linearRec709": [
+            0.0083465576171875, 0.006084442138671873, 0.001208305358886719
+          ]
+        },
+        {
+          "x": 309,
+          "y": 633,
+          "linearRec709": [
+            0.0028324127197265625, 0.0004892349243164061, 6.604194641113283e-5
+          ]
+        },
+        {
+          "x": 309,
+          "y": 845,
+          "linearRec709": [
+            0.0014753341674804688, 0.00010752677917480466, 9.560585021972656e-5
+          ]
+        },
+        {
+          "x": 377,
+          "y": 450,
+          "linearRec709": [22.234375000000004, 24.499999999999993, 61.4375]
+        },
+        {
+          "x": 377,
+          "y": 451,
+          "linearRec709": [25.890625000000004, 26.812499999999993, 54.75]
+        },
+        {
+          "x": 619,
+          "y": 0,
+          "linearRec709": [
+            5.91278076171875e-5, 2.217292785644531e-5, 6.504839203842788e-22
+          ]
+        },
+        {
+          "x": 619,
+          "y": 211,
+          "linearRec709": [9.131431579589844e-5, 0.0, 0.0]
+        },
+        {
+          "x": 619,
+          "y": 422,
+          "linearRec709": [
+            0.0014286041259765625, 4.4107437133789056e-5, 5.269050598144531e-5
+          ]
+        },
+        {
+          "x": 619,
+          "y": 633,
+          "linearRec709": [
+            0.014022827148437502, 0.007221221923828123, 0.0014581680297851565
+          ]
+        },
+        {
+          "x": 619,
+          "y": 845,
+          "linearRec709": [
+            0.006191253662109376, 0.0032939910888671866, 0.0004265308380126954
+          ]
+        },
+        {
+          "x": 860,
+          "y": 370,
+          "linearRec709": [
+            28.937500000000004, 15.898437499999996, 7.578125000000001
+          ]
+        },
+        {
+          "x": 929,
+          "y": 0,
+          "linearRec709": [1.0013580322265625e-5, 0.0, 0.0]
+        },
+        {
+          "x": 929,
+          "y": 211,
+          "linearRec709": [7.295608520507812e-5, 0.0, 0.0]
+        },
+        {
+          "x": 929,
+          "y": 422,
+          "linearRec709": [0.00037288665771484375, 0.0, 0.0]
+        },
+        {
+          "x": 929,
+          "y": 633,
+          "linearRec709": [
+            0.0019626617431640625, 0.0006437301635742186, 0.00010609626770019533
+          ]
+        },
+        {
+          "x": 929,
+          "y": 845,
+          "linearRec709": [
+            0.001483917236328125, 0.00017452239990234372, 5.119937953992388e-21
+          ]
+        },
+        {
+          "x": 1239,
+          "y": 0,
+          "linearRec709": [
+            2.2888183593750007e-5, 4.2200088500976556e-5, 1.52587890625e-5
+          ]
+        },
+        {
+          "x": 1239,
+          "y": 211,
+          "linearRec709": [
+            3.981590270996094e-5, 3.0994415283203117e-6, 9.092785983866264e-23
+          ]
+        },
+        {
+          "x": 1239,
+          "y": 422,
+          "linearRec709": [
+            9.202957153320312e-5, 2.026557922363281e-5, 5.945283143297172e-22
+          ]
+        },
+        {
+          "x": 1239,
+          "y": 633,
+          "linearRec709": [
+            7.462501525878906e-5, 1.7881393432617184e-5, 5.245838067615152e-22
+          ]
+        },
+        {
+          "x": 1239,
+          "y": 845,
+          "linearRec709": [
+            7.057189941406251e-5, 5.364418029785155e-5, 0.0002167224884033203
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flower",
+      "title": "Red flower",
+      "scene": "exterior",
+      "sourcePath": "Chromaticities/Rec709.exr",
+      "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/Chromaticities/Rec709.exr",
+      "sourceSha256": "15028cbf7bf0efa43738890af715ec550d26ae9e32a1020d0f4e7c785d3a370e",
+      "encoding": {
+        "transfer": "davinci-intermediate",
+        "primaries": "davinci-wide-gamut"
+      },
+      "exposureStops": 0,
+      "file": "flower.png",
+      "sha256": "c1be960e130ead26f0877ba94880b9d6deca6ee8e5e4a427aa688ac777d069cf",
+      "bytes": 1411672,
+      "width": 610,
+      "height": 406,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "license": "BSD-3-Clause",
+      "licenseFile": "licenses/OpenEXR.txt",
+      "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "16-bit HALF",
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "Copyright 2006 Industrial Light & Magic",
+        "captureDate": null
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.5627674560071075, 0.3235165887039595, 0.1137159552889327],
+          [0.07775463528504588, 0.749577346163222, 0.17266801855173206],
+          [0.0646691999163282, 0.19199869204629902, 0.7433321080373732]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": 0,
+        "steps": [
+          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": 0.0,
+        "sourceRgbMax": 6.9453125,
+        "preparedLinearMin": 0.001838962603536297,
+        "preparedLinearMax": 5.6005891326902955,
+        "linearChannelsAboveOne": 14031,
+        "codeMin": 1259,
+        "codeMax": 45571,
+        "distinctCodes": 33717,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            0.28344726562500006, 0.3859863281249999, 0.11120605468750001
+          ]
+        },
+        {
+          "x": 0,
+          "y": 101,
+          "linearRec709": [
+            0.20996093750000003, 0.25927734374999994, 0.139892578125
+          ]
+        },
+        {
+          "x": 0,
+          "y": 202,
+          "linearRec709": [
+            0.36865234375000006, 0.5078124999999999, 0.15576171875000003
+          ]
+        },
+        {
+          "x": 0,
+          "y": 303,
+          "linearRec709": [
+            0.07849121093750001, 0.08984374999999999, 0.012794494628906253
+          ]
+        },
+        {
+          "x": 0,
+          "y": 405,
+          "linearRec709": [
+            0.48046875000000006, 0.4733886718749999, 0.15551757812500003
+          ]
+        },
+        {
+          "x": 152,
+          "y": 0,
+          "linearRec709": [
+            0.15161132812500003, 0.20056152343749994, 0.10528564453125
+          ]
+        },
+        {
+          "x": 152,
+          "y": 101,
+          "linearRec709": [
+            0.21875000000000003, 0.27197265624999994, 0.07501220703125001
+          ]
+        },
+        {
+          "x": 152,
+          "y": 202,
+          "linearRec709": [
+            0.17834472656250003, 0.24829101562499994, 0.05255126953125001
+          ]
+        },
+        {
+          "x": 152,
+          "y": 303,
+          "linearRec709": [
+            0.4711914062500001, 0.6230468749999999, 0.17785644531250003
+          ]
+        },
+        {
+          "x": 152,
+          "y": 405,
+          "linearRec709": [
+            0.08441162109375001, 0.13354492187499997, 0.030929565429687503
+          ]
+        },
+        {
+          "x": 296,
+          "y": 34,
+          "linearRec709": [
+            6.945312500000001, 4.640624999999999, 1.6767578125000002
+          ]
+        },
+        {
+          "x": 301,
+          "y": 207,
+          "linearRec709": [2.3007812500000004, 1.8437499999999996, 4.140625]
+        },
+        {
+          "x": 304,
+          "y": 0,
+          "linearRec709": [
+            0.25732421875000006, 0.28784179687499994, 0.10528564453125001
+          ]
+        },
+        {
+          "x": 304,
+          "y": 101,
+          "linearRec709": [1.802734375, 0.24768066406249994, 0.36181640625]
+        },
+        {
+          "x": 304,
+          "y": 202,
+          "linearRec709": [1.2412109375, 0.8017578124999998, 1.369140625]
+        },
+        {
+          "x": 304,
+          "y": 303,
+          "linearRec709": [0.5673828125, 0.4008789062499999, 0.273681640625]
+        },
+        {
+          "x": 304,
+          "y": 405,
+          "linearRec709": [
+            0.16918945312500003, 0.15795898437499997, 0.030548095703125003
+          ]
+        },
+        {
+          "x": 352,
+          "y": 228,
+          "linearRec709": [1.2861328125, 0.0, 0.010223388671875]
+        },
+        {
+          "x": 353,
+          "y": 228,
+          "linearRec709": [1.26953125, 0.0, 0.0]
+        },
+        {
+          "x": 456,
+          "y": 0,
+          "linearRec709": [
+            0.13916015625000003, 0.19226074218749994, 0.05096435546875001
+          ]
+        },
+        {
+          "x": 456,
+          "y": 101,
+          "linearRec709": [0.408203125, 0.19531249999999994, 0.204345703125]
+        },
+        {
+          "x": 456,
+          "y": 202,
+          "linearRec709": [
+            0.09875488281250001, 0.10516357421874997, 0.036712646484375
+          ]
+        },
+        {
+          "x": 456,
+          "y": 303,
+          "linearRec709": [
+            0.5898437500000001, 0.6982421874999999, 0.403564453125
+          ]
+        },
+        {
+          "x": 456,
+          "y": 405,
+          "linearRec709": [
+            0.07611083984375001, 0.10339355468749997, 0.043548583984375
+          ]
+        },
+        {
+          "x": 530,
+          "y": 394,
+          "linearRec709": [
+            0.003225326538085939, 0.009536743164062498, 2.797780302728081e-19
+          ]
+        },
+        {
+          "x": 609,
+          "y": 0,
+          "linearRec709": [
+            0.19860839843750003, 0.24645996093749994, 0.08471679687500001
+          ]
+        },
+        {
+          "x": 609,
+          "y": 101,
+          "linearRec709": [
+            0.09277343750000001, 0.13220214843749997, 0.03686523437500001
+          ]
+        },
+        {
+          "x": 609,
+          "y": 202,
+          "linearRec709": [
+            0.13720703125000003, 0.17224121093749997, 0.0701904296875
+          ]
+        },
+        {
+          "x": 609,
+          "y": 303,
+          "linearRec709": [
+            0.12597656250000003, 0.17626953124999997, 0.04589843750000001
+          ]
+        },
+        {
+          "x": 609,
+          "y": 405,
+          "linearRec709": [
+            0.04718017578125001, 0.06457519531249999, 0.025833129882812503
+          ]
+        }
+      ]
+    }
+  ]
+}

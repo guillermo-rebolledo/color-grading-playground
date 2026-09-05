@@ -8,6 +8,8 @@
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "test:engine": "playwright test tests/engine.spec.ts",
+    "samples:verify": "node scripts/verify-log-samples.mjs",
+    "samples:release-check": "node scripts/verify-log-samples.mjs --release",
     "preview": "vite preview",
     "format:check": "prettier --check ."
   },

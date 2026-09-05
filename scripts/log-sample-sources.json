@@ -1,0 +1,80 @@
+[
+  {
+    "id": "desk",
+    "title": "Desk by stained-glass window",
+    "scene": "interior",
+    "sourcePath": "ScanLines/Desk.exr",
+    "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/Desk.exr",
+    "sourceSha256": "2734d15e1ce157f73feaae5033b148bdabc98acb3084e9d892c6b01f23c24854",
+    "encoding": {
+      "transfer": "logc3",
+      "primaries": "arri-wide-gamut3"
+    },
+    "exposureStops": -3
+  },
+  {
+    "id": "mount-tamalpais",
+    "title": "Mount Tamalpais west",
+    "scene": "high-contrast-exterior",
+    "sourcePath": "ScanLines/MtTamWest.exr",
+    "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/MtTamWest.exr",
+    "sourceSha256": "95731ce474982e74e154e96a6d74afb1ba0da851b673bff592fa977f87adaae5",
+    "encoding": {
+      "transfer": "logc3",
+      "primaries": "arri-wide-gamut3"
+    },
+    "exposureStops": 0
+  },
+  {
+    "id": "tree",
+    "title": "Sunlit tree",
+    "scene": "high-contrast-exterior",
+    "sourcePath": "ScanLines/Tree.exr",
+    "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/Tree.exr",
+    "sourceSha256": "8397741de996ab16ab94005fd0f0327bd29ab448163160a608c0b26e26864712",
+    "encoding": {
+      "transfer": "slog3",
+      "primaries": "sgamut3-cine"
+    },
+    "exposureStops": 0
+  },
+  {
+    "id": "golden-gate",
+    "title": "Golden Gate at dusk",
+    "scene": "exterior",
+    "sourcePath": "Tiles/GoldenGate.exr",
+    "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/Tiles/GoldenGate.exr",
+    "sourceSha256": "8790ad440e8708a05044d646082e876327ceba759052dffa7adf8eb7c170bca0",
+    "encoding": {
+      "transfer": "slog3",
+      "primaries": "sgamut3-cine"
+    },
+    "exposureStops": -5
+  },
+  {
+    "id": "still-life",
+    "title": "Oil-lamp still life",
+    "scene": "interior",
+    "sourcePath": "ScanLines/StillLife.exr",
+    "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/ScanLines/StillLife.exr",
+    "sourceSha256": "86a04a36ec10983780d47ae33b2fba0dde269dd687bf53decf5ec0a726e50756",
+    "encoding": {
+      "transfer": "davinci-intermediate",
+      "primaries": "davinci-wide-gamut"
+    },
+    "exposureStops": -3
+  },
+  {
+    "id": "flower",
+    "title": "Red flower",
+    "scene": "exterior",
+    "sourcePath": "Chromaticities/Rec709.exr",
+    "sourceUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/Chromaticities/Rec709.exr",
+    "sourceSha256": "15028cbf7bf0efa43738890af715ec550d26ae9e32a1020d0f4e7c785d3a370e",
+    "encoding": {
+      "transfer": "davinci-intermediate",
+      "primaries": "davinci-wide-gamut"
+    },
+    "exposureStops": 0
+  }
+]
