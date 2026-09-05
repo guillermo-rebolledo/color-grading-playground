@@ -24,7 +24,7 @@ type GraphState = {
   add: (type: NodeType) => void;
   remove: (nodeIds: string[], edgeIds: string[]) => void;
   connect: (edge: GradingEdge) => void;
-  parameter: (id: string, stops: number) => void;
+  updateParameters: (id: string, parameters: GradingNode["data"]) => void;
   copy: () => void;
   paste: () => void;
 };
@@ -43,6 +43,13 @@ const append = (history: GradingGraph[], graph: GradingGraph) => [
   ...history.slice(-99),
   graph,
 ];
+
+export function connectionError(graph: GradingGraph, edge: GradingEdge) {
+  return GradingEngine.validate(
+    { ...graph, edges: [...graph.edges, edge] },
+    true,
+  );
+}
 
 // Immutable whole-graph snapshots keep history independent of individual node types.
 export const useGraph = create<GraphState>()((set, get) => ({
@@ -145,19 +152,21 @@ export const useGraph = create<GraphState>()((set, get) => ({
   connect: (edge) => {
     get().end();
     const graph = { ...get().graph, edges: [...get().graph.edges, edge] };
-    const error = GradingEngine.validate(graph, true);
+    const error = connectionError(get().graph, edge);
     if (error) set({ feedback: error });
     else get().edit(graph);
   },
-  parameter: (id, stops) => {
-    if (!Number.isFinite(stops) || stops < -6 || stops > 6) return;
+  updateParameters: (id, parameters) => {
     const { graph } = get();
-    get().edit({
+    const next = {
       ...graph,
       nodes: graph.nodes.map((n) =>
-        n.id === id ? { ...n, data: { ...n.data, stops } } : n,
+        n.id === id ? { ...n, data: { ...n.data, ...parameters } } : n,
       ),
-    });
+    };
+    const error = GradingEngine.validate(next, true);
+    if (error) set({ feedback: error });
+    else get().edit(next);
   },
   copy: () => {
     const { graph } = get();
