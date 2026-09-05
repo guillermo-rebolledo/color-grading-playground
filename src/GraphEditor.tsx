@@ -180,7 +180,10 @@ export function GraphEditor() {
           ))}
           {state.solo && (
             <button onClick={() => useGraph.setState({ solo: null })}>
-              Exit mask solo
+              {graph.nodes.find((n) => n.id === state.solo)?.type ===
+              "qualifier"
+                ? "Exit mask solo"
+                : "Exit solo"}
             </button>
           )}
           <button onClick={state.undo} disabled={!state.past.length}>
@@ -213,7 +216,7 @@ export function GraphEditor() {
         {state.feedback ||
           (error
             ? `Preview paused: ${error}`
-            : "Live graph · RGB: solid · Mask: dashed · Double-click qualifier to solo · Drag ports to connect · Shift-drag to box select · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
+            : "Live graph · RGB: solid · Mask: dashed · Double-click a node to solo · Drag ports to connect · Shift-drag to box select · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
       </div>
       {warnings.length > 0 && (
         <div className="graph-feedback" role="status">
@@ -229,10 +232,9 @@ export function GraphEditor() {
             className: e.sourceHandle === "mask" ? "mask-edge" : "rgb-edge",
           }))}
           onNodeDoubleClick={(_, node) => {
-            if (node.type === "qualifier")
-              useGraph.setState((s) => ({
-                solo: s.solo === node.id ? null : node.id,
-              }));
+            useGraph.setState((s) => ({
+              solo: s.solo === node.id ? null : node.id,
+            }));
           }}
           nodeTypes={nodeTypes}
           colorMode="dark"
