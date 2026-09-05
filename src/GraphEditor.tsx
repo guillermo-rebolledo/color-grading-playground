@@ -48,21 +48,23 @@ function GradeNode({
         <span>RGB</span>
       </div>
       <p>
-        {type === "whiteBalance"
-          ? `${data.temperature} K · Tint ${data.tint}`
-          : type === "cst"
-            ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
-            : type === "exposure"
-              ? `${(data.stops ?? 0).toFixed(2)} stops`
-              : type === "cdl"
-                ? "Unbounded SOP · Rec.709 luma"
-                : type === "contrast"
-                  ? `Amount ${data.contrast} · Pivot ${data.pivot}`
-                  : type === "saturation"
-                    ? `Saturation ${data.saturation} · Vibrance ${data.vibrance}`
-                    : type === "source"
-                      ? encodingLabel(colour.input)
-                      : encodingLabel(colour.output)}
+        {type === "curves"
+          ? "Master → R/G/B"
+          : type === "whiteBalance"
+            ? `${data.temperature} K · Tint ${data.tint}`
+            : type === "cst"
+              ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
+              : type === "exposure"
+                ? `${(data.stops ?? 0).toFixed(2)} stops`
+                : type === "cdl"
+                  ? "Unbounded SOP · Rec.709 luma"
+                  : type === "contrast"
+                    ? `Amount ${data.contrast} · Pivot ${data.pivot}`
+                    : type === "saturation"
+                      ? `Saturation ${data.saturation} · Vibrance ${data.vibrance}`
+                      : type === "source"
+                        ? encodingLabel(colour.input)
+                        : encodingLabel(colour.output)}
       </p>
       {type !== "output" && (
         <Handle
@@ -83,6 +85,7 @@ const nodeTypes = {
   contrast: GradeNode,
   saturation: GradeNode,
   whiteBalance: GradeNode,
+  curves: GradeNode,
   output: GradeNode,
 };
 const isTyping = (target: EventTarget | null) =>
@@ -133,6 +136,7 @@ export function GraphEditor() {
               "contrast",
               "saturation",
               "whiteBalance",
+              "curves",
               "output",
             ] as const
           ).map((type) => (

@@ -53,6 +53,7 @@ export class GradingEngine {
   private target: WebGLTexture | null = null;
   private framebuffer: WebGLFramebuffer | null = null;
   private disposed = false;
+  private curveTextures: WebGLTexture[] = [];
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", {
@@ -252,6 +253,14 @@ export class GradingEngine {
 
   private prepare(graph: GradingGraph) {
     const compiled = compileGraph(graph);
+    const gl = this.gl;
+    if (
+      compiled.curves.length + 1 >
+      gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)
+    )
+      throw new Error(
+        "This graph exceeds the device texture-unit limit. Remove a Curves node.",
+      );
     let program = this.programs.get(compiled.key);
     if (!program) {
       program = this.createProgram(
@@ -259,9 +268,34 @@ export class GradingEngine {
       );
       this.programs.set(compiled.key, program);
     }
-    const gl = this.gl;
     gl.useProgram(program);
     gl.uniform1i(gl.getUniformLocation(program, "sourceImage"), 0);
+    while (this.curveTextures.length > compiled.curves.length)
+      gl.deleteTexture(this.curveTextures.pop()!);
+    compiled.curves.forEach((curve, i) => {
+      gl.activeTexture(gl.TEXTURE0 + i + 1);
+      if (!this.curveTextures[i]) {
+        const texture = gl.createTexture();
+        if (!texture) throw new Error("Could not allocate curve texture.");
+        this.curveTextures.push(texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        this.configureTexture();
+        gl.texStorage2D(gl.TEXTURE_2D, 1, gl.R32F, 1024, 1);
+      } else gl.bindTexture(gl.TEXTURE_2D, this.curveTextures[i]);
+      gl.texSubImage2D(
+        gl.TEXTURE_2D,
+        0,
+        0,
+        0,
+        1024,
+        1,
+        gl.RED,
+        gl.FLOAT,
+        curve.samples,
+      );
+      gl.uniform1i(gl.getUniformLocation(program, `curve${i}`), i + 1);
+    });
+    gl.activeTexture(gl.TEXTURE0);
     compiled.uniforms.forEach((value, i) =>
       gl.uniform1f(gl.getUniformLocation(program, `parameter${i}`), value),
     );
@@ -337,5 +371,7 @@ export class GradingEngine {
     gl.deleteFramebuffer(this.framebuffer);
     this.programs.forEach((program) => gl.deleteProgram(program));
     this.programs.clear();
+    this.curveTextures.forEach((texture) => gl.deleteTexture(texture));
+    this.curveTextures = [];
   }
 }
