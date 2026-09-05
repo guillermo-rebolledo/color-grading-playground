@@ -12,7 +12,7 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useGraph } from "./graphStore";
+import { useGraph, connectionError } from "./graphStore";
 import { GradingEngine, type GradingNode } from "./engine/GradingEngine";
 
 function GradeNode({
@@ -56,7 +56,9 @@ function GradeNode({
 const nodeTypes = { source: GradeNode, exposure: GradeNode, output: GradeNode };
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
-  !!target.closest('input, textarea, select, [contenteditable="true"]');
+  !!target.closest(
+    'input:not([type="range"]), textarea, [contenteditable="true"]',
+  );
 
 export function GraphEditor() {
   const state = useGraph();
@@ -136,6 +138,7 @@ export function GraphEditor() {
           colorMode="dark"
           fitView
           multiSelectionKeyCode="Shift"
+          deleteKeyCode={["Backspace", "Delete"]}
           snapToGrid
           snapGrid={[16, 16]}
           minZoom={0.25}
@@ -179,21 +182,12 @@ export function GraphEditor() {
             })
           }
           isValidConnection={(connection) =>
-            !GradingEngine.validate(
-              {
-                ...useGraph.getState().graph,
-                edges: [
-                  ...useGraph.getState().graph.edges,
-                  {
-                    ...connection,
-                    sourceHandle: connection.sourceHandle ?? "",
-                    targetHandle: connection.targetHandle ?? "",
-                    id: "candidate",
-                  },
-                ],
-              },
-              true,
-            )
+            !connectionError(useGraph.getState().graph, {
+              ...connection,
+              sourceHandle: connection.sourceHandle ?? "",
+              targetHandle: connection.targetHandle ?? "",
+              id: "candidate",
+            })
           }
           onConnectEnd={(_, connection) => {
             if (!connection.isValid && connection.fromNode) {
@@ -209,13 +203,8 @@ export function GraphEditor() {
               };
               useGraph.setState({
                 feedback: to
-                  ? (GradingEngine.validate(
-                      {
-                        ...useGraph.getState().graph,
-                        edges: [...useGraph.getState().graph.edges, edge],
-                      },
-                      true,
-                    ) ?? "Connect an RGB output to an RGB input.")
+                  ? (connectionError(useGraph.getState().graph, edge) ??
+                    "Connect an RGB output to an RGB input.")
                   : "Connection canceled. Drop on an RGB input port.",
               });
             }

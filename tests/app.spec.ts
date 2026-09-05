@@ -381,3 +381,83 @@ test("box selection and endpoint deletion are reversible, and incomplete output 
     page.locator('.react-flow__node[data-id="source"]'),
   ).toBeVisible();
 });
+
+test("rebuild the active graph with Delete and resume live exposure rendering", async ({
+  page,
+}) => {
+  const { PNG } = await import("pngjs");
+  const fixture = new PNG({ width: 40, height: 40 });
+  for (let i = 0; i < fixture.data.length; i += 4) {
+    fixture.data[i] = 128;
+    fixture.data[i + 1] = 128;
+    fixture.data[i + 2] = 128;
+    fixture.data[i + 3] = 255;
+  }
+  await page.goto("/");
+  await page
+    .getByLabel("Choose image")
+    .setInputFiles({
+      name: "gray.png",
+      mimeType: "image/png",
+      buffer: PNG.sync.write(fixture),
+    });
+  await page.locator('.react-flow__node[data-id="exposure"]').click();
+  await page.keyboard.press("Delete");
+  await expect(page.locator(".react-flow__node")).toHaveCount(2);
+  await expect(page.getByRole("alert")).toContainText("Preview paused");
+  await page.getByRole("button", { name: "Add Exposure", exact: true }).click();
+  await page.getByRole("button", { name: "Fit View", exact: true }).click();
+  const added = page.locator(".react-flow__node-exposure");
+  const connect = async (
+    from: import("@playwright/test").Locator,
+    to: import("@playwright/test").Locator,
+  ) => {
+    const a = (await from.boundingBox())!,
+      b = (await to.boundingBox())!;
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 });
+    await page.mouse.up();
+  };
+  await connect(
+    page.getByLabel("Source RGB output"),
+    added.getByLabel("Exposure RGB input"),
+  );
+  await connect(
+    added.getByLabel("Exposure RGB output"),
+    page.getByLabel("Output RGB input"),
+  );
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await connect(
+    added.getByLabel("Exposure RGB output"),
+    added.getByLabel("Exposure RGB input"),
+  );
+  await expect(page.getByRole("status")).toContainText(
+    "already has a connection",
+  );
+  const exposure = page.getByRole("spinbutton", { name: "Exposure in stops" });
+  await exposure.fill("1");
+  await exposure.press("Enter");
+  const canvas = page.getByLabel("Graded image preview");
+  await expect
+    .poll(async () => {
+      const shot = PNG.sync.read(await canvas.screenshot());
+      return shot.data[(20 * shot.width + 20) * 4];
+    })
+    .toBe(176);
+});
+
+test("keyboard undo and redo work from the focused exposure slider", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const slider = page.getByRole("slider", { name: "Scrub exposure" });
+  const value = page.getByRole("spinbutton", { name: "Exposure in stops" });
+  await slider.focus();
+  await slider.press("ArrowRight");
+  await expect(value).toHaveValue("0.01");
+  await slider.press("Control+z");
+  await expect(value).toHaveValue("0.00");
+  await slider.press("Control+Shift+z");
+  await expect(value).toHaveValue("0.01");
+});

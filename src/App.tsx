@@ -400,7 +400,9 @@ export default function App() {
                 key={selected.id}
                 value={selected.data.stops!}
                 disabled={disabled}
-                onChange={(value) => graphState.parameter(selected.id, value)}
+                onChange={(value) =>
+                  graphState.updateParameters(selected.id, { stops: value })
+                }
                 onBegin={graphState.begin}
                 onEnd={graphState.end}
               />
@@ -412,22 +414,11 @@ export default function App() {
                   aria-label="Output range"
                   value={selected.data.clamp ?? "clamp"}
                   onChange={(event) =>
-                    graphState.edit({
-                      ...graph,
-                      nodes: graph.nodes.map((n) =>
-                        n.id === selected.id
-                          ? {
-                              ...n,
-                              data: {
-                                ...n.data,
-                                clamp:
-                                  event.target.value === "unbounded"
-                                    ? "unbounded"
-                                    : "clamp",
-                              },
-                            }
-                          : n,
-                      ),
+                    graphState.updateParameters(selected.id, {
+                      clamp:
+                        event.target.value === "unbounded"
+                          ? "unbounded"
+                          : "clamp",
                     })
                   }
                 >
