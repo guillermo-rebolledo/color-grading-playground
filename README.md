@@ -50,6 +50,13 @@ Local tests use Chromium with ANGLE SwiftShader. This validates the actual WebGL
 
 ## Checks
 
+Six licensed photographic HDR log stills, their encoding/provenance inventory,
+and reproducible preparation instructions are in [Log sample assets](docs/log-samples.md).
+**MEM-208 remains release-blocked:** skin tones, a photographed neutral chart,
+and confirmed tungsten lighting still need acquisition. `npm run samples:verify`
+checks the bundled subset; `npm run samples:release-check` intentionally fails
+until the complete collection is available.
+
 ```sh
 npx playwright install chromium
 npm run typecheck
