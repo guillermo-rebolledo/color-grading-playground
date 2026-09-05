@@ -24,29 +24,27 @@ function ScopePlot({
     element.width = width;
     element.height = 256;
     context.clearRect(0, 0, width, 256);
-    context.strokeStyle = "#ffffff20";
-    for (const y of [0.5, 64, 128, 192, 255.5]) {
-      context.beginPath();
-      context.moveTo(0, y);
-      context.lineTo(width, y);
-      context.stroke();
-    }
     if (parade) {
+      const raster = context.createImageData(width, 256);
       for (let channel = 0; channel < 3; channel++) {
         const counts = report.parade[channel];
         let peak = 1;
         for (const count of counts) peak = Math.max(peak, count);
-        context.fillStyle = colours[channel];
+        const colour = Number.parseInt(colours[channel].slice(1), 16);
+        const densityScale = 204 / Math.log1p(peak);
         for (let bin = 0; bin < 256; bin++)
           for (let x = 0; x < report.width; x++) {
             const count = counts[bin * report.width + x];
             if (!count) continue;
-            context.globalAlpha =
-              0.2 + (0.8 * Math.log1p(count)) / Math.log1p(peak);
-            context.fillRect(channel * report.width + x, 255 - bin, 1, 1);
+            const index =
+              ((255 - bin) * width + channel * report.width + x) * 4;
+            raster.data[index] = colour >> 16;
+            raster.data[index + 1] = (colour >> 8) & 255;
+            raster.data[index + 2] = colour & 255;
+            raster.data[index + 3] = 51 + Math.log1p(count) * densityScale;
           }
       }
-      context.globalAlpha = 1;
+      context.putImageData(raster, 0, 0);
     } else {
       let peak = 1;
       for (const channel of report.histogram)
@@ -61,6 +59,13 @@ function ScopePlot({
         });
         context.stroke();
       });
+    }
+    context.strokeStyle = "#ffffff20";
+    for (const y of [0.5, 64, 128, 192, 255.5]) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(width, y);
+      context.stroke();
     }
   }, [report, parade]);
   return (

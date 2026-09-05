@@ -5,8 +5,9 @@ and primaries, after the Output clamp policy and before viewer display conversio
 Solo, before/after, snapshots, warnings and fidelity overlays do not change them.
 They are diagnostics outside the graph and exported LUT.
 
-The GPU grades the capped preview, then nearest-neighbour downsamples that output
-to at most 512 pixels on its long edge, preserving aspect ratio. This is a sampled
+The GPU evaluates the shared grading program at at most 512 pixels on the long
+edge, preserving aspect ratio. Nearest-neighbour source sampling commutes with
+the per-pixel grade, so the diagnostic samples need no second full-preview pass. This is a sampled
 distribution, not a full-image census or an averaged image. Floating-point readback
 preserves negative and above-one output; it does not pass through an eight-bit canvas.
 Fully transparent samples are excluded; partially transparent samples count once.

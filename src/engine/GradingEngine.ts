@@ -859,7 +859,10 @@ export class GradingEngine {
     const target = gl.createTexture();
     const framebuffer = gl.createFramebuffer();
     try {
-      this.drawGrade(graph);
+      if (!this.source)
+        throw new Error("Load an image before measuring scopes.");
+      this.prepare(graph);
+      gl.activeTexture(gl.TEXTURE0);
       if (!target || !framebuffer)
         throw new Error("Could not allocate scope resources.");
       gl.bindTexture(gl.TEXTURE_2D, target);
@@ -875,35 +878,23 @@ export class GradingEngine {
         gl.FLOAT,
         null,
       );
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, framebuffer);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
       gl.framebufferTexture2D(
-        gl.DRAW_FRAMEBUFFER,
+        gl.FRAMEBUFFER,
         gl.COLOR_ATTACHMENT0,
         gl.TEXTURE_2D,
         target,
         0,
       );
-      if (
-        gl.checkFramebufferStatus(gl.DRAW_FRAMEBUFFER) !==
-        gl.FRAMEBUFFER_COMPLETE
-      )
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
         throw new Error(
           "Floating-point scopes are unavailable on this device.",
         );
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.framebuffer);
-      gl.blitFramebuffer(
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height,
-        0,
-        0,
-        width,
-        height,
-        gl.COLOR_BUFFER_BIT,
-        gl.NEAREST,
-      );
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, framebuffer);
+      // Per-pixel grading commutes with nearest source sampling. Evaluate only
+      // the diagnostic-sized image, without redrawing or mutating the preview.
+      gl.bindTexture(gl.TEXTURE_2D, this.source);
+      gl.viewport(0, 0, width, height);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
       const pixels = new Float32Array(width * height * 4);
       gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, pixels);
       if (gl.getError() !== gl.NO_ERROR)
@@ -911,6 +902,7 @@ export class GradingEngine {
       // Accumulation ignores vertical order; x is preserved by framebuffer readback.
       return { width, height, pixels };
     } finally {
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.deleteFramebuffer(framebuffer);
       gl.deleteTexture(target);
