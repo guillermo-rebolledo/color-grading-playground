@@ -309,6 +309,7 @@ test("point dragging and keyboard repeats each form one undo step; deletion and 
   await expect(output).toHaveValue("0.52");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(output).toHaveValue("0.5");
+  await point.scrollIntoViewIfNeeded();
   const box = await point.boundingBox();
   if (!box) throw new Error("Point not visible");
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
