@@ -39,6 +39,33 @@ function floatImage(
   return { ...size, data };
 }
 
+const TiffTag = {
+  Width: 256,
+  Height: 257,
+  BitsPerSample: 258,
+  Compression: 259,
+  Photometric: 262,
+  FillOrder: 266,
+  StripOffsets: 273,
+  Orientation: 274,
+  SamplesPerPixel: 277,
+  RowsPerStrip: 278,
+  StripByteCounts: 279,
+  PlanarConfiguration: 284,
+  Predictor: 317,
+  TileWidth: 322,
+  TileLength: 323,
+  TileOffsets: 324,
+  TileByteCounts: 325,
+  ExtraSamples: 338,
+  SampleFormat: 339,
+} as const;
+const pixelTags = new Set<number>(Object.values(TiffTag));
+const TIFF_RGB = 2;
+const TIFF_UNSIGNED = 1;
+const TIFF_ASSOCIATED_ALPHA = 1;
+const TIFF_STRAIGHT_ALPHA = 2;
+
 function tiffDirectory(bytes: Uint8Array) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const le = view.getUint16(0) === 0x4949;
@@ -55,13 +82,7 @@ function tiffDirectory(bytes: Uint8Array) {
       type = view.getUint16(entry + 2, le),
       length = view.getUint32(entry + 4, le);
     // Only pixel-layout tags and orientation are interpreted; colour profiles remain user-tagged.
-    if (
-      ![
-        256, 257, 258, 259, 262, 266, 273, 274, 277, 278, 279, 284, 317, 322,
-        323, 324, 325, 338, 339,
-      ].includes(tag)
-    )
-      continue;
+    if (!pixelTags.has(tag)) continue;
     if (tags.has(tag) || ![3, 4].includes(type) || length > 100_000)
       throw new Error("Malformed TIFF tags. Re-export the image.");
     const stride = type === 3 ? 2 : 4;
@@ -86,38 +107,47 @@ export function decodeTiff(bytes: Uint8Array) {
       throw new Error("Malformed TIFF scalar tag. Re-export the image.");
     return values?.[0] ?? fallback;
   };
-  const width = one(256),
-    height = one(257),
-    channels = one(277),
-    bits = tags.get(258) ?? [];
+  const width = one(TiffTag.Width),
+    height = one(TiffTag.Height),
+    channels = one(TiffTag.SamplesPerPixel),
+    bits = tags.get(TiffTag.BitsPerSample) ?? [];
   checkDimensions(width, height);
-  const orientation = one(274, 1),
-    alpha = one(338);
+  const orientation = one(TiffTag.Orientation, 1),
+    alpha = one(TiffTag.ExtraSamples);
   if (
     next ||
-    one(259, 1) !== 1 ||
-    one(266, 1) !== 1 ||
-    one(262) !== 2 ||
-    one(284, 1) !== 1 ||
-    one(317, 1) !== 1 ||
-    [322, 323, 324, 325].some((tag) => tags.has(tag)) ||
+    one(TiffTag.Compression, 1) !== 1 ||
+    one(TiffTag.FillOrder, 1) !== 1 ||
+    one(TiffTag.Photometric) !== TIFF_RGB ||
+    one(TiffTag.PlanarConfiguration, 1) !== 1 ||
+    one(TiffTag.Predictor, 1) !== 1 ||
+    [
+      TiffTag.TileWidth,
+      TiffTag.TileLength,
+      TiffTag.TileOffsets,
+      TiffTag.TileByteCounts,
+    ].some((tag) => tags.has(tag)) ||
     ![3, 4].includes(channels) ||
     bits.length !== channels ||
     !bits.every((bit) => bit === bits[0]) ||
     ![8, 16].includes(bits[0]) ||
-    (tags.has(339) &&
-      (tags.get(339)!.length !== channels ||
-        !tags.get(339)!.every((value) => value === 1))) ||
+    (tags.has(TiffTag.SampleFormat) &&
+      (tags.get(TiffTag.SampleFormat)!.length !== channels ||
+        !tags
+          .get(TiffTag.SampleFormat)!
+          .every((value) => value === TIFF_UNSIGNED))) ||
     orientation < 1 ||
     orientation > 8 ||
-    (channels === 4 ? ![1, 2].includes(alpha) : tags.has(338))
+    (channels === 4
+      ? ![TIFF_ASSOCIATED_ALPHA, TIFF_STRAIGHT_ALPHA].includes(alpha)
+      : tags.has(TiffTag.ExtraSamples))
   )
     throw new Error(
       "Unsupported TIFF variant. Export a single-page, uncompressed, chunky 8/16-bit unsigned RGB/RGBA TIFF with explicit alpha.",
     );
-  const rows = one(278, height),
-    offsets = tags.get(273) ?? [],
-    counts = tags.get(279) ?? [];
+  const rows = one(TiffTag.RowsPerStrip, height),
+    offsets = tags.get(TiffTag.StripOffsets) ?? [],
+    counts = tags.get(TiffTag.StripByteCounts) ?? [];
   if (
     !rows ||
     offsets.length !== Math.ceil(height / rows) ||
@@ -142,7 +172,7 @@ export function decodeTiff(bytes: Uint8Array) {
   };
   const bitmap = floatImage(width, height, orientation, (x, y, c) => {
     const value = raw(x, y, c);
-    if (alpha !== 1 || c === 3) return value;
+    if (alpha !== TIFF_ASSOCIATED_ALPHA || c === 3) return value;
     const a = raw(x, y, 3);
     return a === 0 ? 0 : value / a;
   });
@@ -227,7 +257,8 @@ export async function decodePng16(bytes: Uint8Array) {
       compressed.push(chunk);
     } else if (compressed.length) dataEnded = true;
     if (type === "eXIf")
-      orientation = tiffDirectory(chunk).tags.get(274)?.[0] ?? 1;
+      orientation =
+        tiffDirectory(chunk).tags.get(TiffTag.Orientation)?.[0] ?? 1;
     if (type === "tRNS") {
       if (channels !== 3 || length !== 6 || compressed.length || transparency)
         throw new Error("Malformed PNG transparency.");

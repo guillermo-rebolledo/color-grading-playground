@@ -41,7 +41,7 @@ test("16-bit PNG samples and straight alpha survive import and GPU evaluation", 
   expect(result[4] - result[0]).toBeGreaterThan(0.000015);
 });
 
-// Independent TIFF fixture writer: fixed 2x1 strip, TIFF 6.0 directory entries.
+// Independent TIFF fixture writer: two-pixel rows, TIFF 6.0 directory entries.
 function tiff16({
   little = true,
   orientation = 1,
@@ -50,22 +50,37 @@ function tiff16({
   depth = 16,
   channels = 4,
   width = 2,
+  height = 1,
+  rows = 1,
 } = {}) {
+  const rowBytes = (2 * channels * depth) / 8;
+  const strips = Math.ceil(height / rows);
   const entries: [number, number, number[]][] = [
     [256, 4, [width]],
-    [257, 4, [1]],
+    [257, 4, [height]],
     [258, 3, Array(channels).fill(depth)],
     [259, 3, [compression]],
     [262, 3, [2]],
-    [273, 4, [256]],
+    [
+      273,
+      4,
+      Array.from({ length: strips }, (_, i) => 256 + i * rows * rowBytes),
+    ],
     [274, 3, [orientation]],
     [277, 3, [channels]],
-    [278, 4, [1]],
-    [279, 4, [(2 * channels * depth) / 8]],
+    [278, 4, [rows]],
+    [
+      279,
+      4,
+      Array.from(
+        { length: strips },
+        (_, i) => Math.min(rows, height - i * rows) * rowBytes,
+      ),
+    ],
     [284, 3, [1]],
   ];
   if (channels === 4) entries.push([338, 3, [alpha]]);
-  const buffer = Buffer.alloc(256 + (2 * channels * depth) / 8);
+  const buffer = Buffer.alloc(256 + height * rowBytes);
   const u16 = (n: number, offset: number) =>
     little ? buffer.writeUInt16LE(n, offset) : buffer.writeUInt16BE(n, offset);
   const u32 = (n: number, offset: number) =>
@@ -94,11 +109,12 @@ function tiff16({
     channels === 4
       ? [32768, 16384, 8192, 32768, 32769, 16385, 8193, 65535]
       : [32768, 16384, 8192, 32769, 16385, 8193];
-  samples.forEach((v, i) =>
-    depth === 16
-      ? u16(v, 256 + i * 2)
-      : buffer.writeUInt8(Math.round(v / 257), 256 + i),
-  );
+  for (let row = 0; row < height; row++)
+    samples.forEach((v, i) =>
+      depth === 16
+        ? u16(v, 256 + row * rowBytes + i * 2)
+        : buffer.writeUInt8(Math.round(v / 257), 256 + row * rowBytes + i),
+    );
   return buffer;
 }
 
@@ -391,3 +407,49 @@ test("PNG checksum and inflated-size failures are actionable and preserve the vi
     await expect(page.getByText("good.png", { exact: true })).toBeVisible();
   }
 });
+
+for (const depth of [8, 16]) {
+  test(`${depth}-bit TIFF reconstructs multiple strips and a shorter final strip`, async ({
+    page,
+  }) => {
+    const bytes = tiff16({ depth, height: 3, rows: 2 });
+    // Three asymmetric rows: ordinary precision fixture, then green, then blue.
+    const rows =
+      depth === 16
+        ? [
+            0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 0, 65535, 65535, 0, 0,
+            65535, 65535,
+          ]
+        : [0, 255, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 0, 0, 255, 255];
+    rows.forEach((v, i) =>
+      depth === 16
+        ? bytes.writeUInt16LE(v, 272 + i * 2)
+        : bytes.writeUInt8(v, 264 + i),
+    );
+    await page.goto("/");
+    const result = await evaluateFile(page, bytes, "strips.tif");
+    expect([result.width, result.height]).toEqual([2, 3]);
+    expect(result.pixels[0]).toBeCloseTo(
+      depth === 16 ? 0.5000076295 : 0.5019607843,
+      6,
+    );
+    const expected = [0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1];
+    result.pixels
+      .slice(8)
+      .forEach((v, i) => expect(v).toBeCloseTo(expected[i], 6));
+  });
+}
+
+for (const alpha of [1, 2]) {
+  test(`TIFF zero alpha ${alpha === 1 ? "associated" : "straight"} keeps finite grading pixels`, async ({
+    page,
+  }) => {
+    const bytes = tiff16({ alpha });
+    bytes.writeUInt16LE(0, 262);
+    await page.goto("/");
+    const { pixels } = await evaluateFile(page, bytes, "transparent.tif");
+    expect(pixels[3]).toBe(0);
+    expect(pixels.every(Number.isFinite)).toBe(true);
+    expect(pixels[0]).toBeCloseTo(alpha === 1 ? 0 : 0.5000076295, 6);
+  });
+}
