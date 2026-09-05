@@ -1109,3 +1109,40 @@ dd {
 .share-link input {
   width: min(400px, 55vw);
 }
+
+.fidelity-report {
+  display: grid;
+  gap: 12px;
+}
+.fidelity-report table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.fidelity-report caption {
+  text-align: left;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.fidelity-report th,
+.fidelity-report td {
+  padding: 5px 0;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+.fidelity-report th:first-child {
+  text-align: left;
+}
+.lut-export .fidelity-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lut-export .fidelity-toggle input {
+  width: auto;
+}
+.viewer .viewer-surface .fidelity-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

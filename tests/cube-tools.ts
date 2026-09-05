@@ -89,3 +89,39 @@ export function applyCube(
   }
   return result as [number, number, number];
 }
+
+/** Independent tetrahedral reference: sort axes, walk a simplex, barycentric weights. */
+export function applyTetrahedral(
+  cube: Cube,
+  rgb: readonly [number, number, number],
+): [number, number, number] {
+  const p = rgb.map(
+    (v, i) =>
+      Math.max(
+        0,
+        Math.min(
+          1,
+          (v - cube.domainMin[i]) / (cube.domainMax[i] - cube.domainMin[i]),
+        ),
+      ) *
+      (cube.size - 1),
+  );
+  const base = p.map((v) => Math.min(cube.size - 2, Math.floor(v)));
+  const fractions = p.map((v, i) => v - base[i]);
+  const axes = [0, 1, 2].sort((a, b) => fractions[b] - fractions[a]);
+  const weights = [
+    1 - fractions[axes[0]],
+    fractions[axes[0]] - fractions[axes[1]],
+    fractions[axes[1]] - fractions[axes[2]],
+    fractions[axes[2]],
+  ];
+  const out: [number, number, number] = [0, 0, 0];
+  for (let corner = 0; corner < 4; corner++) {
+    const index =
+      3 * (base[0] + cube.size * base[1] + cube.size ** 2 * base[2]);
+    for (let c = 0; c < 3; c++)
+      out[c] += weights[corner] * cube.table[index + c];
+    if (corner < 3) base[axes[corner]]++;
+  }
+  return out;
+}
