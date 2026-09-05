@@ -254,15 +254,7 @@ export default function App() {
           setProjectError("");
           if (shared)
             history.replaceState(null, "", location.pathname + location.search);
-          useGraph.setState({
-            graph: saved.project.graph,
-            past: [],
-            future: [],
-            transaction: null,
-            clipboard: null,
-            solo: null,
-            feedback: "",
-          });
+          useGraph.getState().restore(saved.project.graph);
           setSource(saved.project.source);
           const source = saved.project.source;
           let loaded = true;

@@ -35,6 +35,9 @@ test("save and reload restores the private still, colour settings and evaluated 
     "gamma24",
   );
   expect(await preview.screenshot()).toEqual(before);
+  await expect(
+    page.getByRole("button", { name: "Undo", exact: true }),
+  ).toBeDisabled();
 });
 
 test("share links round trip without image bytes or uploads and preserve recipient source tags", async ({
