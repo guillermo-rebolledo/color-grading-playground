@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 import struct
 import urllib.request
+import zipfile
 import zlib
 
 import numpy as np
@@ -81,24 +82,44 @@ def png16(samples):
             + chunk(b"IDAT", zlib.compress(rows, 9)) + chunk(b"IEND", b""))
 
 
-def prepare(spec, cache):
+def prepare(spec, cache, licenses):
     path = cache / Path(spec["sourcePath"]).name
     if not path.exists():
         urllib.request.urlretrieve(spec["sourceUrl"], path)
     if sha256(path.read_bytes()) != spec["sourceSha256"]:
         raise ValueError(f"Source checksum mismatch: {path}")
+    if "archiveMember" in spec:
+        with zipfile.ZipFile(path) as archive:
+            data = archive.read(spec["archiveMember"])
+        if sha256(data) != spec["archiveMemberSha256"]:
+            raise ValueError("Archived EXR checksum mismatch")
+        path = cache / f'{spec["id"]}-source.exr'
+        path.write_bytes(data)
     with OpenEXR.File(str(path), separate_channels=True) as source:
         header, channels = source.header(), source.channels()
         rgb = np.stack([channels[c].pixels for c in "RGB"], axis=-1).astype(np.float64)
         if not np.isfinite(rgb).all():
             raise ValueError("Non-finite source pixels")
-        if "A" in channels and not np.all(channels["A"].pixels == 1):
-            raise ValueError("Preparation supports only opaque photographs")
-        if any(channels[c].pixels.dtype != np.float16 for c in "RGB"):
-            raise ValueError("Expected HALF source channels")
+        if "A" in channels and not np.allclose(
+            channels["A"].pixels, spec.get("sourceAlphaValue", 1),
+            atol=spec.get("sourceAlphaTolerance", 0), rtol=0,
+        ):
+            raise ValueError("Source alpha differs from the documented constant; refusing to discard")
+        channel_type = spec.get("sourceChannelType", "HALF")
+        dtype = {"HALF": np.float16, "FLOAT": np.float32}[channel_type]
+        if any(channels[c].pixels.dtype != dtype for c in "RGB"):
+            raise ValueError(f"Expected {channel_type} source channels")
         if not np.array_equal(header["dataWindow"][0], [0, 0]) or header["pixelAspectRatio"] != 1:
             raise ValueError("Unexpected image origin or pixel aspect")
         chromaticities = list(header.get("chromaticities", REC709))
+        source_height, source_width, _ = rgb.shape
+        source_min, source_max = float(rgb.min()), float(rgb.max())
+        stride = spec.get("sampleStride", 1)
+        if not isinstance(stride, int) or stride < 1:
+            raise ValueError("Sample stride must be a positive integer")
+        rgb = rgb[::stride, ::stride]
+        if max(rgb.shape[:2]) > 2048:
+            raise ValueError("Choose a documented sample stride to meet the preview limit")
         target = GAMUTS[spec["encoding"]["primaries"]]
         matrix = conversion(chromaticities, target)
         exposure = 2.0 ** spec["exposureStops"]
@@ -122,30 +143,34 @@ def prepare(spec, cache):
             "file": f'{spec["id"]}.png', "sha256": sha256(data), "bytes": len(data),
             "width": width, "height": height, "bitDepth": 16,
             "codeRange": "full", "codeNormalization": "uint16 / 65535",
-            "alpha": "opaque", "license": "BSD-3-Clause",
-            "licenseFile": "licenses/OpenEXR.txt",
-            "licenseUrl": spec["sourceUrl"].split(spec["sourcePath"])[0] + "LICENSE",
+            "alpha": "opaque",
+            "licenseFile": licenses[spec["license"]]["file"],
+            "licenseUrl": licenses[spec["license"]]["url"],
             "sourceMetadata": {
-                "transfer": "scene-linear", "bitDepth": "16-bit HALF",
+                "transfer": "scene-linear", "bitDepth": "16-bit HALF" if channel_type == "HALF" else "32-bit FLOAT",
+                "width": source_width, "height": source_height,
                 "range": "unbounded floating point",
                 "chromaticities": chromaticities,
                 "primariesEvidence": "EXR chromaticities attribute" if "chromaticities" in header
                     else "OpenEXR specified Rec.709/D65 default for absent chromaticities",
-                "owner": header.get("owner", "See collection copyright in licenses/OpenEXR.txt"),
+                "owner": header.get("owner", spec.get("attribution", "See collection copyright in licenses/OpenEXR.txt")),
                 "captureDate": header.get("capDate"),
             },
             "preparation": {
                 "sourceToTargetLinearMatrix": matrix.tolist(),
                 "whiteAdaptation": "Bradford source white to D65",
                 "exposureStops": spec["exposureStops"],
-                "steps": ["Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+                "sampleStride": stride,
+                "alphaHandling": spec.get("sourceAlphaNote", "Absent alpha or exact A=1; RGB unchanged"),
+                "steps": [f"Decode EXR {channel_type} RGB to float64; validate documented constant alpha before discarding",
+                          f"Select source pixel (x*{stride}, y*{stride}) for each output pixel; no interpolation",
                           "Apply source-to-target linear matrix and uniform exposure factor",
                           "Apply publisher log transfer, preserving negative toe values",
                           "Reject out-of-container codes; round to nearest uint16, no clipping",
-                          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"],
+                          "Write RGB PNG16 without ICC/gamma tags; no tone map"],
             },
             "measurements": {
-                "sourceRgbMin": float(rgb.min()), "sourceRgbMax": float(rgb.max()),
+                "sourceRgbMin": source_min, "sourceRgbMax": source_max,
                 "preparedLinearMin": float(linear.min()), "preparedLinearMax": float(linear.max()),
                 "linearChannelsAboveOne": int(np.count_nonzero(linear > 1)),
                 "codeMin": int(samples.min()), "codeMax": int(samples.max()),
@@ -164,9 +189,13 @@ def main():
     args = parser.parse_args()
     args.cache.mkdir(parents=True, exist_ok=True)
     specs = json.loads((ROOT / "scripts/log-sample-sources.json").read_text())
+    licenses = json.loads((ROOT / "scripts/log-sample-licenses.json").read_text())
+    for license in licenses.values():
+        if sha256((OUTPUT / license["file"]).read_bytes()) != license["sha256"]:
+            raise ValueError("Redistribution notice checksum mismatch")
     assets = []
     for spec in specs:
-        asset, data = prepare(spec, args.cache)
+        asset, data = prepare(spec, args.cache, licenses)
         destination = OUTPUT / asset["file"]
         if args.check:
             if destination.read_bytes() != data:
@@ -175,13 +204,18 @@ def main():
             destination.write_bytes(data)
         assets.append(asset)
         print(f'{asset["id"]}: {asset["width"]}x{asset["height"]}, {len(data)} bytes', flush=True)
+    blockers = []
+    if not 6 <= len(assets) <= 10:
+        blockers.append("Collection must contain 6–10 assets")
+    for scene in ["skin-tones", "high-contrast-exterior", "tungsten-interior", "neutral-chart"]:
+        if not any(asset["scene"] == scene for asset in assets):
+            blockers.append(f"Acquire {scene} coverage")
+    for transfer in ["logc3", "slog3", "davinci-intermediate"]:
+        if not any(asset["encoding"]["transfer"] == transfer for asset in assets):
+            blockers.append(f"Acquire {transfer} coverage")
     inventory = {
-        "schemaVersion": 1, "issue": "MEM-208", "releaseReady": False,
-        "releaseBlockers": [
-            "Acquire permissively redistributable photographic HDR skin-tone coverage",
-            "Acquire permissively redistributable photographic HDR neutral-chart coverage",
-            "Acquire photographic HDR interior with confirmed tungsten illumination",
-        ],
+        "schemaVersion": 1, "issue": "MEM-208", "releaseReady": not blockers,
+        "releaseBlockers": blockers,
         "assets": assets,
     }
     serialized = json.dumps(inventory, indent=2) + "\n"

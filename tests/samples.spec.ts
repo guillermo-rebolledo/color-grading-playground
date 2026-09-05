@@ -8,6 +8,14 @@ test("bundled HDR stills decode and preserve their measured scene values through
   const response = await page.request.get("/samples/inventory.json");
   expect(response.headers()["content-type"]).toContain("application/json");
   const inventory = await response.json();
+  expect(inventory.releaseReady).toBe(true);
+  expect(inventory.releaseBlockers).toEqual([]);
+  for (const scene of ["skin-tones", "tungsten-interior", "neutral-chart"])
+    expect(
+      inventory.assets.some(
+        (asset: { scene: string }) => asset.scene === scene,
+      ),
+    ).toBe(true);
   expect(inventory.assets.length).toBeGreaterThanOrEqual(6);
   expect(inventory.assets.length).toBeLessThanOrEqual(10);
   for (const asset of inventory.assets) {

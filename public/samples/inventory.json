@@ -1,12 +1,8 @@
 {
   "schemaVersion": 1,
   "issue": "MEM-208",
-  "releaseReady": false,
-  "releaseBlockers": [
-    "Acquire permissively redistributable photographic HDR skin-tone coverage",
-    "Acquire permissively redistributable photographic HDR neutral-chart coverage",
-    "Acquire photographic HDR interior with confirmed tungsten illumination"
-  ],
+  "releaseReady": true,
+  "releaseBlockers": [],
   "assets": [
     {
       "id": "desk",
@@ -20,6 +16,7 @@
         "primaries": "arri-wide-gamut3"
       },
       "exposureStops": -3,
+      "license": "BSD-3-Clause",
       "file": "desk.png",
       "sha256": "260bc2e4682417d7f1dcac4775135522f966d081f449233ff39fcd946436f89d",
       "bytes": 3117781,
@@ -29,12 +26,13 @@
       "codeRange": "full",
       "codeNormalization": "uint16 / 65535",
       "alpha": "opaque",
-      "license": "BSD-3-Clause",
       "licenseFile": "licenses/OpenEXR.txt",
       "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
       "sourceMetadata": {
         "transfer": "scene-linear",
         "bitDepth": "16-bit HALF",
+        "width": 644,
+        "height": 874,
         "range": "unbounded floating point",
         "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
         "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
@@ -49,12 +47,15 @@
         ],
         "whiteAdaptation": "Bradford source white to D65",
         "exposureStops": -3,
+        "sampleStride": 1,
+        "alphaHandling": "Absent alpha or exact A=1; RGB unchanged",
         "steps": [
-          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Decode EXR HALF RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*1, y*1) for each output pixel; no interpolation",
           "Apply source-to-target linear matrix and uniform exposure factor",
           "Apply publisher log transfer, preserving negative toe values",
           "Reject out-of-container codes; round to nearest uint16, no clipping",
-          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
         ]
       },
       "measurements": {
@@ -293,6 +294,7 @@
         "primaries": "arri-wide-gamut3"
       },
       "exposureStops": 0,
+      "license": "BSD-3-Clause",
       "file": "mount-tamalpais.png",
       "sha256": "c16e49ce5bd364da24d28cd5996635890822fffec249e3c0c69b971287752fd8",
       "bytes": 4792015,
@@ -302,12 +304,13 @@
       "codeRange": "full",
       "codeNormalization": "uint16 / 65535",
       "alpha": "opaque",
-      "license": "BSD-3-Clause",
       "licenseFile": "licenses/OpenEXR.txt",
       "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
       "sourceMetadata": {
         "transfer": "scene-linear",
         "bitDepth": "16-bit HALF",
+        "width": 1214,
+        "height": 732,
         "range": "unbounded floating point",
         "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
         "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
@@ -322,12 +325,15 @@
         ],
         "whiteAdaptation": "Bradford source white to D65",
         "exposureStops": 0,
+        "sampleStride": 1,
+        "alphaHandling": "Absent alpha or exact A=1; RGB unchanged",
         "steps": [
-          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Decode EXR HALF RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*1, y*1) for each output pixel; no interpolation",
           "Apply source-to-target linear matrix and uniform exposure factor",
           "Apply publisher log transfer, preserving negative toe values",
           "Reject out-of-container codes; round to nearest uint16, no clipping",
-          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
         ]
       },
       "measurements": {
@@ -553,6 +559,7 @@
         "primaries": "sgamut3-cine"
       },
       "exposureStops": 0,
+      "license": "BSD-3-Clause",
       "file": "tree.png",
       "sha256": "b346e2c5e9b57915758e46ada3e18b4bb286c11f1662d5128eb6ef186130ada8",
       "bytes": 4827813,
@@ -562,12 +569,13 @@
       "codeRange": "full",
       "codeNormalization": "uint16 / 65535",
       "alpha": "opaque",
-      "license": "BSD-3-Clause",
       "licenseFile": "licenses/OpenEXR.txt",
       "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
       "sourceMetadata": {
         "transfer": "scene-linear",
         "bitDepth": "16-bit HALF",
+        "width": 928,
+        "height": 906,
         "range": "unbounded floating point",
         "chromaticities": [
           0.6295499801635742, 0.3409999907016754, 0.2867000102996826,
@@ -586,12 +594,15 @@
         ],
         "whiteAdaptation": "Bradford source white to D65",
         "exposureStops": 0,
+        "sampleStride": 1,
+        "alphaHandling": "Absent alpha or exact A=1; RGB unchanged",
         "steps": [
-          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Decode EXR HALF RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*1, y*1) for each output pixel; no interpolation",
           "Apply source-to-target linear matrix and uniform exposure factor",
           "Apply publisher log transfer, preserving negative toe values",
           "Reject out-of-container codes; round to nearest uint16, no clipping",
-          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
         ]
       },
       "measurements": {
@@ -825,6 +836,7 @@
         "primaries": "sgamut3-cine"
       },
       "exposureStops": -5,
+      "license": "BSD-3-Clause",
       "file": "golden-gate.png",
       "sha256": "ef47844b97835c421f562a5a1dcd18892af1ee0acdd48e320e7653e9fb8e350d",
       "bytes": 5126267,
@@ -834,12 +846,13 @@
       "codeRange": "full",
       "codeNormalization": "uint16 / 65535",
       "alpha": "opaque",
-      "license": "BSD-3-Clause",
       "licenseFile": "licenses/OpenEXR.txt",
       "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
       "sourceMetadata": {
         "transfer": "scene-linear",
         "bitDepth": "16-bit HALF",
+        "width": 1262,
+        "height": 860,
         "range": "unbounded floating point",
         "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
         "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
@@ -854,12 +867,15 @@
         ],
         "whiteAdaptation": "Bradford source white to D65",
         "exposureStops": -5,
+        "sampleStride": 1,
+        "alphaHandling": "Absent alpha or exact A=1; RGB unchanged",
         "steps": [
-          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Decode EXR HALF RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*1, y*1) for each output pixel; no interpolation",
           "Apply source-to-target linear matrix and uniform exposure factor",
           "Apply publisher log transfer, preserving negative toe values",
           "Reject out-of-container codes; round to nearest uint16, no clipping",
-          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
         ]
       },
       "measurements": {
@@ -1102,6 +1118,7 @@
         "primaries": "davinci-wide-gamut"
       },
       "exposureStops": -3,
+      "license": "BSD-3-Clause",
       "file": "still-life.png",
       "sha256": "e8b4b554db0d804d5ba31aa9a016a4f31f9703d7d57fa5c429e0ed703674b276",
       "bytes": 3917131,
@@ -1111,12 +1128,13 @@
       "codeRange": "full",
       "codeNormalization": "uint16 / 65535",
       "alpha": "opaque",
-      "license": "BSD-3-Clause",
       "licenseFile": "licenses/OpenEXR.txt",
       "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
       "sourceMetadata": {
         "transfer": "scene-linear",
         "bitDepth": "16-bit HALF",
+        "width": 1240,
+        "height": 846,
         "range": "unbounded floating point",
         "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
         "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
@@ -1131,12 +1149,15 @@
         ],
         "whiteAdaptation": "Bradford source white to D65",
         "exposureStops": -3,
+        "sampleStride": 1,
+        "alphaHandling": "Absent alpha or exact A=1; RGB unchanged",
         "steps": [
-          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Decode EXR HALF RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*1, y*1) for each output pixel; no interpolation",
           "Apply source-to-target linear matrix and uniform exposure factor",
           "Apply publisher log transfer, preserving negative toe values",
           "Reject out-of-container codes; round to nearest uint16, no clipping",
-          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
         ]
       },
       "measurements": {
@@ -1362,6 +1383,7 @@
         "primaries": "davinci-wide-gamut"
       },
       "exposureStops": 0,
+      "license": "BSD-3-Clause",
       "file": "flower.png",
       "sha256": "c1be960e130ead26f0877ba94880b9d6deca6ee8e5e4a427aa688ac777d069cf",
       "bytes": 1411672,
@@ -1371,12 +1393,13 @@
       "codeRange": "full",
       "codeNormalization": "uint16 / 65535",
       "alpha": "opaque",
-      "license": "BSD-3-Clause",
       "licenseFile": "licenses/OpenEXR.txt",
       "licenseUrl": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
       "sourceMetadata": {
         "transfer": "scene-linear",
         "bitDepth": "16-bit HALF",
+        "width": 610,
+        "height": 406,
         "range": "unbounded floating point",
         "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
         "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
@@ -1391,12 +1414,15 @@
         ],
         "whiteAdaptation": "Bradford source white to D65",
         "exposureStops": 0,
+        "sampleStride": 1,
+        "alphaHandling": "Absent alpha or exact A=1; RGB unchanged",
         "steps": [
-          "Decode EXR HALF RGB to float64; discard alpha only after proving A=1",
+          "Decode EXR HALF RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*1, y*1) for each output pixel; no interpolation",
           "Apply source-to-target linear matrix and uniform exposure factor",
           "Apply publisher log transfer, preserving negative toe values",
           "Reject out-of-container codes; round to nearest uint16, no clipping",
-          "Write full-resolution RGB PNG16 without ICC/gamma tags; no resize or tone map"
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
         ]
       },
       "measurements": {
@@ -1605,6 +1631,863 @@
           "y": 405,
           "linearRec709": [
             0.04718017578125001, 0.06457519531249999, 0.025833129882812503
+          ]
+        }
+      ]
+    },
+    {
+      "id": "canal-actors",
+      "title": "Canal conversation \u2014 Tears of Steel",
+      "scene": "skin-tones",
+      "sourcePath": "01_2a_00100.exr",
+      "sourceUrl": "https://media.xiph.org/tearsofsteel/tearsofsteel-footage-exr/01_2a/linear/01_2a_00100.exr",
+      "sourceSha256": "b30b54bffb5188cb4d24fd44f5de4e54175db05e3c4331c00d9e84d56285a3b1",
+      "encoding": {
+        "transfer": "logc3",
+        "primaries": "arri-wide-gamut3"
+      },
+      "exposureStops": -1,
+      "license": "CC-BY-3.0",
+      "sampleStride": 2,
+      "sourceEvidenceUrl": "https://mango.blender.org/production/4-tb-original-4k-footage-available-as-cc-by/",
+      "attribution": "(CC) Blender Foundation | mango.blender.org",
+      "sourceHistory": "Sony F65 RAW \u2192 Sony software ACES EXR \u2192 OpenColorIO scene-linear Rec.709; original footage, not final composite",
+      "usageNotice": "Technical grading demo; actors retain personal-image/privacy rights; no actor advertising or endorsement permission",
+      "file": "canal-actors.png",
+      "sha256": "c196e6332f5b95507359b646938e9f81693cac2f40dbc3fca182c9ab6edcaa16",
+      "bytes": 12595674,
+      "width": 2048,
+      "height": 1080,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "licenseFile": "licenses/TearsOfSteel.txt",
+      "licenseUrl": "https://mango.blender.org/sharing/",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "16-bit HALF",
+        "width": 4096,
+        "height": 2160,
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "(CC) Blender Foundation | mango.blender.org",
+        "captureDate": "2012:07:16 14:06:10"
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.6313210225311373, 0.2708007272644512, 0.09787825020441142],
+          [0.03681993374460059, 0.7930369660262774, 0.1701431002291219],
+          [0.017369731859000155, 0.14878918490996326, 0.8338410832310369]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": -1,
+        "sampleStride": 2,
+        "alphaHandling": "Absent alpha or exact A=1; RGB unchanged",
+        "steps": [
+          "Decode EXR HALF RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*2, y*2) for each output pixel; no interpolation",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": -0.0479736328125,
+        "sourceRgbMax": 7.27734375,
+        "preparedLinearMin": -0.0014743977841821484,
+        "preparedLinearMax": 2.3436961561641896,
+        "linearChannelsAboveOne": 207104,
+        "codeMin": 5564,
+        "codeMax": 43351,
+        "distinctCodes": 36587,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            0.14172363281250003, 0.16210937499999997, 0.0643310546875
+          ]
+        },
+        {
+          "x": 0,
+          "y": 269,
+          "linearRec709": [
+            0.09326171875000001, 0.11755371093749997, 0.05120849609375
+          ]
+        },
+        {
+          "x": 0,
+          "y": 539,
+          "linearRec709": [
+            0.09338378906250001, 0.055145263671874986, 0.057586669921875
+          ]
+        },
+        {
+          "x": 0,
+          "y": 809,
+          "linearRec709": [
+            0.08709716796875001, 0.054901123046874986, 0.045806884765625
+          ]
+        },
+        {
+          "x": 0,
+          "y": 1079,
+          "linearRec709": [
+            0.11859130859375001, 0.06268310546874999, 0.056854248046875
+          ]
+        },
+        {
+          "x": 511,
+          "y": 0,
+          "linearRec709": [1.0078125000000002, 1.0087890624999998, 1.1552734375]
+        },
+        {
+          "x": 511,
+          "y": 269,
+          "linearRec709": [
+            0.15466308593750003, 0.18859863281249994, 0.0745849609375
+          ]
+        },
+        {
+          "x": 511,
+          "y": 539,
+          "linearRec709": [
+            0.15429687500000003, 0.15319824218749997, 0.10772705078125
+          ]
+        },
+        {
+          "x": 511,
+          "y": 809,
+          "linearRec709": [
+            0.131103515625, 0.09838867187499997, 0.08319091796875
+          ]
+        },
+        {
+          "x": 511,
+          "y": 1079,
+          "linearRec709": [
+            0.29614257812500006, 0.22131347656249994, 0.2568359375
+          ]
+        },
+        {
+          "x": 800,
+          "y": 94,
+          "linearRec709": [2.3300781250000004, 2.0468749999999996, 2.048828125]
+        },
+        {
+          "x": 803,
+          "y": 92,
+          "linearRec709": [2.3554687500000004, 2.0175781249999996, 2.07421875]
+        },
+        {
+          "x": 1023,
+          "y": 0,
+          "linearRec709": [0.36083984375000006, 0.36279296874999994, 0.34375]
+        },
+        {
+          "x": 1023,
+          "y": 269,
+          "linearRec709": [
+            0.10687255859375001, 0.14929199218749997, 0.04840087890625001
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 539,
+          "linearRec709": [
+            0.09143066406250001, 0.08325195312499999, 0.07220458984375
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 809,
+          "linearRec709": [
+            0.18444824218750003, 0.11474609374999997, 0.1112060546875
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 1079,
+          "linearRec709": [
+            0.31616210937500006, 0.29907226562499994, 0.334228515625
+          ]
+        },
+        {
+          "x": 1143,
+          "y": 527,
+          "linearRec709": [3.634765625, 0.12011718749999997, 0.168212890625]
+        },
+        {
+          "x": 1167,
+          "y": 594,
+          "linearRec709": [
+            0.548828125, -0.008888244628906248, -0.006351470947265625
+          ]
+        },
+        {
+          "x": 1209,
+          "y": 598,
+          "linearRec709": [
+            -0.023986816406249913, 0.6347656249999999, 0.06872558593750001
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 0,
+          "linearRec709": [
+            0.020065307617187503, 0.03369140624999999, 0.009742736816406252
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 269,
+          "linearRec709": [
+            0.07214355468750001, 0.09338378906249999, 0.0313720703125
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 539,
+          "linearRec709": [
+            0.037078857421875014, 0.11041259765624997, 0.29052734375
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 809,
+          "linearRec709": [
+            0.08990478515625, 0.050140380859374986, 0.0467529296875
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 1079,
+          "linearRec709": [
+            0.22583007812500003, 0.16308593749999997, 0.1903076171875
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 0,
+          "linearRec709": [
+            0.23706054687500003, 0.21118164062499994, 0.249755859375
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 269,
+          "linearRec709": [
+            0.17663574218750003, 0.15136718749999997, 0.155517578125
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 539,
+          "linearRec709": [
+            0.06347656250000001, 0.06445312499999999, 0.04986572265625
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 809,
+          "linearRec709": [
+            0.018722534179687503, 0.020629882812499997, 0.0241546630859375
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 1079,
+          "linearRec709": [
+            0.20288085937500003, 0.14904785156249997, 0.1741943359375
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tungsten-saloon",
+      "title": "Cowboy Town Saloon \u2014 mixed tungsten and daylight",
+      "scene": "tungsten-interior",
+      "sourcePath": "cowboy_town_saloon_2k.exr",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/2k/cowboy_town_saloon_2k.exr",
+      "sourceSha256": "099ec884b306ef3858eb87ace0063506dede85ee59dd974cc6b366d035e9758d",
+      "encoding": {
+        "transfer": "slog3",
+        "primaries": "sgamut3-cine"
+      },
+      "exposureStops": -8,
+      "license": "CC0-1.0",
+      "sourceChannelType": "FLOAT",
+      "sourceEvidenceUrl": "https://polyhaven.com/a/cowboy_town_saloon",
+      "attribution": "Dimitrios Savva (photography), Jarod Guest (processing), Poly Haven",
+      "sourceHistory": "Poly Haven photographic linear HDR workflow; Rec.709/D65 by OpenEXR default; publisher reports 19 EV panorama capture and 4171 K white balance",
+      "sourceAlphaValue": 9.262558937072754,
+      "sourceAlphaTolerance": 0,
+      "sourceAlphaNote": "Publisher normalized every channel by 9.262559393631358; A is constant 9.262558937072754, a non-coverage channel discarded without dividing RGB. Header ImageHistory records this normalization.",
+      "file": "tungsten-saloon.png",
+      "sha256": "0f4d9be83a6cf6db5533af082a93fb26a8c14768e0f4ee92b2dafbb9ba7e0421",
+      "bytes": 6967656,
+      "width": 2048,
+      "height": 1024,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "licenseFile": "licenses/PolyHaven.txt",
+      "licenseUrl": "https://polyhaven.com/license",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "32-bit FLOAT",
+        "width": 2048,
+        "height": 1024,
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "Dimitrios Savva (photography), Jarod Guest (processing), Poly Haven",
+        "captureDate": "2026:06:04 18:37:31"
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.6456794776099917, 0.25911454699971503, 0.09520597539029335],
+          [0.08752999151186003, 0.7596995625540705, 0.1527704459340693],
+          [0.036957419887523664, 0.12928090476633827, 0.8337616753461382]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": -8,
+        "sampleStride": 1,
+        "alphaHandling": "Publisher normalized every channel by 9.262559393631358; A is constant 9.262558937072754, a non-coverage channel discarded without dividing RGB. Header ImageHistory records this normalization.",
+        "steps": [
+          "Decode EXR FLOAT RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*1, y*1) for each output pixel; no interpolation",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": 0.0005392121383920312,
+        "sourceRgbMax": 4859.36962890625,
+        "preparedLinearMin": 4.851643127772497e-6,
+        "preparedLinearMax": 14.982076768747936,
+        "linearChannelsAboveOne": 3710,
+        "codeMin": 6088,
+        "codeMax": 58686,
+        "distinctCodes": 27128,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            0.0009996757144108415, 0.00040598766645416607,
+            0.00010061830107588322
+          ]
+        },
+        {
+          "x": 0,
+          "y": 255,
+          "linearRec709": [
+            0.00025524647207930684, 9.414528904017058e-5, 2.347422741877381e-5
+          ]
+        },
+        {
+          "x": 0,
+          "y": 511,
+          "linearRec709": [
+            0.0004030382842756808, 0.00015374820213764903, 4.1601924749556936e-5
+          ]
+        },
+        {
+          "x": 0,
+          "y": 767,
+          "linearRec709": [
+            0.00040686424472369254, 0.00013340973237063733, 2.680058787518647e-5
+          ]
+        },
+        {
+          "x": 0,
+          "y": 1023,
+          "linearRec709": [
+            0.0005397407803684473, 0.0002579243446234613, 0.0001535418996354565
+          ]
+        },
+        {
+          "x": 511,
+          "y": 0,
+          "linearRec709": [
+            0.0012450453359633684, 0.0004959762445650994, 0.0001184031425509602
+          ]
+        },
+        {
+          "x": 511,
+          "y": 255,
+          "linearRec709": [
+            0.0006645718822255731, 0.00020362385839689518, 3.282382022007369e-5
+          ]
+        },
+        {
+          "x": 511,
+          "y": 511,
+          "linearRec709": [
+            0.00046530779218301177, 0.0001717961567919701,
+            0.00014675219426862895
+          ]
+        },
+        {
+          "x": 511,
+          "y": 767,
+          "linearRec709": [
+            0.0003063111798837781, 0.00011517726670717818, 4.437868847162463e-5
+          ]
+        },
+        {
+          "x": 511,
+          "y": 1023,
+          "linearRec709": [
+            0.0004204958095215261, 0.00018965564959216857,
+            0.00011300642654532567
+          ]
+        },
+        {
+          "x": 645,
+          "y": 683,
+          "linearRec709": [
+            0.00015063400496728718, 2.842188678187085e-6, 7.081468538672198e-6
+          ]
+        },
+        {
+          "x": 746,
+          "y": 446,
+          "linearRec709": [
+            8.998295015771875e-6, 6.862186637590638e-6, 5.169725682208082e-6
+          ]
+        },
+        {
+          "x": 953,
+          "y": 180,
+          "linearRec709": [
+            18.98191261291504, 9.746975898742674, 2.1034615039825444
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 0,
+          "linearRec709": [
+            0.0011446434073150158, 0.0005006295396015047, 0.00013404042692855003
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 255,
+          "linearRec709": [
+            0.0002512738574296236, 0.00011043861741200087, 5.7120167184621096e-5
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 511,
+          "linearRec709": [
+            0.0007603386184200644, 0.0002762009389698505, 0.00015599017206113786
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 767,
+          "linearRec709": [
+            0.00032966287108138204, 0.00018428487237542862,
+            0.00014858966460451484
+          ]
+        },
+        {
+          "x": 1023,
+          "y": 1023,
+          "linearRec709": [
+            0.00046626135008409625, 0.00022770601208321745,
+            0.00012631548452191055
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 0,
+          "linearRec709": [
+            0.00127138732932508, 0.0005400813533924519, 0.00012989214155822995
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 255,
+          "linearRec709": [
+            0.0007078960188664497, 0.0004919773782603442, 0.0002753734006546438
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 511,
+          "linearRec709": [
+            0.0004467005492188037, 0.00028454963467083866, 0.0001636919187149033
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 767,
+          "linearRec709": [
+            0.0005372019368223847, 0.0005093893269076942, 0.0006224643439054489
+          ]
+        },
+        {
+          "x": 1535,
+          "y": 1023,
+          "linearRec709": [
+            0.0006754620699211955, 0.0003222838276997208, 0.00015975951100699604
+          ]
+        },
+        {
+          "x": 1681,
+          "y": 473,
+          "linearRec709": [
+            8.392121315002443, 7.038478374481199, 4.8558197021484375
+          ]
+        },
+        {
+          "x": 1836,
+          "y": 696,
+          "linearRec709": [
+            0.00031984603265300393, 6.0423015384003506e-5, 2.1062974155938735e-6
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 0,
+          "linearRec709": [
+            0.000999636948108673, 0.00040598303894512344, 0.00010055139136966319
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 255,
+          "linearRec709": [
+            0.0002569608041085303, 9.316949581261722e-5, 2.0780918930540796e-5
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 511,
+          "linearRec709": [
+            0.0004535382613539696, 0.00017753099382389334, 4.8216264985967434e-5
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 767,
+          "linearRec709": [
+            0.00038292756653390825, 0.0001318279682891443, 2.7869236873812046e-5
+          ]
+        },
+        {
+          "x": 2047,
+          "y": 1023,
+          "linearRec709": [
+            0.0005401803064160049, 0.0002581618609838187, 0.00015363797137979418
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neutral-chart",
+      "title": "Cowboy Town Saloon \u2014 photographed neutral and colour chart",
+      "scene": "neutral-chart",
+      "sourcePath": "cowboy_town_saloon.zip",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Color%20Charts/cowboy_town_saloon.zip",
+      "sourceSha256": "940a61a35a53d7b4fed83ffffa590078a6957175f163276e9695e01ea19b4680",
+      "encoding": {
+        "transfer": "davinci-intermediate",
+        "primaries": "davinci-wide-gamut"
+      },
+      "exposureStops": 4,
+      "license": "CC0-1.0",
+      "sourceChannelType": "FLOAT",
+      "sourceEvidenceUrl": "https://polyhaven.com/a/cowboy_town_saloon",
+      "attribution": "Dimitrios Savva (photography), Jarod Guest (processing), Poly Haven",
+      "sourceHistory": "Photographed ColorChecker Passport supplied with the HDRI as merged_000.exr plus source RAF; independently exposed from the panorama; no shared brightness calibration is assumed",
+      "sampleStride": 2,
+      "archiveMember": "merged_000.exr",
+      "archiveMemberSha256": "5ed10e5ff36d2c32a42af37004d1a7236f7705a3562af0cfb3461b90a1eeec64",
+      "sourceAlphaTolerance": 1e-7,
+      "sourceAlphaNote": "A is within 1e-7 of one; discard rounding residual, retain RGB unchanged.",
+      "file": "neutral-chart.png",
+      "sha256": "26a8e77adc6a16f4131c2f9ffc62b6dca122515bf76140084d64f909c832343b",
+      "bytes": 10729250,
+      "width": 1180,
+      "height": 1636,
+      "bitDepth": 16,
+      "codeRange": "full",
+      "codeNormalization": "uint16 / 65535",
+      "alpha": "opaque",
+      "licenseFile": "licenses/PolyHaven.txt",
+      "licenseUrl": "https://polyhaven.com/license",
+      "sourceMetadata": {
+        "transfer": "scene-linear",
+        "bitDepth": "32-bit FLOAT",
+        "width": 2359,
+        "height": 3271,
+        "range": "unbounded floating point",
+        "chromaticities": [0.64, 0.33, 0.3, 0.6, 0.15, 0.06, 0.3127, 0.329],
+        "primariesEvidence": "OpenEXR specified Rec.709/D65 default for absent chromaticities",
+        "owner": "Dimitrios Savva (photography), Jarod Guest (processing), Poly Haven",
+        "captureDate": null
+      },
+      "preparation": {
+        "sourceToTargetLinearMatrix": [
+          [0.5627674560071075, 0.3235165887039595, 0.1137159552889327],
+          [0.07775463528504588, 0.749577346163222, 0.17266801855173206],
+          [0.0646691999163282, 0.19199869204629902, 0.7433321080373732]
+        ],
+        "whiteAdaptation": "Bradford source white to D65",
+        "exposureStops": 4,
+        "sampleStride": 2,
+        "alphaHandling": "A is within 1e-7 of one; discard rounding residual, retain RGB unchanged.",
+        "steps": [
+          "Decode EXR FLOAT RGB to float64; validate documented constant alpha before discarding",
+          "Select source pixel (x*2, y*2) for each output pixel; no interpolation",
+          "Apply source-to-target linear matrix and uniform exposure factor",
+          "Apply publisher log transfer, preserving negative toe values",
+          "Reject out-of-container codes; round to nearest uint16, no clipping",
+          "Write RGB PNG16 without ICC/gamma tags; no tone map"
+        ]
+      },
+      "measurements": {
+        "sourceRgbMin": 7.772665640004561e-7,
+        "sourceRgbMax": 0.10660699009895325,
+        "preparedLinearMin": 0.0018970546643098977,
+        "preparedLinearMax": 1.537194907773526,
+        "linearChannelsAboveOne": 2017,
+        "codeMin": 1298,
+        "codeMax": 36636,
+        "distinctCodes": 32766,
+        "clippedChannels": 0
+      },
+      "probes": [
+        {
+          "x": 0,
+          "y": 0,
+          "linearRec709": [
+            0.05559837445616722, 0.023694453760981553, 0.006553823128342629
+          ]
+        },
+        {
+          "x": 0,
+          "y": 408,
+          "linearRec709": [
+            0.0749327540397644, 0.03577556461095809, 0.02029300667345524
+          ]
+        },
+        {
+          "x": 0,
+          "y": 817,
+          "linearRec709": [
+            0.10166703164577486, 0.07273541390895842, 0.06688591092824936
+          ]
+        },
+        {
+          "x": 0,
+          "y": 1226,
+          "linearRec709": [
+            0.042035941034555435, 0.016942301765084263, 0.006582748610526324
+          ]
+        },
+        {
+          "x": 0,
+          "y": 1635,
+          "linearRec709": [
+            0.04706117883324623, 0.019258994609117504, 0.005565041676163674
+          ]
+        },
+        {
+          "x": 294,
+          "y": 0,
+          "linearRec709": [
+            0.06014413759112358, 0.024719700217247002, 0.0047798226587474355
+          ]
+        },
+        {
+          "x": 294,
+          "y": 408,
+          "linearRec709": [
+            0.7669897079467773, 0.2934920787811279, 0.11499723047018053
+          ]
+        },
+        {
+          "x": 294,
+          "y": 817,
+          "linearRec709": [
+            0.0485258512198925, 0.019702177494764325, 0.004122564103454352
+          ]
+        },
+        {
+          "x": 294,
+          "y": 1226,
+          "linearRec709": [
+            0.05035850405693055, 0.02837149798870086, 0.017859581857919693
+          ]
+        },
+        {
+          "x": 294,
+          "y": 1635,
+          "linearRec709": [
+            0.04969073832035065, 0.021211955696344372, 0.007321413606405259
+          ]
+        },
+        {
+          "x": 475,
+          "y": 1286,
+          "linearRec709": [
+            0.4167912006378174, 0.000826514442451298, 0.008457503281533718
+          ]
+        },
+        {
+          "x": 507,
+          "y": 867,
+          "linearRec709": [
+            0.003914508502930403, 0.0025326476898044343, 0.0019145256374031305
+          ]
+        },
+        {
+          "x": 589,
+          "y": 0,
+          "linearRec709": [
+            0.20318329334259036, 0.1275081634521484, 0.09983953833580017
+          ]
+        },
+        {
+          "x": 589,
+          "y": 408,
+          "linearRec709": [
+            0.5876917243003845, 0.2472094446420669, 0.05562961101531983
+          ]
+        },
+        {
+          "x": 589,
+          "y": 817,
+          "linearRec709": [
+            0.05529273301362992, 0.03505218774080276, 0.03465874865651131
+          ]
+        },
+        {
+          "x": 589,
+          "y": 1226,
+          "linearRec709": [
+            0.17836549878120422, 0.02112217620015144, 0.012254300527274609
+          ]
+        },
+        {
+          "x": 589,
+          "y": 1635,
+          "linearRec709": [
+            0.018366986885666847, 0.010068459436297415, 0.006241939030587673
+          ]
+        },
+        {
+          "x": 698,
+          "y": 781,
+          "linearRec709": [
+            0.830677628517151, 1.1488555669784544, 1.6989672183990479
+          ]
+        },
+        {
+          "x": 884,
+          "y": 0,
+          "linearRec709": [
+            0.050597451627254486, 0.02290365472435951, 0.007334218826144935
+          ]
+        },
+        {
+          "x": 884,
+          "y": 408,
+          "linearRec709": [
+            0.16031144559383392, 0.08433056622743605, 0.03462238237261772
+          ]
+        },
+        {
+          "x": 884,
+          "y": 817,
+          "linearRec709": [
+            0.0591859593987465, 0.027260499075055115, 0.01084059663116932
+          ]
+        },
+        {
+          "x": 884,
+          "y": 1226,
+          "linearRec709": [
+            0.5371422171592712, 0.3477311432361602, 0.011277621611952792
+          ]
+        },
+        {
+          "x": 884,
+          "y": 1635,
+          "linearRec709": [
+            0.02462191879749298, 0.010639790445566176, 0.0053001027554273605
+          ]
+        },
+        {
+          "x": 923,
+          "y": 784,
+          "linearRec709": [
+            0.8720733523368837, 1.1944569349288938, 1.6631600856781006
+          ]
+        },
+        {
+          "x": 1004,
+          "y": 1136,
+          "linearRec709": [
+            0.6393395066261292, 0.1833493113517761, 1.5404360965481752e-5
+          ]
+        },
+        {
+          "x": 1024,
+          "y": 657,
+          "linearRec709": [
+            1.1092220544815063, 0.5263632535934447, 0.24408333003520968
+          ]
+        },
+        {
+          "x": 1179,
+          "y": 0,
+          "linearRec709": [
+            0.15957424044609073, 0.13584786653518674, 0.14466199278831482
+          ]
+        },
+        {
+          "x": 1179,
+          "y": 408,
+          "linearRec709": [
+            0.06519567966461182, 0.026450674980878823, 0.006681365426629783
+          ]
+        },
+        {
+          "x": 1179,
+          "y": 817,
+          "linearRec709": [
+            0.08587463945150375, 0.04071683436632156, 0.016958164051175117
+          ]
+        },
+        {
+          "x": 1179,
+          "y": 1226,
+          "linearRec709": [
+            0.09593866020441055, 0.03948982432484626, 0.01179343741387129
+          ]
+        },
+        {
+          "x": 1179,
+          "y": 1635,
+          "linearRec709": [
+            0.08104642480611801, 0.036735817790031426, 0.010565781034529211
           ]
         }
       ]
