@@ -26,52 +26,73 @@ function GradeNode({
 }: NodeProps<Node<GradingNode["data"]>>) {
   const colour = useGraph((s) => s.graph.colour);
   const title =
-    type === "whiteBalance"
-      ? "White Balance"
-      : type === "cdl"
-        ? "CDL"
-        : type === "cst"
-          ? "CST"
-          : type[0].toUpperCase() + type.slice(1);
+    type === "qualifier"
+      ? "HSL Qualifier"
+      : type === "whiteBalance"
+        ? "White Balance"
+        : type === "cdl"
+          ? "CDL"
+          : type === "cst"
+            ? "CST"
+            : type[0].toUpperCase() + type.slice(1);
   return (
     <div className={`graph-node ${selected ? "active" : ""}`}>
-      {type !== "source" && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="rgb"
-          aria-label={`${title} RGB input`}
-        />
-      )}
+      {type !== "source" &&
+        (type === "blend" ? ["a", "b", "mask"] : ["rgb"]).map((port, i) => (
+          <Handle
+            key={port}
+            type="target"
+            position={Position.Left}
+            id={port}
+            className={port === "mask" ? "mask-port" : "rgb-port"}
+            style={type === "blend" ? { top: `${25 + i * 25}%` } : undefined}
+            aria-label={`${title} ${port === "mask" ? "mask" : port === "rgb" ? "RGB" : `RGB ${port.toUpperCase()}`} input`}
+          />
+        ))}
+      {type === "blend" &&
+        ["A", "B", "Mask"].map((port, i) => (
+          <span
+            key={port}
+            className="port-label"
+            style={{ top: `${25 + i * 25}%` }}
+          >
+            {port}
+          </span>
+        ))}
       <div className="node-top">
-        <h3>{title}</h3>
-        <span>RGB</span>
+        <h3>{data.label ?? title}</h3>
+        <span>{type === "qualifier" ? "MASK" : "RGB"}</span>
       </div>
       <p>
-        {type === "curves"
-          ? "Master → R/G/B"
-          : type === "whiteBalance"
-            ? `${data.temperature} K · Tint ${data.tint}`
-            : type === "cst"
-              ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
-              : type === "exposure"
-                ? `${(data.stops ?? 0).toFixed(2)} stops`
-                : type === "cdl"
-                  ? "Unbounded SOP · Rec.709 luma"
-                  : type === "contrast"
-                    ? `Amount ${data.contrast} · Pivot ${data.pivot}`
-                    : type === "saturation"
-                      ? `Saturation ${data.saturation} · Vibrance ${data.vibrance}`
-                      : type === "source"
-                        ? encodingLabel(colour.input)
-                        : encodingLabel(colour.output)}
+        {type === "blend"
+          ? `A → B · Amount ${data.amount} · Mask optional`
+          : type === "qualifier"
+            ? "Hue / Saturation / Value"
+            : type === "curves"
+              ? "Master → R/G/B"
+              : type === "whiteBalance"
+                ? `${data.temperature} K · Tint ${data.tint}`
+                : type === "cst"
+                  ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
+                  : type === "exposure"
+                    ? `${(data.stops ?? 0).toFixed(2)} stops`
+                    : type === "cdl"
+                      ? "Unbounded SOP · Rec.709 luma"
+                      : type === "contrast"
+                        ? `Amount ${data.contrast} · Pivot ${data.pivot}`
+                        : type === "saturation"
+                          ? `Saturation ${data.saturation} · Vibrance ${data.vibrance}`
+                          : type === "source"
+                            ? encodingLabel(colour.input)
+                            : encodingLabel(colour.output)}
       </p>
       {type !== "output" && (
         <Handle
           type="source"
           position={Position.Right}
-          id="rgb"
-          aria-label={`${title} RGB output`}
+          id={type === "qualifier" ? "mask" : "rgb"}
+          className={type === "qualifier" ? "mask-port" : "rgb-port"}
+          aria-label={`${title} ${type === "qualifier" ? "mask" : "RGB"} output`}
         />
       )}
     </div>
@@ -87,6 +108,8 @@ const nodeTypes = {
   whiteBalance: GradeNode,
   curves: GradeNode,
   output: GradeNode,
+  qualifier: GradeNode,
+  blend: GradeNode,
 };
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
@@ -137,20 +160,29 @@ export function GraphEditor() {
               "saturation",
               "whiteBalance",
               "curves",
+              "qualifier",
+              "blend",
               "output",
             ] as const
           ).map((type) => (
             <button key={type} onClick={() => state.add(type)}>
               Add{" "}
-              {type === "whiteBalance"
-                ? "White Balance"
-                : type === "cdl"
-                  ? "CDL"
-                  : type === "cst"
-                    ? "CST"
-                    : type[0].toUpperCase() + type.slice(1)}
+              {type === "qualifier"
+                ? "HSL Qualifier"
+                : type === "whiteBalance"
+                  ? "White Balance"
+                  : type === "cdl"
+                    ? "CDL"
+                    : type === "cst"
+                      ? "CST"
+                      : type[0].toUpperCase() + type.slice(1)}
             </button>
           ))}
+          {state.solo && (
+            <button onClick={() => useGraph.setState({ solo: null })}>
+              Exit mask solo
+            </button>
+          )}
           <button onClick={state.undo} disabled={!state.past.length}>
             Undo
           </button>
@@ -181,7 +213,7 @@ export function GraphEditor() {
         {state.feedback ||
           (error
             ? `Preview paused: ${error}`
-            : "Live graph · Drag RGB ports to connect · Shift-drag to box select · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
+            : "Live graph · RGB: solid · Mask: dashed · Double-click qualifier to solo · Drag ports to connect · Shift-drag to box select · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
       </div>
       {warnings.length > 0 && (
         <div className="graph-feedback" role="status">
@@ -192,7 +224,16 @@ export function GraphEditor() {
         <ReactFlow<GradingNode>
           onInit={setFlow}
           nodes={graph.nodes}
-          edges={graph.edges}
+          edges={graph.edges.map((e) => ({
+            ...e,
+            className: e.sourceHandle === "mask" ? "mask-edge" : "rgb-edge",
+          }))}
+          onNodeDoubleClick={(_, node) => {
+            if (node.type === "qualifier")
+              useGraph.setState((s) => ({
+                solo: s.solo === node.id ? null : node.id,
+              }));
+          }}
           nodeTypes={nodeTypes}
           colorMode="dark"
           fitView
@@ -257,14 +298,20 @@ export function GraphEditor() {
                 id: crypto.randomUUID(),
                 source: forward ? from : (to ?? ""),
                 target: forward ? (to ?? "") : from,
-                sourceHandle: "rgb",
-                targetHandle: "rgb",
+                sourceHandle:
+                  (forward
+                    ? connection.fromHandle?.id
+                    : connection.toHandle?.id) ?? "",
+                targetHandle:
+                  (forward
+                    ? connection.toHandle?.id
+                    : connection.fromHandle?.id) ?? "",
               };
               useGraph.setState({
                 feedback: to
                   ? (connectionError(useGraph.getState().graph, edge) ??
-                    "Connect an RGB output to an RGB input.")
-                  : "Connection canceled. Drop on an RGB input port.",
+                    "Connect matching RGB or mask ports.")
+                  : "Connection canceled. Drop on a matching input port.",
               });
             }
           }}

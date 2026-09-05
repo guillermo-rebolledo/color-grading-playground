@@ -13,7 +13,7 @@ import {
   inspectGraph,
   type GradingGraph,
 } from "./graph";
-export { createGraph } from "./graph";
+export { createGraph, createStarterGraph } from "./graph";
 export type { GradingGraph, GradingNode, GradingEdge, NodeType } from "./graph";
 import { previewSize } from "./previewSize";
 
@@ -251,8 +251,8 @@ export class GradingEngine {
     return encodingFlow(graph).warnings;
   }
 
-  private prepare(graph: GradingGraph) {
-    const compiled = compileGraph(graph);
+  private prepare(graph: GradingGraph, solo?: string) {
+    const compiled = compileGraph(graph, solo);
     const gl = this.gl;
     if (
       compiled.curves.length + 1 >
@@ -319,11 +319,11 @@ export class GradingEngine {
     gl.uniform1i(gl.getUniformLocation(program, "sourceImage"), 0);
   }
 
-  render(input: number | GradingGraph) {
+  render(input: number | GradingGraph, solo?: string) {
     this.assertAvailable();
     const graph = typeof input === "number" ? createGraph() : input;
     if (typeof input === "number") graph.nodes[1].data.stops = input;
-    this.prepare(graph);
+    this.prepare(graph, solo);
     if (!this.source) throw new Error("Load an image before rendering.");
     const gl = this.gl;
     gl.activeTexture(gl.TEXTURE0);
@@ -333,7 +333,9 @@ export class GradingEngine {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     // Display conversion is a separate pass. The float target retains output encoding.
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    this.prepareDisplay(graph.colour.output);
+    this.prepareDisplay(
+      solo ? { transfer: "srgb", primaries: "rec709" } : graph.colour.output,
+    );
     gl.bindTexture(gl.TEXTURE_2D, this.target);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     if (gl.getError() !== gl.NO_ERROR)

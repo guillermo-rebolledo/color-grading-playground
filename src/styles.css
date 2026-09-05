@@ -919,3 +919,29 @@ dd {
 .curve-controls input {
   width: 100px;
 }
+
+.react-flow__handle.rgb-port {
+  background: #9acaad;
+  border-color: #9acaad;
+}
+.react-flow__handle.mask-port {
+  background: #d7b5ef;
+  border-color: #d7b5ef;
+  border-radius: 1px;
+}
+.react-flow__edge.rgb-edge .react-flow__edge-path {
+  stroke: #9acaad;
+}
+.react-flow__edge.mask-edge .react-flow__edge-path {
+  stroke: #d7b5ef;
+  stroke-dasharray: 5 4;
+}
+.port-label {
+  position: absolute;
+  right: calc(100% + 10px);
+  transform: translateY(-50%);
+  color: var(--text);
+  background: var(--panel);
+  font-size: 10px;
+  pointer-events: none;
+}
