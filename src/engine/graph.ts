@@ -7,13 +7,21 @@ import {
   type Encoding,
   type ColourSettings,
 } from "./colour";
-export type NodeType = "source" | "exposure" | "cst" | "output";
+export type NodeType =
+  "source" | "exposure" | "cst" | "cdl" | "contrast" | "saturation" | "output";
 export type GradingNode = {
   id: string;
   type: NodeType;
   position: { x: number; y: number };
   data: {
     stops?: number;
+    slope?: [number, number, number];
+    offset?: [number, number, number];
+    power?: [number, number, number];
+    saturation?: number;
+    contrast?: number;
+    pivot?: number;
+    vibrance?: number;
     clamp?: "clamp" | "unbounded";
     from?: Encoding;
     to?: Encoding;
@@ -104,7 +112,17 @@ export function inspectGraph(
       (!validEncoding(node.data.from) || !validEncoding(node.data.to))
     )
       throw new Error("CST requires supported from and to encoding pairs.");
-    if (!["source", "exposure", "cst", "output"].includes(node.type))
+    if (
+      ![
+        "source",
+        "exposure",
+        "cst",
+        "cdl",
+        "contrast",
+        "saturation",
+        "output",
+      ].includes(node.type)
+    )
       throw new Error("Unsupported node type.");
     if (!Number.isFinite(node.position.x) || !Number.isFinite(node.position.y))
       throw new Error("Node positions must be finite.");
@@ -115,6 +133,42 @@ export function inspectGraph(
         node.data.stops! > 6)
     )
       throw new Error("Exposure must be between −6 and +6 stops.");
+    if (
+      node.type === "saturation" &&
+      ![node.data.saturation, node.data.vibrance].every(
+        (v) => Number.isFinite(v) && Number.isFinite(Math.fround(v!)),
+      )
+    )
+      throw new Error("Saturation and vibrance must be finite.");
+    if (
+      node.type === "contrast" &&
+      (![node.data.contrast, node.data.pivot].every(
+        (v) => Number.isFinite(v) && Number.isFinite(Math.fround(v!)),
+      ) ||
+        Math.fround(node.data.contrast!) <= 0 ||
+        Math.fround(node.data.pivot!) <= 0)
+    )
+      throw new Error("Contrast amount and pivot must be finite and positive.");
+    if (node.type === "cdl") {
+      for (const key of ["slope", "offset", "power"] as const) {
+        const value = node.data[key];
+        if (
+          !Array.isArray(value) ||
+          value.length !== 3 ||
+          !value.every(
+            (v) => Number.isFinite(v) && Number.isFinite(Math.fround(v)),
+          )
+        )
+          throw new Error(`CDL ${key} requires three finite RGB values.`);
+      }
+      if (node.data.power!.some((v) => Math.fround(v) <= 0))
+        throw new Error("CDL power must be positive.");
+      if (
+        !Number.isFinite(node.data.saturation) ||
+        !Number.isFinite(Math.fround(node.data.saturation!))
+      )
+        throw new Error("CDL saturation must be finite.");
+    }
     if (
       node.type === "output" &&
       !["clamp", "unbounded"].includes(node.data.clamp ?? "clamp")
@@ -165,7 +219,7 @@ export function inspectGraph(
     if (node.type !== "source" && !input) {
       if (!draft)
         throw new Error(
-          `${node.type === "output" ? "Output" : node.type === "cst" ? "CST" : "Exposure"} requires an RGB input. Connect it to Source.`,
+          `${node.type === "cdl" ? "CDL" : node.type === "cst" ? "CST" : node.type[0].toUpperCase() + node.type.slice(1)} requires an RGB input. Connect it to Source.`,
         );
       return;
     }
@@ -240,6 +294,8 @@ export function compileGraph(graph: GradingGraph) {
     edges,
   ]);
   const uniforms: number[] = [];
+  const scalar = (value: number) => `parameter${uniforms.push(value) - 1}`;
+  const vector = (values: number[]) => `vec3(${values.map(scalar).join(", ")})`;
   const lines = ordered.map((node, i) => {
     if (node.type === "source")
       return `vec3 v${i} = ${transformShader("source.rgb", graph.colour.input, graph.colour.working)};`;
@@ -247,8 +303,25 @@ export function compileGraph(graph: GradingGraph) {
       graph.edges.find((e) => e.target === node.id)!.source,
     )!;
     if (node.type === "exposure") {
-      const slot = uniforms.push(node.data.stops!) - 1;
-      return `vec3 v${i} = v${input} * exp2(stops${slot});`;
+      return `vec3 v${i} = v${input} * exp2(${scalar(node.data.stops!)});`;
+    }
+    if (node.type === "saturation") {
+      const saturation = scalar(node.data.saturation!),
+        vibrance = scalar(node.data.vibrance!);
+      return `float hi${i} = max(v${input}.r, max(v${input}.g, v${input}.b));
+float lo${i} = min(v${input}.r, min(v${input}.g, v${input}.b));
+float chroma${i} = clamp((hi${i} - lo${i}) / max(max(abs(hi${i}), abs(lo${i})), 1e-6), 0.0, 1.0);
+vec3 v${i} = mix(vec3(dot(v${input}, vec3(0.2126, 0.7152, 0.0722))), v${input}, ${saturation} * (1.0 + ${vibrance} * (1.0 - chroma${i})));`;
+    }
+    if (node.type === "contrast") {
+      const amount = scalar(node.data.contrast!),
+        pivot = scalar(node.data.pivot!);
+      return `vec3 v${i} = ${pivot} * pow(max(v${input}, vec3(1e-6)) / ${pivot}, vec3(${amount}));`;
+    }
+    if (node.type === "cdl") {
+      const sop = `pow(max(v${input} * ${vector(node.data.slope!)} + ${vector(node.data.offset!)}, vec3(0.0)), ${vector(node.data.power!)})`;
+      return `vec3 sop${i} = ${sop};
+vec3 v${i} = mix(vec3(dot(sop${i}, vec3(0.2126, 0.7152, 0.0722))), sop${i}, ${scalar(node.data.saturation!)});`;
     }
     if (node.type === "cst")
       return `vec3 v${i} = ${transformShader(`v${input}`, node.data.from!, node.data.to!)};`;
@@ -262,7 +335,9 @@ export function compileGraph(graph: GradingGraph) {
   return {
     key,
     uniforms,
-    declarations: uniforms.map((_, i) => `uniform float stops${i};`).join("\n"),
+    declarations: uniforms
+      .map((_, i) => `uniform float parameter${i};`)
+      .join("\n"),
     body:
       lines.join("\n") + `\nresult = vec4(v${ordered.length - 1}, source.a);`,
   };
