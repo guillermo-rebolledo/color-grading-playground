@@ -18,13 +18,11 @@ test("load a private image, adjust exposure, reset, and recover from a bad file"
     ctx.fillRect(0, 0, 40, 20);
     return canvas.toDataURL().split(",")[1];
   });
-  await page
-    .getByLabel("Choose image")
-    .setInputFiles({
-      name: "private.png",
-      mimeType: "image/png",
-      buffer: Buffer.from(png, "base64"),
-    });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "private.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
   await expect(page.getByText("private.png", { exact: true })).toBeVisible();
   const canvas = page.getByLabel("Graded image preview");
   await expect(canvas).toBeVisible();
@@ -35,13 +33,11 @@ test("load a private image, adjust exposure, reset, and recover from a bad file"
   await expect(exposure).toHaveValue("2.00");
   await page.getByRole("button", { name: "Reset exposure" }).click();
   await expect(exposure).toHaveValue("0.00");
-  await page
-    .getByLabel("Choose image")
-    .setInputFiles({
-      name: "bad.png",
-      mimeType: "image/png",
-      buffer: Buffer.from("not an image"),
-    });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "bad.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("not an image"),
+  });
   await expect(page.getByRole("alert")).toContainText("could not be read");
   await expect(page.getByText("private.png", { exact: true })).toBeVisible();
   expect(uploads).toEqual([]);
@@ -55,13 +51,11 @@ test("numeric entry supports signed decimals and scrubbing resets on double clic
     const canvas = document.createElement("canvas");
     return canvas.toDataURL().split(",")[1];
   });
-  await page
-    .getByLabel("Choose image")
-    .setInputFiles({
-      name: "image.png",
-      mimeType: "image/png",
-      buffer: Buffer.from(png, "base64"),
-    });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "image.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
   const exposure = page.getByRole("spinbutton", { name: "Exposure in stops" });
   await expect(exposure).toBeEnabled();
   await exposure.fill("");
@@ -100,13 +94,11 @@ test("honors JPEG EXIF orientation in the visible preview", async ({
     "hex",
   );
   const bytes = Buffer.from(jpeg, "base64");
-  await page
-    .getByLabel("Choose image")
-    .setInputFiles({
-      name: "rotated.jpg",
-      mimeType: "image/jpeg",
-      buffer: Buffer.concat([bytes.subarray(0, 2), exif, bytes.subarray(2)]),
-    });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "rotated.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.concat([bytes.subarray(0, 2), exif, bytes.subarray(2)]),
+  });
   const canvas = page.getByLabel("Graded image preview");
   await expect(canvas).toHaveAttribute("width", "20");
   await expect(canvas).toHaveAttribute("height", "40");
@@ -131,13 +123,11 @@ test("renders PNG transparency without premultiplying the grade twice", async ({
     source.data[i + 3] = 128;
   }
   await page.goto("/");
-  await page
-    .getByLabel("Choose image")
-    .setInputFiles({
-      name: "alpha.png",
-      mimeType: "image/png",
-      buffer: PNG.sync.write(source),
-    });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "alpha.png",
+    mimeType: "image/png",
+    buffer: PNG.sync.write(source),
+  });
   const canvas = page.getByLabel("Graded image preview");
   await expect(canvas).toBeVisible();
   const screenshot = PNG.sync.read(await canvas.screenshot());
@@ -177,13 +167,11 @@ test("caps uploaded preview dimensions while keeping original size visible", asy
   const source = new PNG({ width: 4096, height: 16 });
   source.data.fill(255);
   await page.goto("/");
-  await page
-    .getByLabel("Choose image")
-    .setInputFiles({
-      name: "wide.png",
-      mimeType: "image/png",
-      buffer: PNG.sync.write(source),
-    });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "wide.png",
+    mimeType: "image/png",
+    buffer: PNG.sync.write(source),
+  });
   await expect(page.getByLabel("Graded image preview")).toHaveAttribute(
     "width",
     "2048",
@@ -193,4 +181,22 @@ test("caps uploaded preview dimensions while keeping original size visible", asy
     "8",
   );
   await expect(page.getByText("4096 × 16", { exact: true })).toBeVisible();
+});
+
+test("a tall image fits the viewer instead of stretching the workspace", async ({
+  page,
+}) => {
+  const { PNG } = await import("pngjs");
+  const source = new PNG({ width: 400, height: 1600 });
+  source.data.fill(128);
+  await page.goto("/");
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "portrait.png",
+    mimeType: "image/png",
+    buffer: PNG.sync.write(source),
+  });
+  const canvas = page.getByLabel("Graded image preview");
+  await expect(canvas).toBeVisible();
+  const bounds = await canvas.boundingBox();
+  expect(bounds!.height).toBeLessThan(700);
 });

@@ -1,3 +1,5 @@
+import { previewSize } from "./previewSize";
+
 export interface LoadedImage {
   bitmap: ImageBitmap;
   name: string;
@@ -25,13 +27,13 @@ export async function loadImage(file: File): Promise<LoadedImage> {
   }
   const originalWidth = bitmap.width;
   const originalHeight = bitmap.height;
-  const scale = Math.min(1, 2048 / Math.max(originalWidth, originalHeight));
-  if (scale < 1) {
+  const { width, height } = previewSize(originalWidth, originalHeight);
+  if (width !== originalWidth || height !== originalHeight) {
     const original = bitmap;
     try {
       bitmap = await createImageBitmap(original, {
-        resizeWidth: Math.max(1, Math.round(originalWidth * scale)),
-        resizeHeight: Math.max(1, Math.round(originalHeight * scale)),
+        resizeWidth: width,
+        resizeHeight: height,
         resizeQuality: "high",
         premultiplyAlpha: "none",
         colorSpaceConversion: "none",
