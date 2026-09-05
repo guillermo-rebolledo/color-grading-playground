@@ -1,5 +1,6 @@
+import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
-import { GradingEngine } from "./engine/GradingEngine";
+import { GradingEngine, encodingLabel } from "./engine/GradingEngine";
 import { loadImage } from "./engine/loadImage";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
@@ -292,7 +293,9 @@ export default function App() {
           <div className="panel-bar">
             <h1>Viewer</h1>
             <span>
-              {image ? "sRGB · Rec.709 primaries" : "Start with a still image"}
+              {image
+                ? "Display: sRGB · Rec.709 primaries"
+                : "Start with a still image"}
             </span>
             <span className="view-mode">Fit</span>
           </div>
@@ -325,9 +328,7 @@ export default function App() {
                 >
                   Choose an image <span aria-hidden="true">↗</span>
                 </button>
-                <span className="file-hint">
-                  JPEG or PNG · sRGB · up to 50 MB
-                </span>
+                <span className="file-hint">JPEG or PNG · up to 50 MB</span>
               </div>
             )}
             {capabilityError && (
@@ -385,7 +386,9 @@ export default function App() {
               <div>
                 <h3>
                   {selected
-                    ? selected.type[0].toUpperCase() + selected.type.slice(1)
+                    ? selected.type === "cst"
+                      ? "Colour Space Transform"
+                      : selected.type[0].toUpperCase() + selected.type.slice(1)
                     : "Select a node"}
                 </h3>
                 <p>
@@ -407,6 +410,19 @@ export default function App() {
                 onEnd={graphState.end}
               />
             )}
+            {selected?.type === "cst" &&
+              (["from", "to"] as const).map((direction) => (
+                <EncodingControl
+                  key={`${selected.id}-${direction}`}
+                  label={`CST ${direction}`}
+                  value={selected.data[direction]!}
+                  onChange={(value) =>
+                    graphState.updateParameters(selected.id, {
+                      [direction]: value,
+                    })
+                  }
+                />
+              ))}
             {selected?.type === "output" && (
               <label className="output-policy">
                 Output range
@@ -429,24 +445,27 @@ export default function App() {
             )}
             <div className="space-info">
               <span className="eyebrow">COLOUR PIPELINE</span>
-              <dl>
-                <div>
-                  <dt>Input</dt>
-                  <dd>sRGB</dd>
-                </div>
-                <div>
-                  <dt>Working</dt>
-                  <dd>Linear Rec.709</dd>
-                </div>
-                <div>
-                  <dt>Output</dt>
-                  <dd>sRGB · clamped</dd>
-                </div>
-              </dl>
+              {(["input", "working", "output"] as const).map((boundary) => (
+                <EncodingControl
+                  key={boundary}
+                  label={boundary[0].toUpperCase() + boundary.slice(1)}
+                  value={graph.colour[boundary]}
+                  onChange={(value) =>
+                    graphState.updateColour({
+                      ...graph.colour,
+                      [boundary]: value,
+                    })
+                  }
+                />
+              ))}
             </div>
             <p className="encoding-note">
-              This preview treats your image as sRGB. Use an sRGB still for
-              accurate colour.
+              Source tag: {encodingLabel(graph.colour.input)}. Full-range code
+              values; embedded profiles are not applied. Correct the input tag
+              to match your source. Retagging does not restore highlight range.
+              <br />
+              Viewer conversion is sRGB only; output pixels keep the chosen
+              output encoding.
             </p>
           </div>
           <div className="inspector-footer">

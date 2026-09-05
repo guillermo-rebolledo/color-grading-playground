@@ -1,5 +1,14 @@
 import {
+  transferShader,
+  transformShader,
+  displayEncoding,
+  type Encoding,
+} from "./colour";
+export { defaultColour, transfers, primaries, encodingLabel } from "./colour";
+export type { Encoding, ColourSettings } from "./colour";
+import {
   compileGraph,
+  encodingFlow,
   createGraph,
   inspectGraph,
   type GradingGraph,
@@ -18,22 +27,24 @@ void main() {
 }`;
 
 // A reachable graph compiles to one pass; numeric parameters remain uniforms.
-const fragmentSource = (declarations: string, body: string) => `#version 300 es
+const fragmentSource = (
+  declarations: string,
+  body: string,
+  flip = true,
+) => `#version 300 es
 precision highp float;
 uniform sampler2D sourceImage;
 ${declarations}
 in vec2 uv;
 out vec4 result;
-vec3 decodeSrgb(vec3 c) {
-  return mix(pow((c + 0.055) / 1.055, vec3(2.4)), c / 12.92, lessThanEqual(c, vec3(0.04045)));
-}
-vec3 encodeSrgb(vec3 c) {
-  return mix(1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, c * 12.92, lessThanEqual(c, vec3(0.0031308)));
-}
+${transferShader}
 void main() {
-  vec4 source = texture(sourceImage, vec2(uv.x, 1.0 - uv.y));
+  vec4 source = texture(sourceImage, ${flip ? "vec2(uv.x, 1.0 - uv.y)" : "uv"});
   ${body}
 }`;
+
+/** Full-range straight RGBA for numeric evaluation; never browser colour-converted. */
+export type FloatImage = { width: number; height: number; data: Float32Array };
 
 export class GradingEngine {
   private readonly gl: WebGL2RenderingContext;
@@ -68,7 +79,9 @@ export class GradingEngine {
         "This graphics device does not provide the precision required for grading.",
       );
     }
+    gl.drawingBufferColorSpace = "srgb";
     this.prepare(createGraph());
+    this.prepareDisplay(displayEncoding);
     gl.disable(gl.DITHER);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
@@ -113,11 +126,25 @@ export class GradingEngine {
       );
   }
 
-  /** Input is straight-alpha sRGB with rows ordered top to bottom. */
-  setImage(image: ImageData | ImageBitmap) {
+  /** Input is full-range straight RGBA, top to bottom; graph.colour.input declares its encoding. */
+  setImage(image: ImageData | ImageBitmap | FloatImage) {
     this.assertAvailable();
     const gl = this.gl;
-    if (!image.width || !image.height)
+    const floating = "data" in image && image.data instanceof Float32Array;
+    if (
+      floating &&
+      (image.data.length !== image.width * image.height * 4 ||
+        !image.data.every(Number.isFinite))
+    )
+      throw new Error(
+        "Float input requires finite straight RGBA samples for every pixel.",
+      );
+    if (
+      !Number.isInteger(image.width) ||
+      !Number.isInteger(image.height) ||
+      image.width <= 0 ||
+      image.height <= 0
+    )
       throw new Error("The image has no readable pixels.");
     const maxSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
     if (image.width > maxSize || image.height > maxSize)
@@ -132,25 +159,39 @@ export class GradingEngine {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, source);
       this.configureTexture();
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA8,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        image,
-      );
+      if ("data" in image) {
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          floating ? gl.RGBA32F : gl.RGBA8,
+          image.width,
+          image.height,
+          0,
+          gl.RGBA,
+          floating ? gl.FLOAT : gl.UNSIGNED_BYTE,
+          image.data,
+        );
+      } else {
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA8,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          image,
+        );
+      }
       gl.bindTexture(gl.TEXTURE_2D, target);
       this.configureTexture();
       gl.texImage2D(
         gl.TEXTURE_2D,
         0,
-        gl.RGBA16F,
+        floating ? gl.RGBA32F : gl.RGBA16F,
         width,
         height,
         0,
         gl.RGBA,
-        gl.HALF_FLOAT,
+        floating ? gl.FLOAT : gl.HALF_FLOAT,
         null,
       );
       gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
@@ -204,6 +245,11 @@ export class GradingEngine {
     }
   }
 
+  static warnings(graph: GradingGraph): string[] {
+    if (GradingEngine.validate(graph)) return [];
+    return encodingFlow(graph).warnings;
+  }
+
   private prepare(graph: GradingGraph) {
     const compiled = compileGraph(graph);
     let program = this.programs.get(compiled.key);
@@ -221,6 +267,24 @@ export class GradingEngine {
     );
   }
 
+  private prepareDisplay(output: Encoding) {
+    const key = `viewer:${output.transfer}:${output.primaries}`;
+    let program = this.programs.get(key);
+    if (!program) {
+      program = this.createProgram(
+        fragmentSource(
+          "",
+          `result = vec4(clamp(${transformShader("source.rgb", output, displayEncoding)}, 0.0, 1.0), source.a);`,
+          false,
+        ),
+      );
+      this.programs.set(key, program);
+    }
+    const gl = this.gl;
+    gl.useProgram(program);
+    gl.uniform1i(gl.getUniformLocation(program, "sourceImage"), 0);
+  }
+
   render(input: number | GradingGraph) {
     this.assertAvailable();
     const graph = typeof input === "number" ? createGraph() : input;
@@ -233,25 +297,16 @@ export class GradingEngine {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-    gl.blitFramebuffer(
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height,
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height,
-      gl.COLOR_BUFFER_BIT,
-      gl.NEAREST,
-    );
+    // Display conversion is a separate pass. The float target retains output encoding.
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.prepareDisplay(graph.colour.output);
+    gl.bindTexture(gl.TEXTURE_2D, this.target);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
     if (gl.getError() !== gl.NO_ERROR)
       throw new Error("The graphics device could not render this preview.");
   }
 
-  /** Read the graded float pixels in top-to-bottom RGBA order (before browser compositing). */
+  /** Read graded output-encoded pixels in top-to-bottom RGBA order, before display conversion. */
   readPixels(): Float32Array {
     this.assertAvailable();
     if (!this.framebuffer)

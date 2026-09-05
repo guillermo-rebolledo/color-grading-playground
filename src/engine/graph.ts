@@ -1,9 +1,22 @@
-export type NodeType = "source" | "exposure" | "output";
+import {
+  defaultColour,
+  validEncoding,
+  transformShader,
+  sameEncoding,
+  type Encoding,
+  type ColourSettings,
+} from "./colour";
+export type NodeType = "source" | "exposure" | "cst" | "output";
 export type GradingNode = {
   id: string;
   type: NodeType;
   position: { x: number; y: number };
-  data: { stops?: number; clamp?: "clamp" | "unbounded" };
+  data: {
+    stops?: number;
+    clamp?: "clamp" | "unbounded";
+    from?: Encoding;
+    to?: Encoding;
+  };
   selected?: boolean;
 };
 export type GradingEdge = {
@@ -16,12 +29,14 @@ export type GradingEdge = {
 };
 export type GradingGraph = {
   version: 1;
+  colour: ColourSettings;
   nodes: GradingNode[];
   edges: GradingEdge[];
 };
 export function createGraph(): GradingGraph {
   return {
     version: 1,
+    colour: structuredClone(defaultColour),
     nodes: [
       { id: "source", type: "source", position: { x: 0, y: 0 }, data: {} },
       {
@@ -63,6 +78,15 @@ export function inspectGraph(
   draft = false,
 ): GradingNode[] {
   if (graph.version !== 1) throw new Error("Unsupported graph schema version.");
+  if (
+    !graph.colour ||
+    ![graph.colour.input, graph.colour.working, graph.colour.output].every(
+      validEncoding,
+    )
+  )
+    throw new Error(
+      "Choose supported input, working and output encoding pairs.",
+    );
   const nodes = new Map(graph.nodes.map((n) => [n.id, n]));
   if (nodes.size !== graph.nodes.length || graph.nodes.some((n) => !n.id))
     throw new Error("Node IDs must be unique and nonempty.");
@@ -74,7 +98,12 @@ export function inspectGraph(
       );
   }
   for (const node of graph.nodes) {
-    if (!["source", "exposure", "output"].includes(node.type))
+    if (
+      node.type === "cst" &&
+      (!validEncoding(node.data.from) || !validEncoding(node.data.to))
+    )
+      throw new Error("CST requires supported from and to encoding pairs.");
+    if (!["source", "exposure", "cst", "output"].includes(node.type))
       throw new Error("Unsupported node type.");
     if (!Number.isFinite(node.position.x) || !Number.isFinite(node.position.y))
       throw new Error("Node positions must be finite.");
@@ -135,7 +164,7 @@ export function inspectGraph(
     if (node.type !== "source" && !input) {
       if (!draft)
         throw new Error(
-          `${node.type === "output" ? "Output" : "Exposure"} requires an RGB input. Connect it to Source.`,
+          `${node.type === "output" ? "Output" : node.type === "cst" ? "CST" : "Exposure"} requires an RGB input. Connect it to Source.`,
         );
       return;
     }
@@ -146,8 +175,45 @@ export function inspectGraph(
   return ordered;
 }
 
+/** Propagate declared encodings; never insert hidden repairs for a mismatched CST. */
+export function encodingFlow(
+  graph: GradingGraph,
+  ordered = inspectGraph(graph),
+) {
+  const encodings = new Map<string, Encoding>();
+  const inputs = new Map<string, Encoding>();
+  const warnings: string[] = [];
+  for (const node of ordered) {
+    if (node.type === "source") {
+      encodings.set(node.id, graph.colour.working);
+      continue;
+    }
+    const edge = graph.edges.find((e) => e.target === node.id)!;
+    const input = encodings.get(edge.source)!;
+    inputs.set(node.id, input);
+    if (node.type === "cst" && !sameEncoding(input, node.data.from!))
+      warnings.push(
+        `${node.id}: CST from encoding differs from its connected input. Check the declaration.`,
+      );
+    if (node.type === "exposure" && input.transfer !== "linear")
+      warnings.push(
+        `${node.id}: Exposure expects linear light. Insert a CST before this node.`,
+      );
+    encodings.set(
+      node.id,
+      node.type === "cst"
+        ? node.data.to!
+        : node.type === "output"
+          ? graph.colour.output
+          : input,
+    );
+  }
+  return { inputs, warnings };
+}
+
 export function compileGraph(graph: GradingGraph) {
   const ordered = inspectGraph(graph);
+  const flow = encodingFlow(graph, ordered);
   const index = new Map(ordered.map((n, i) => [n.id, i]));
   const edges = graph.edges
     .filter((e) => index.has(e.target))
@@ -159,15 +225,21 @@ export function compileGraph(graph: GradingGraph) {
     ])
     .sort((a, b) => String(a).localeCompare(String(b)));
   const key = JSON.stringify([
+    graph.colour,
     ordered.map((n) => [
       n.type,
-      n.type === "output" ? (n.data.clamp ?? "clamp") : null,
+      n.type === "output"
+        ? (n.data.clamp ?? "clamp")
+        : n.type === "cst"
+          ? [n.data.from, n.data.to]
+          : null,
     ]),
     edges,
   ]);
   const uniforms: number[] = [];
   const lines = ordered.map((node, i) => {
-    if (node.type === "source") return `vec3 v${i} = decodeSrgb(source.rgb);`;
+    if (node.type === "source")
+      return `vec3 v${i} = ${transformShader("source.rgb", graph.colour.input, graph.colour.working)};`;
     const input = index.get(
       graph.edges.find((e) => e.target === node.id)!.source,
     )!;
@@ -175,7 +247,14 @@ export function compileGraph(graph: GradingGraph) {
       const slot = uniforms.push(node.data.stops!) - 1;
       return `vec3 v${i} = v${input} * exp2(stops${slot});`;
     }
-    return `vec3 v${i} = ${node.data.clamp === "unbounded" ? `encodeSrgb(v${input})` : `clamp(encodeSrgb(v${input}), 0.0, 1.0)`};`;
+    if (node.type === "cst")
+      return `vec3 v${i} = ${transformShader(`v${input}`, node.data.from!, node.data.to!)};`;
+    const converted = transformShader(
+      `v${input}`,
+      flow.inputs.get(node.id)!,
+      graph.colour.output,
+    );
+    return `vec3 v${i} = ${node.data.clamp === "unbounded" ? converted : `clamp(${converted}, 0.0, 1.0)`};`;
   });
   return {
     key,

@@ -6,6 +6,7 @@ import {
   type GradingNode,
   type GradingEdge,
   type NodeType,
+  type ColourSettings,
 } from "./engine/GradingEngine";
 
 type GraphState = {
@@ -25,6 +26,7 @@ type GraphState = {
   remove: (nodeIds: string[], edgeIds: string[]) => void;
   connect: (edge: GradingEdge) => void;
   updateParameters: (id: string, parameters: GradingNode["data"]) => void;
+  updateColour: (colour: ColourSettings) => void;
   copy: () => void;
   paste: () => void;
 };
@@ -111,7 +113,10 @@ export const useGraph = create<GraphState>()((set, get) => ({
   add: (type) => {
     get().end();
     const { graph } = get();
-    if (type !== "exposure" && graph.nodes.some((n) => n.type === type)) {
+    if (
+      (type === "source" || type === "output") &&
+      graph.nodes.some((n) => n.type === type)
+    ) {
       set({
         feedback: `Only one ${type === "source" ? "Source" : "Output"} is allowed. Delete the existing node first.`,
       });
@@ -122,11 +127,16 @@ export const useGraph = create<GraphState>()((set, get) => ({
       type,
       position: { x: 260, y: 144 + (graph.nodes.length % 3) * 112 },
       data:
-        type === "exposure"
-          ? { stops: 0 }
-          : type === "output"
-            ? { clamp: "clamp" }
-            : {},
+        type === "cst"
+          ? {
+              from: { ...graph.colour.working },
+              to: { ...graph.colour.working },
+            }
+          : type === "exposure"
+            ? { stops: 0 }
+            : type === "output"
+              ? { clamp: "clamp" }
+              : {},
       selected: true,
     };
     get().edit({
@@ -168,6 +178,13 @@ export const useGraph = create<GraphState>()((set, get) => ({
     if (error) set({ feedback: error });
     else get().edit(next);
   },
+  updateColour: (colour) => {
+    get().end();
+    const graph = { ...get().graph, colour };
+    const error = GradingEngine.validate(graph, true);
+    if (error) set({ feedback: error });
+    else get().edit(graph);
+  },
   copy: () => {
     const { graph } = get();
     const nodes = graph.nodes.filter((n) => n.selected);
@@ -191,7 +208,7 @@ export const useGraph = create<GraphState>()((set, get) => ({
     if (
       clipboard.nodes.some(
         (n) =>
-          n.type !== "exposure" &&
+          (n.type === "source" || n.type === "output") &&
           graph.nodes.some((existing) => existing.type === n.type),
       )
     ) {

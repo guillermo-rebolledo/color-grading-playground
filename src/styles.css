@@ -708,3 +708,44 @@ dd {
   border-radius: 0;
   box-shadow: none;
 }
+
+.encoding-control {
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 12px 0;
+  margin: 0;
+  min-width: 0;
+}
+.encoding-control legend {
+  font-size: 12px;
+  padding: 0 6px 0 0;
+}
+.encoding-control label {
+  display: block;
+  font-size: 11px;
+  margin: 6px 0;
+}
+.encoding-control select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px;
+  background: var(--panel);
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.inspector-body {
+  overflow-y: auto;
+}
+
+@media (min-width: 801px) {
+  .inspector {
+    contain: size;
+    min-height: 0;
+  }
+  .inspector-body {
+    flex: 1;
+    min-height: 0;
+  }
+}

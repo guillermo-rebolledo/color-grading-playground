@@ -459,3 +459,53 @@ test("keyboard undo and redo work from the focused exposure slider", async ({
   await slider.press("Control+Shift+z");
   await expect(value).toHaveValue("0.01");
 });
+
+test("project colour settings and CST edits share reversible graph history", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByLabel("Input transfer", { exact: true })).toHaveValue(
+    "srgb",
+  );
+  await expect(
+    page.getByLabel("Working transfer", { exact: true }),
+  ).toHaveValue("linear");
+  await page
+    .getByLabel("Input primaries", { exact: true })
+    .selectOption("dci-p3");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.getByLabel("Input primaries", { exact: true })).toHaveValue(
+    "rec709",
+  );
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(page.getByLabel("Input primaries", { exact: true })).toHaveValue(
+    "dci-p3",
+  );
+  await page
+    .getByLabel("Output transfer", { exact: true })
+    .selectOption("gamma24");
+  await page.getByRole("button", { name: "Add CST", exact: true }).click();
+  await page
+    .getByLabel("CST to transfer", { exact: true })
+    .selectOption("gamma22");
+  await page
+    .getByLabel("CST to primaries", { exact: true })
+    .selectOption("display-p3");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(
+    page.getByLabel("CST to primaries", { exact: true }),
+  ).toHaveValue("rec709");
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await page.getByRole("button", { name: "Paste", exact: true }).click();
+  await expect(page.locator(".react-flow__node-cst")).toHaveCount(2);
+  await expect(page.getByLabel("CST to transfer", { exact: true })).toHaveValue(
+    "gamma22",
+  );
+  await expect(
+    page.getByLabel("CST to primaries", { exact: true }),
+  ).toHaveValue("display-p3");
+  await expect(page.getByLabel("Output transfer", { exact: true })).toHaveValue(
+    "gamma24",
+  );
+});
