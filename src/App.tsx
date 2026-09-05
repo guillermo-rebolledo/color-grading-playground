@@ -164,7 +164,9 @@ export default function App() {
   const solo = graph.nodes.some((n) => n.id === graphState.solo)
     ? graphState.solo
     : null;
-  const [comparison, setComparison] = useState("off");
+  const [comparison, setComparison] = useState<"off" | "before" | "A" | "B">(
+    "off",
+  );
   const [snapshots, setSnapshots] = useState<{
     A?: GradingGraph;
     B?: GradingGraph;
@@ -412,7 +414,16 @@ export default function App() {
                 aria-label="Compare view"
                 value={comparison}
                 disabled={!image}
-                onChange={(event) => setComparison(event.target.value)}
+                onChange={(event) => {
+                  const mode = event.target.value;
+                  if (
+                    mode === "off" ||
+                    mode === "before" ||
+                    mode === "A" ||
+                    mode === "B"
+                  )
+                    setComparison(mode);
+                }}
               >
                 <option value="off">Off</option>
                 <option value="before">Before / current</option>

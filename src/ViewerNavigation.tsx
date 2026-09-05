@@ -56,7 +56,7 @@ export function ViewerNavigation({
         >
           −
         </button>
-        <output aria-label="Viewer zoom">{Math.round(scale * 100)}%</output>
+        <span aria-label="Viewer zoom">{Math.round(scale * 100)}%</span>
         <button
           aria-label="Zoom in"
           onClick={() => navigate(Math.min(8, scale * 1.25))}

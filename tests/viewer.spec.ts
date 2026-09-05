@@ -1,5 +1,9 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator } from "@playwright/test";
 import { openNeutralGraph } from "./fixtures";
+
+function previewScreenshot(canvas: Locator) {
+  return canvas.screenshot({ style: ".wipe-handle { visibility: hidden }" });
+}
 
 test("RGB solo respects intermediate encoding and restores active output", async ({
   page,
@@ -146,36 +150,20 @@ test("viewer snapshots stay frozen through edits, with aligned zoom and solo res
   const wipe = page.getByRole("slider", { name: "Comparison wipe" });
   await wipe.focus();
   await wipe.press("End");
-  const frozen = await canvas.screenshot({
-    style: ".wipe-handle { visibility: hidden }",
-  });
+  const frozen = await previewScreenshot(canvas);
   const exposure = page.getByRole("spinbutton", { name: "Exposure in stops" });
   await exposure.fill("2");
   await exposure.press("Enter");
   await expect
-    .poll(async () =>
-      (
-        await canvas.screenshot({
-          style: ".wipe-handle { visibility: hidden }",
-        })
-      ).equals(frozen),
-    )
+    .poll(async () => (await previewScreenshot(canvas)).equals(frozen))
     .toBe(true);
   await wipe.focus();
   await wipe.press("Home");
   await expect
-    .poll(async () =>
-      (
-        await canvas.screenshot({
-          style: ".wipe-handle { visibility: hidden }",
-        })
-      ).equals(frozen),
-    )
+    .poll(async () => (await previewScreenshot(canvas)).equals(frozen))
     .toBe(false);
   await page.getByLabel("Compare view").selectOption("off");
-  const active = await canvas.screenshot({
-    style: ".wipe-handle { visibility: hidden }",
-  });
+  const active = await previewScreenshot(canvas);
   await page
     .locator('.react-flow__node[data-id="source"]')
     .dblclick({ delay: 100 });
@@ -183,23 +171,11 @@ test("viewer snapshots stay frozen through edits, with aligned zoom and solo res
     page.getByRole("button", { name: "Exit solo", exact: true }),
   ).toBeVisible();
   await expect
-    .poll(async () =>
-      (
-        await canvas.screenshot({
-          style: ".wipe-handle { visibility: hidden }",
-        })
-      ).equals(active),
-    )
+    .poll(async () => (await previewScreenshot(canvas)).equals(active))
     .toBe(false);
   await page.getByRole("button", { name: "Exit solo", exact: true }).click();
   await expect
-    .poll(async () =>
-      (
-        await canvas.screenshot({
-          style: ".wipe-handle { visibility: hidden }",
-        })
-      ).equals(active),
-    )
+    .poll(async () => (await previewScreenshot(canvas)).equals(active))
     .toBe(true);
   await page.getByRole("button", { name: "100%", exact: true }).click();
   const native = await canvas.boundingBox();
@@ -229,26 +205,14 @@ test("A and B can be recaptured independently and the wipe follows zoom and pan"
   const wipe = page.getByRole("slider", { name: "Comparison wipe" });
   await wipe.focus();
   await wipe.press("End");
-  const b = await canvas.screenshot({
-    style: ".wipe-handle { visibility: hidden }",
-  });
+  const b = await previewScreenshot(canvas);
   await exposure.fill("1");
   await exposure.press("Enter");
   await page.getByRole("button", { name: "Capture A", exact: true }).click();
-  expect(
-    (
-      await canvas.screenshot({ style: ".wipe-handle { visibility: hidden }" })
-    ).equals(b),
-  ).toBe(true);
+  expect((await previewScreenshot(canvas)).equals(b)).toBe(true);
   await page.getByLabel("Compare view").selectOption("A");
   await expect
-    .poll(async () =>
-      (
-        await canvas.screenshot({
-          style: ".wipe-handle { visibility: hidden }",
-        })
-      ).equals(b),
-    )
+    .poll(async () => (await previewScreenshot(canvas)).equals(b))
     .toBe(false);
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
   const zoomed = await canvas.boundingBox();
