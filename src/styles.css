@@ -803,3 +803,13 @@ dd {
   background: #222;
   pointer-events: none;
 }
+
+.chart-select {
+  max-width: 220px;
+  padding: 10px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}

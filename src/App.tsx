@@ -3,6 +3,7 @@ import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
 import { GradingEngine, encodingLabel } from "./engine/GradingEngine";
 import { loadImage } from "./engine/loadImage";
+import { createLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
 import "./styles.css";
@@ -231,6 +232,30 @@ export default function App() {
       if (current === request.current) setLoading(false);
     }
   }
+  function openChart(profile: keyof typeof logCharts) {
+    if (!engine.current || capabilityError) return;
+    ++request.current;
+    setLoading(false);
+    setError("");
+    try {
+      const chart = createLogChart(profile);
+      engine.current.setImage(chart);
+      const state = useGraph.getState();
+      state.updateColour({
+        ...state.graph.colour,
+        input: { ...logCharts[profile].encoding },
+      });
+      setImage({
+        name: `${logCharts[profile].name} · synthetic precision chart`,
+        originalWidth: chart.width,
+        originalHeight: chart.height,
+        width: chart.width,
+        height: chart.height,
+      });
+    } catch (cause) {
+      setError(message(cause));
+    }
+  }
   const disabled = !!capabilityError;
   return (
     <main
@@ -275,6 +300,25 @@ export default function App() {
         >
           <span aria-hidden="true">＋</span> Open image
         </button>
+        <select
+          aria-label="Load precision chart"
+          className="chart-select"
+          value=""
+          disabled={disabled}
+          onChange={(event) => {
+            const profile = event.target.value;
+            if (profile === "logc3" || profile === "slog3") openChart(profile);
+          }}
+        >
+          <option value="" disabled>
+            Load precision chart
+          </option>
+          {Object.entries(logCharts).map(([key, chart]) => (
+            <option key={key} value={key}>
+              {chart.name}
+            </option>
+          ))}
+        </select>
         <input
           ref={fileInput}
           className="visually-hidden"

@@ -40,7 +40,8 @@ separately by output encoding.
 ## Transfer functions and extensions
 
 Let `L` be linear light and `E` encoded code value. These functions use normalized
-**full-range** values: nominal black 0, nominal white 1. Video/legal-range samples
+**full-range** values: the nominal code container spans 0–1. Scene black and
+white need not be code 0 and 1 (camera-log encodings have nonzero black). Video/legal-range samples
 must be expanded before import; no range is inferred from transfer or gamut.
 There are no intermediate clamps. All transfer choices are independent of gamut.
 
@@ -66,6 +67,10 @@ negative sRGB power extension. Gamma transfers use signed powers. Above one,
 the positive power branches continue without clipping. Scalar conditional GLSL
 avoids evaluating fractional powers of negative bases. Preview and numeric
 readback use the same functions.
+
+ARRI LogC3 EI 800 and Sony S-Log3 use their published piecewise log/linear-toe
+functions. See [camera-log workflows](camera-log.md) for pinned references,
+coefficients, gamut chromaticities, precision charts, and encoding metadata.
 
 ## Gamuts and white adaptation
 
