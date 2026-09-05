@@ -150,6 +150,13 @@ button {
   background-image: repeating-conic-gradient(#141617 0% 25%, #181a1b 0% 50%);
   background-size: 20px 20px;
 }
+.image-frame {
+  position: absolute;
+  inset: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .viewer canvas {
   display: block;
   max-width: 100%;

@@ -262,11 +262,13 @@ export default function App() {
             className={`viewer ${image ? "has-image" : ""}`}
             aria-busy={loading}
           >
-            <canvas
-              ref={canvas}
-              aria-label="Graded image preview"
-              className={image ? "" : "empty-canvas"}
-            />
+            <div className="image-frame">
+              <canvas
+                ref={canvas}
+                aria-label="Graded image preview"
+                className={image ? "" : "empty-canvas"}
+              />
+            </div>
             {!image && !capabilityError && (
               <div className="empty-state">
                 <div className="empty-frame" aria-hidden="true">

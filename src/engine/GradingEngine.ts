@@ -1,3 +1,5 @@
+import { previewSize } from "./previewSize";
+
 const vertexSource = `#version 300 es
 precision highp float;
 out vec2 uv;
@@ -122,9 +124,7 @@ export class GradingEngine {
     const maxSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
     if (image.width > maxSize || image.height > maxSize)
       throw new Error("This image exceeds the graphics device texture limit.");
-    const scale = Math.min(1, 2048 / Math.max(image.width, image.height));
-    const width = Math.max(1, Math.round(image.width * scale));
-    const height = Math.max(1, Math.round(image.height * scale));
+    const { width, height } = previewSize(image.width, image.height);
     const source = gl.createTexture();
     const target = gl.createTexture();
     const framebuffer = gl.createFramebuffer();
