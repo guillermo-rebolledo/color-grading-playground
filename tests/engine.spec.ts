@@ -649,6 +649,17 @@ test("CST gamut inverse pairs recover signed RGB and invalid encoding metadata i
       const changed = compiles;
       graph.nodes[3].data.to.primaries = "dci-p3";
       engine.render(graph);
+      // Serialization order is not an enum change.
+      graph.colour = Object.fromEntries(
+        Object.entries(graph.colour)
+          .reverse()
+          .map(([key, value]) => [
+            key,
+            Object.fromEntries(Object.entries(value as object).reverse()),
+          ]),
+      );
+      graph.nodes[3].data.to = { primaries: "dci-p3", transfer: "gamma22" };
+      engine.render(graph);
       const reused = compiles;
       const pixels = Array.from<number>(engine.readPixels());
       graph.nodes[3].data.to.transfer = "unknown";

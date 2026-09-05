@@ -37,6 +37,9 @@ export function validEncoding(value: Encoding | undefined): value is Encoding {
     Object.hasOwn(primaries, value.primaries)
   );
 }
+export function encodingKey(value: Encoding) {
+  return [value.transfer, value.primaries];
+}
 export function sameEncoding(a: Encoding, b: Encoding) {
   return a.transfer === b.transfer && a.primaries === b.primaries;
 }
