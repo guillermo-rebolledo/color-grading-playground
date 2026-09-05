@@ -95,11 +95,13 @@ function NumericControl({
 }
 
 function ColourWheel({
+  parameter,
   label,
   value,
   neutral,
   onChange,
 }: {
+  parameter: "slope" | "offset" | "power";
   label: string;
   value: [number, number, number];
   neutral: number;
@@ -107,7 +109,7 @@ function ColourWheel({
 }) {
   const { begin, end } = useGraph();
   const mean = (value[0] + value[1] + value[2]) / 3;
-  const scale = label === "Offset" ? 0.25 : 0.5;
+  const scale = parameter === "offset" ? 0.25 : 0.5;
   const x = (value[0] - mean) / scale;
   const y = (value[1] - value[2]) / (Math.sqrt(3) * scale);
   function update(x: number, y: number) {
@@ -119,7 +121,7 @@ function ColourWheel({
       mean - x / 2 + (Math.sqrt(3) * y) / 2,
       mean - x / 2 - (Math.sqrt(3) * y) / 2,
     ];
-    if (label === "Power" && next.some((v) => v <= 0)) return;
+    if (parameter === "power" && next.some((v) => v <= 0)) return;
     onChange(next);
   }
   return (
@@ -261,6 +263,7 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
               <fieldset key={key}>
                 <legend>{label}</legend>
                 <ColourWheel
+                  parameter={key}
                   label={label}
                   value={node.data[key]!}
                   neutral={neutral}
