@@ -120,9 +120,9 @@ straight RGBA for numeric evaluation, using RGBA32F input and target. Both paths
 use the same grade shader. Float inputs allow tests to reach exact threshold
 neighborhoods, negative samples and values above one without eight-bit
 quantization. Allocation/render/readback failures are explicit; float precision
-never silently falls back. Preview size remains capped at 2048. This API does
-not provide a 16-bit file decoder or a tiled lattice exporter; those have their
-own scheduled slices.
+never silently falls back. Preview size remains capped at 2048. Sixteen-bit
+file decoding is covered in [image import](image-import.md), and the tiled
+lattice exporter in [LUT export](lut-export.md).
 
 Engine reference tests use independently tabulated transfer values and primary
 conversion vectors, neutral whites and inverse checks. Float transfer checks

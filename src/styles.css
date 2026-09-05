@@ -1047,7 +1047,47 @@ dd {
   outline: 2px solid #a7c8ac;
   outline-offset: 3px;
 }
-
+.lut-export {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 25px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+.lut-export label {
+  display: grid;
+  gap: 4px;
+}
+.lut-export input,
+.lut-export select {
+  width: 100%;
+  padding: 6px;
+  background: var(--panel);
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+}
+.lut-export p {
+  margin: 0;
+  line-height: 1.6;
+}
+.lut-summary {
+  color: var(--muted);
+}
+.lut-warning {
+  color: #e2b871;
+}
+.lut-reason {
+  color: #e0a4a4;
+}
+.lut-export .primary-button {
+  justify-self: start;
+}
+.lut-export .primary-button:disabled {
+  opacity: 0.4;
+}
 .project-toolbar {
   display: flex;
   flex-wrap: wrap;

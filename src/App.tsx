@@ -20,6 +20,7 @@ import { createLogChart, isLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
 import { ViewerNavigation } from "./ViewerNavigation";
+import { LutExport, OutputRangeSelect, type LatticeSupport } from "./LutExport";
 import type { GradingGraph } from "./engine/GradingEngine";
 import "./styles.css";
 
@@ -202,6 +203,9 @@ export default function App() {
   const [renderError, setRenderError] = useState("");
   const [error, setError] = useState("");
   const [capabilityError, setCapabilityError] = useState("");
+  const [latticeSupport, setLatticeSupport] = useState<LatticeSupport | null>(
+    null,
+  );
   const [showSamples, setShowSamples] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -211,6 +215,11 @@ export default function App() {
     const element = canvas.current!;
     try {
       engine.current = new GradingEngine(element);
+      try {
+        setLatticeSupport(engine.current.latticeSupport());
+      } catch (cause) {
+        setLatticeSupport({ reason: message(cause) });
+      }
     } catch (cause) {
       setCapabilityError(message(cause));
     }
@@ -799,21 +808,7 @@ export default function App() {
             {selected?.type === "output" && (
               <label className="output-policy">
                 Output range
-                <select
-                  aria-label="Output range"
-                  value={selected.data.clamp ?? "clamp"}
-                  onChange={(event) =>
-                    graphState.updateParameters(selected.id, {
-                      clamp:
-                        event.target.value === "unbounded"
-                          ? "unbounded"
-                          : "clamp",
-                    })
-                  }
-                >
-                  <option value="clamp">Clamp to 0–1</option>
-                  <option value="unbounded">Allow out-of-range</option>
-                </select>
+                <OutputRangeSelect output={selected} label="Output range" />
               </label>
             )}
             <div className="space-info">
@@ -840,6 +835,12 @@ export default function App() {
               Viewer conversion is sRGB only; output pixels keep the chosen
               output encoding.
             </p>
+            <LutExport
+              engine={() => engine.current}
+              support={
+                capabilityError ? { reason: capabilityError } : latticeSupport
+              }
+            />
           </div>
           <div className="inspector-footer">
             Build a grade, one connection at a time.

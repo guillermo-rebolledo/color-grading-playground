@@ -16,6 +16,17 @@ import {
 export { createGraph, createStarterGraph } from "./graph";
 export type { GradingGraph, GradingNode, GradingEdge, NodeType } from "./graph";
 import { previewSize } from "./previewSize";
+import { isCubeSize } from "./cube";
+export {
+  cubeSizes,
+  cubeTitleLength,
+  defaultCubeSize,
+  isCubeSize,
+  cubeFileBytes,
+  sanitizeCubeTitle,
+  serializeCube,
+} from "./cube";
+export type { CubeSize } from "./cube";
 
 const vertexSource = `#version 300 es
 precision highp float;
@@ -34,12 +45,20 @@ const fragmentSource = (
 ) => `#version 300 es
 precision highp float;
 uniform sampler2D sourceImage;
+uniform int lattice;
+uniform int latticeRow;
 ${declarations}
 in vec2 uv;
 out vec4 result;
 ${transferShader}
 void main() {
-  vec4 source = texture(sourceImage, ${flip ? "vec2(uv.x, 1.0 - uv.y)" : "uv"});
+  vec4 source;
+  if (lattice > 0) {
+    // Identity lattice in place of the image: red along x, one green step per row, blue every N rows.
+    ivec2 texel = ivec2(gl_FragCoord.xy);
+    int row = texel.y + latticeRow;
+    source = vec4(vec3(float(texel.x), float(row % lattice), float(row / lattice)) / float(lattice - 1), 1.0);
+  } else source = texture(sourceImage, ${flip ? "vec2(uv.x, 1.0 - uv.y)" : "uv"});
   ${body}
 }`;
 
@@ -54,6 +73,8 @@ export type ViewerOptions = {
   outOfRange?: boolean;
 };
 
+export type LatticeFormat = "RGBA32F" | "RGBA16F";
+
 export class GradingEngine {
   private readonly gl: WebGL2RenderingContext;
   private readonly programs = new Map<string, WebGLProgram>();
@@ -62,6 +83,10 @@ export class GradingEngine {
   private framebuffer: WebGLFramebuffer | null = null;
   private disposed = false;
   private curveTextures: WebGLTexture[] = [];
+  private latticeTarget: {
+    format: LatticeFormat;
+    internalFormat: number;
+  } | null = null;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", {
@@ -259,7 +284,7 @@ export class GradingEngine {
     return encodingFlow(graph).warnings;
   }
 
-  private prepare(graph: GradingGraph, solo?: string) {
+  private prepare(graph: GradingGraph, solo?: string): WebGLProgram {
     const compiled = compileGraph(graph, solo);
     const gl = this.gl;
     if (
@@ -307,6 +332,167 @@ export class GradingEngine {
     compiled.uniforms.forEach((value, i) =>
       gl.uniform1f(gl.getUniformLocation(program, `parameter${i}`), value),
     );
+    gl.uniform1i(gl.getUniformLocation(program, "lattice"), 0);
+    return program;
+  }
+
+  /**
+   * Probe float lattice rendering once. RGBA32F is preferred; half-float is
+   * accepted only when its own capability and precision checks pass.
+   */
+  latticeSupport(): { format: LatticeFormat } {
+    this.assertAvailable();
+    if (this.latticeTarget) return { format: this.latticeTarget.format };
+    const gl = this.gl;
+    // A linear identity lattice pushed one stop spans 0–2, covering values above one.
+    const probe = createGraph();
+    probe.colour.input = probe.colour.output = { ...probe.colour.working };
+    probe.nodes[1].data.stops = 1;
+    probe.nodes[2].data.clamp = "unbounded";
+    const reasons: string[] = [];
+    for (const [format, internalFormat, tolerance] of [
+      ["RGBA32F", gl.RGBA32F, 1e-6],
+      ["RGBA16F", gl.RGBA16F, 1e-3],
+    ] as const) {
+      try {
+        const samples = this.drawLattice(probe, 4, internalFormat);
+        let error = 0;
+        for (let i = 0; i < 64; i++)
+          [i % 4, Math.floor(i / 4) % 4, Math.floor(i / 16)].forEach(
+            (step, channel) => {
+              error = Math.max(
+                error,
+                Math.abs(samples[i * 4 + channel] - (2 * step) / 3),
+              );
+            },
+          );
+        if (!(error <= tolerance))
+          throw new Error(
+            `${format} readback error ${error.toExponential(2)} exceeds ${tolerance}.`,
+          );
+        this.latticeTarget = { format, internalFormat };
+        return { format };
+      } catch (cause) {
+        reasons.push(
+          `${format}: ${cause instanceof Error ? cause.message : String(cause)}`,
+        );
+      }
+    }
+    throw new Error(
+      `LUT export is unavailable because this device cannot render and read back a floating-point lattice precisely (${reasons.join(" ")})`,
+    );
+  }
+
+  /**
+   * Evaluate the graph on an identity lattice with the same compiled program
+   * as the preview. Returns size³ RGBA floats, red index fastest, then green,
+   * then blue. tileRows forces smaller tiles than the device requires; it is
+   * a verification hook and yields identical samples.
+   */
+  renderLattice(graph: GradingGraph, size: number, tileRows?: number) {
+    this.assertAvailable();
+    if (!isCubeSize(size)) throw new Error("Choose a 17³, 33³ or 65³ LUT.");
+    this.latticeSupport();
+    return this.drawLattice(
+      graph,
+      size,
+      this.latticeTarget!.internalFormat,
+      tileRows,
+    );
+  }
+
+  private drawLattice(
+    graph: GradingGraph,
+    size: number,
+    internalFormat: number,
+    tileRows?: number,
+  ) {
+    const gl = this.gl;
+    const rows = size * size;
+    const textureLimit = Math.min(
+      gl.getParameter(gl.MAX_TEXTURE_SIZE) as number,
+      gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number,
+    );
+    const viewport = gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array;
+    if (size > Math.min(textureLimit, viewport[0]))
+      throw new Error(
+        "This graphics device cannot render a lattice this wide.",
+      );
+    if (tileRows !== undefined && (!Number.isInteger(tileRows) || tileRows < 1))
+      throw new Error("Tile rows must be a positive integer.");
+    const tile = Math.min(rows, textureLimit, viewport[1], tileRows ?? rows);
+    const program = this.prepare(graph);
+    gl.uniform1i(gl.getUniformLocation(program, "lattice"), size);
+    const rowLocation = gl.getUniformLocation(program, "latticeRow");
+    const texture = gl.createTexture();
+    const framebuffer = gl.createFramebuffer();
+    const samples = new Float32Array(size * rows * 4);
+    // Clear any stale error so allocation and readback failures are attributed here.
+    gl.getError();
+    try {
+      if (!texture || !framebuffer)
+        throw new Error("Could not allocate LUT resources.");
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      this.configureTexture();
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        internalFormat,
+        size,
+        tile,
+        0,
+        gl.RGBA,
+        internalFormat === gl.RGBA32F ? gl.FLOAT : gl.HALF_FLOAT,
+        null,
+      );
+      // The target must not stay bound to the sampler unit while it is drawn to.
+      gl.bindTexture(gl.TEXTURE_2D, this.source);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        texture,
+        0,
+      );
+      if (
+        gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE ||
+        gl.getError() !== gl.NO_ERROR
+      )
+        throw new Error(
+          "This device could not allocate a floating-point LUT target.",
+        );
+      // Rows are ordered bottom-up in both the framebuffer and readback, so
+      // tiles concatenate in lattice order without any reordering.
+      for (let row = 0; row < rows; row += tile) {
+        const height = Math.min(tile, rows - row);
+        gl.uniform1i(rowLocation, row);
+        gl.viewport(0, 0, size, height);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.readPixels(
+          0,
+          0,
+          size,
+          height,
+          gl.RGBA,
+          gl.FLOAT,
+          samples,
+          row * size * 4,
+        );
+      }
+      if (gl.getError() !== gl.NO_ERROR)
+        throw new Error(
+          "Floating-point LUT readback is unavailable on this device.",
+        );
+    } finally {
+      gl.uniform1i(gl.getUniformLocation(program, "lattice"), 0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      gl.deleteTexture(texture);
+      gl.deleteFramebuffer(framebuffer);
+    }
+    return samples;
   }
 
   private prepareDisplay(
