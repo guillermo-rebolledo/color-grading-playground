@@ -224,7 +224,7 @@ export default function App() {
           height: loaded.bitmap.height,
         });
       } finally {
-        loaded.bitmap.close();
+        if ("close" in loaded.bitmap) loaded.bitmap.close();
       }
     } catch (cause) {
       if (current === request.current) setError(message(cause));
@@ -323,7 +323,7 @@ export default function App() {
           ref={fileInput}
           className="visually-hidden"
           type="file"
-          accept="image/jpeg,image/png"
+          accept="image/jpeg,image/png,image/tiff,.tif,.tiff"
           aria-label="Choose image"
           onChange={(event) => {
             void openFile(event.target.files?.[0]);
@@ -365,7 +365,8 @@ export default function App() {
                 <p>
                   Drop a still here and find its exposure.
                   <br />
-                  Your image stays in this browser.
+                  JPEG, PNG and uncompressed RGB TIFF. Your image stays in this
+                  browser.
                 </p>
                 <button
                   className="primary-button"
