@@ -1,3 +1,4 @@
+import { AdjustmentControls } from "./AdjustmentControls";
 import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
 import { GradingEngine, encodingLabel } from "./engine/GradingEngine";
@@ -386,9 +387,12 @@ export default function App() {
               <div>
                 <h3>
                   {selected
-                    ? selected.type === "cst"
-                      ? "Colour Space Transform"
-                      : selected.type[0].toUpperCase() + selected.type.slice(1)
+                    ? selected.type === "cdl"
+                      ? "CDL"
+                      : selected.type === "cst"
+                        ? "Colour Space Transform"
+                        : selected.type[0].toUpperCase() +
+                          selected.type.slice(1)
                     : "Select a node"}
                 </h3>
                 <p>
@@ -408,6 +412,12 @@ export default function App() {
                 }
                 onBegin={graphState.begin}
                 onEnd={graphState.end}
+              />
+            )}
+            {selected && (
+              <AdjustmentControls
+                key={`adjustment-${selected.id}`}
+                node={selected}
               />
             )}
             {selected?.type === "cst" &&

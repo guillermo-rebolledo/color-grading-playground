@@ -1,3 +1,4 @@
+import { adjustmentDefaults } from "./adjustmentDefaults";
 import { create } from "zustand";
 import {
   GradingEngine,
@@ -127,16 +128,18 @@ export const useGraph = create<GraphState>()((set, get) => ({
       type,
       position: { x: 260, y: 144 + (graph.nodes.length % 3) * 112 },
       data:
-        type === "cst"
-          ? {
-              from: { ...graph.colour.working },
-              to: { ...graph.colour.working },
-            }
-          : type === "exposure"
-            ? { stops: 0 }
-            : type === "output"
-              ? { clamp: "clamp" }
-              : {},
+        type === "cdl" || type === "contrast" || type === "saturation"
+          ? structuredClone(adjustmentDefaults[type])
+          : type === "cst"
+            ? {
+                from: { ...graph.colour.working },
+                to: { ...graph.colour.working },
+              }
+            : type === "exposure"
+              ? { stops: 0 }
+              : type === "output"
+                ? { clamp: "clamp" }
+                : {},
       selected: true,
     };
     get().edit({

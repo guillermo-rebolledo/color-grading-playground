@@ -25,7 +25,12 @@ function GradeNode({
   selected,
 }: NodeProps<Node<GradingNode["data"]>>) {
   const colour = useGraph((s) => s.graph.colour);
-  const title = type === "cst" ? "CST" : type[0].toUpperCase() + type.slice(1);
+  const title =
+    type === "cdl"
+      ? "CDL"
+      : type === "cst"
+        ? "CST"
+        : type[0].toUpperCase() + type.slice(1);
   return (
     <div className={`graph-node ${selected ? "active" : ""}`}>
       {type !== "source" && (
@@ -45,9 +50,15 @@ function GradeNode({
           ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
           : type === "exposure"
             ? `${(data.stops ?? 0).toFixed(2)} stops`
-            : type === "source"
-              ? encodingLabel(colour.input)
-              : encodingLabel(colour.output)}
+            : type === "cdl"
+              ? "Unbounded SOP · Rec.709 luma"
+              : type === "contrast"
+                ? `Amount ${data.contrast} · Pivot ${data.pivot}`
+                : type === "saturation"
+                  ? `Saturation ${data.saturation} · Vibrance ${data.vibrance}`
+                  : type === "source"
+                    ? encodingLabel(colour.input)
+                    : encodingLabel(colour.output)}
       </p>
       {type !== "output" && (
         <Handle
@@ -64,6 +75,9 @@ const nodeTypes = {
   source: GradeNode,
   exposure: GradeNode,
   cst: GradeNode,
+  cdl: GradeNode,
+  contrast: GradeNode,
+  saturation: GradeNode,
   output: GradeNode,
 };
 const isTyping = (target: EventTarget | null) =>
@@ -105,10 +119,24 @@ export function GraphEditor() {
       <div className="panel-bar graph-toolbar">
         <h2>Graph</h2>
         <div className="graph-actions">
-          {(["source", "exposure", "cst", "output"] as const).map((type) => (
+          {(
+            [
+              "source",
+              "exposure",
+              "cst",
+              "cdl",
+              "contrast",
+              "saturation",
+              "output",
+            ] as const
+          ).map((type) => (
             <button key={type} onClick={() => state.add(type)}>
               Add{" "}
-              {type === "cst" ? "CST" : type[0].toUpperCase() + type.slice(1)}
+              {type === "cdl"
+                ? "CDL"
+                : type === "cst"
+                  ? "CST"
+                  : type[0].toUpperCase() + type.slice(1)}
             </button>
           ))}
           <button onClick={state.undo} disabled={!state.past.length}>

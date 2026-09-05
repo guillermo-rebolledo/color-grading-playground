@@ -263,7 +263,7 @@ export class GradingEngine {
     gl.useProgram(program);
     gl.uniform1i(gl.getUniformLocation(program, "sourceImage"), 0);
     compiled.uniforms.forEach((value, i) =>
-      gl.uniform1f(gl.getUniformLocation(program, `stops${i}`), value),
+      gl.uniform1f(gl.getUniformLocation(program, `parameter${i}`), value),
     );
   }
 

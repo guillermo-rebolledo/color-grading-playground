@@ -749,3 +749,57 @@ dd {
     min-height: 0;
   }
 }
+
+.adjustment-controls fieldset {
+  margin: 18px 0;
+  border: 1px solid var(--border, #3b3b3b);
+  border-radius: 6px;
+  padding: 12px;
+}
+.adjustment-number {
+  margin: 12px 0;
+}
+.adjustment-number label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+.adjustment-number input[type="number"] {
+  width: 88px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 6px;
+}
+.adjustment-number input[type="range"] {
+  width: 100%;
+}
+.colour-wheel {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 12px auto;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #aaa, transparent),
+    conic-gradient(from 90deg, #e65c5c, #6868d8, #62b062, #e65c5c);
+  touch-action: none;
+  cursor: crosshair;
+}
+.colour-wheel:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 4px;
+}
+.colour-wheel span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #222;
+  pointer-events: none;
+}
