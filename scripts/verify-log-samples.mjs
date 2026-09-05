@@ -10,6 +10,9 @@ const sources = JSON.parse(
   readFileSync(new URL("log-sample-sources.json", import.meta.url)),
 );
 const hash = (data) => createHash("sha256").update(data).digest("hex");
+const licenses = JSON.parse(
+  readFileSync(new URL("log-sample-licenses.json", import.meta.url)),
+);
 assert.equal(inventory.schemaVersion, 1);
 assert.equal(inventory.assets.length, sources.length);
 assert.equal(
@@ -29,12 +32,13 @@ for (const asset of inventory.assets) {
   for (const key of Object.keys(source))
     assert.deepEqual(asset[key], source[key]);
   assert.match(asset.file, /^[a-z-]+\.png$/);
-  assert.equal(asset.license, "BSD-3-Clause");
-  assert.equal(asset.licenseFile, "licenses/OpenEXR.txt");
-  // Pinned upstream notice, with trailing blank lines removed only.
+  const license = licenses[asset.license];
+  assert.ok(license, `Unknown redistribution license: ${asset.license}`);
+  assert.equal(asset.licenseFile, license.file);
+  assert.equal(asset.licenseUrl, license.url);
   assert.equal(
     hash(readFileSync(new URL(asset.licenseFile, root))),
-    "1ac1b0e8619b04100193171de793d00fb602e4b02275260f0ded14dcb45e4940",
+    license.sha256,
     "Redistribution license notice changed",
   );
   assert.equal(asset.bitDepth, 16);
@@ -65,7 +69,9 @@ for (const asset of inventory.assets) {
   assert.equal(max, asset.measurements.codeMax);
   assert.equal(codes.size, asset.measurements.distinctCodes);
   assert.ok(codes.size > 256, `${asset.id}: insufficient code precision`);
-  assert.ok(asset.measurements.sourceRgbMax > 1);
+  // Source exposure scale is arbitrary; a dark HDR chart can have all channels <1.
+  assert.ok(Number.isFinite(asset.measurements.sourceRgbMin));
+  assert.ok(asset.measurements.sourceRgbMax > asset.measurements.sourceRgbMin);
   assert.ok(asset.measurements.preparedLinearMax > 1);
   assert.equal(asset.measurements.clippedChannels, 0);
   assert.ok(asset.probes.length >= 25);

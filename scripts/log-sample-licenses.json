@@ -1,0 +1,17 @@
+{
+  "BSD-3-Clause": {
+    "file": "licenses/OpenEXR.txt",
+    "url": "https://raw.githubusercontent.com/AcademySoftwareFoundation/openexr-images/e38ffb0790f62f05a6f083a6fa4cac150b3b7452/LICENSE",
+    "sha256": "1ac1b0e8619b04100193171de793d00fb602e4b02275260f0ded14dcb45e4940"
+  },
+  "CC0-1.0": {
+    "file": "licenses/PolyHaven.txt",
+    "url": "https://polyhaven.com/license",
+    "sha256": "cbd0f3e714ae7eb66c3f7ecfe7bbed261af44f4af65bcecd148f58d2c0e6312b"
+  },
+  "CC-BY-3.0": {
+    "file": "licenses/TearsOfSteel.txt",
+    "url": "https://mango.blender.org/sharing/",
+    "sha256": "8d3b3c8d118f698942567a434c3c892a88806fb0202a2a9670e2d64f424b251a"
+  }
+}

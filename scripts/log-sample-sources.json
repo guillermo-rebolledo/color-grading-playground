@@ -10,7 +10,8 @@
       "transfer": "logc3",
       "primaries": "arri-wide-gamut3"
     },
-    "exposureStops": -3
+    "exposureStops": -3,
+    "license": "BSD-3-Clause"
   },
   {
     "id": "mount-tamalpais",
@@ -23,7 +24,8 @@
       "transfer": "logc3",
       "primaries": "arri-wide-gamut3"
     },
-    "exposureStops": 0
+    "exposureStops": 0,
+    "license": "BSD-3-Clause"
   },
   {
     "id": "tree",
@@ -36,7 +38,8 @@
       "transfer": "slog3",
       "primaries": "sgamut3-cine"
     },
-    "exposureStops": 0
+    "exposureStops": 0,
+    "license": "BSD-3-Clause"
   },
   {
     "id": "golden-gate",
@@ -49,7 +52,8 @@
       "transfer": "slog3",
       "primaries": "sgamut3-cine"
     },
-    "exposureStops": -5
+    "exposureStops": -5,
+    "license": "BSD-3-Clause"
   },
   {
     "id": "still-life",
@@ -62,7 +66,8 @@
       "transfer": "davinci-intermediate",
       "primaries": "davinci-wide-gamut"
     },
-    "exposureStops": -3
+    "exposureStops": -3,
+    "license": "BSD-3-Clause"
   },
   {
     "id": "flower",
@@ -75,6 +80,70 @@
       "transfer": "davinci-intermediate",
       "primaries": "davinci-wide-gamut"
     },
-    "exposureStops": 0
+    "exposureStops": 0,
+    "license": "BSD-3-Clause"
+  },
+  {
+    "id": "canal-actors",
+    "title": "Canal conversation — Tears of Steel",
+    "scene": "skin-tones",
+    "sourcePath": "01_2a_00100.exr",
+    "sourceUrl": "https://media.xiph.org/tearsofsteel/tearsofsteel-footage-exr/01_2a/linear/01_2a_00100.exr",
+    "sourceSha256": "b30b54bffb5188cb4d24fd44f5de4e54175db05e3c4331c00d9e84d56285a3b1",
+    "encoding": {
+      "transfer": "logc3",
+      "primaries": "arri-wide-gamut3"
+    },
+    "exposureStops": -1,
+    "license": "CC-BY-3.0",
+    "sampleStride": 2,
+    "sourceEvidenceUrl": "https://mango.blender.org/production/4-tb-original-4k-footage-available-as-cc-by/",
+    "attribution": "(CC) Blender Foundation | mango.blender.org",
+    "sourceHistory": "Sony F65 RAW → Sony software ACES EXR → OpenColorIO scene-linear Rec.709; original footage, not final composite",
+    "usageNotice": "Technical grading demo; actors retain personal-image/privacy rights; no actor advertising or endorsement permission"
+  },
+  {
+    "id": "tungsten-saloon",
+    "title": "Cowboy Town Saloon — mixed tungsten and daylight",
+    "scene": "tungsten-interior",
+    "sourcePath": "cowboy_town_saloon_2k.exr",
+    "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/2k/cowboy_town_saloon_2k.exr",
+    "sourceSha256": "099ec884b306ef3858eb87ace0063506dede85ee59dd974cc6b366d035e9758d",
+    "encoding": {
+      "transfer": "slog3",
+      "primaries": "sgamut3-cine"
+    },
+    "exposureStops": -8,
+    "license": "CC0-1.0",
+    "sourceChannelType": "FLOAT",
+    "sourceEvidenceUrl": "https://polyhaven.com/a/cowboy_town_saloon",
+    "attribution": "Dimitrios Savva (photography), Jarod Guest (processing), Poly Haven",
+    "sourceHistory": "Poly Haven photographic linear HDR workflow; Rec.709/D65 by OpenEXR default; publisher reports 19 EV panorama capture and 4171 K white balance",
+    "sourceAlphaValue": 9.262558937072754,
+    "sourceAlphaTolerance": 0,
+    "sourceAlphaNote": "Publisher normalized every channel by 9.262559393631358; A is constant 9.262558937072754, a non-coverage channel discarded without dividing RGB. Header ImageHistory records this normalization."
+  },
+  {
+    "id": "neutral-chart",
+    "title": "Cowboy Town Saloon — photographed neutral and colour chart",
+    "scene": "neutral-chart",
+    "sourcePath": "cowboy_town_saloon.zip",
+    "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Color%20Charts/cowboy_town_saloon.zip",
+    "sourceSha256": "940a61a35a53d7b4fed83ffffa590078a6957175f163276e9695e01ea19b4680",
+    "encoding": {
+      "transfer": "davinci-intermediate",
+      "primaries": "davinci-wide-gamut"
+    },
+    "exposureStops": 4,
+    "license": "CC0-1.0",
+    "sourceChannelType": "FLOAT",
+    "sourceEvidenceUrl": "https://polyhaven.com/a/cowboy_town_saloon",
+    "attribution": "Dimitrios Savva (photography), Jarod Guest (processing), Poly Haven",
+    "sourceHistory": "Photographed ColorChecker Passport supplied with the HDRI as merged_000.exr plus source RAF; independently exposed from the panorama; no shared brightness calibration is assumed",
+    "sampleStride": 2,
+    "archiveMember": "merged_000.exr",
+    "archiveMemberSha256": "5ed10e5ff36d2c32a42af37004d1a7236f7705a3562af0cfb3461b90a1eeec64",
+    "sourceAlphaTolerance": 1e-7,
+    "sourceAlphaNote": "A is within 1e-7 of one; discard rounding residual, retain RGB unchanged."
   }
 ]

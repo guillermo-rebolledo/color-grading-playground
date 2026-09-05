@@ -1,0 +1,17 @@
+Cowboy Town Saloon panorama and photographed colour chart
+Photography: Dimitrios Savva. Processing: Jarod Guest. Poly Haven.
+Source: https://polyhaven.com/a/cowboy_town_saloon
+
+License: CC0 1.0 Universal
+License deed: https://creativecommons.org/publicdomain/zero/1.0/
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Redistribution evidence: https://polyhaven.com/license
+Verified 2026-09-05: Poly Haven dedicates its assets to CC0 and explicitly
+permits redistribution, including as part of a product. Attribution is optional;
+we retain it to make the provenance traceable.
+
+Changes made for this collection: sampled chart pixels at stride 2, converted
+scene-linear Rec.709/D65 RGB to the declared wide gamut, adjusted uniform
+exposure, applied log encoding, and quantized to PNG16. The panorama retains
+its supplied 2K dimensions. See inventory.json for exact transforms and hashes.
+No endorsement by Poly Haven or the credited artists is implied.

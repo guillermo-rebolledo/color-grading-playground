@@ -1,0 +1,26 @@
+Tears of Steel — original Sony F65 footage, shot 01_2a, frame 00100
+(CC) Blender Foundation | mango.blender.org
+
+License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+License deed: https://creativecommons.org/licenses/by/3.0/
+Legal code: https://creativecommons.org/licenses/by/3.0/legalcode
+Source: https://media.xiph.org/tearsofsteel/tearsofsteel-footage-exr/01_2a/linear/01_2a_00100.exr
+License evidence: https://mango.blender.org/sharing/
+Footage and colour provenance:
+https://mango.blender.org/production/4-tb-original-4k-footage-available-as-cc-by/
+
+Verified 2026-09-05: the Blender Foundation releases the original footage
+under CC BY 3.0 and explicitly permits technical demos, showcases and tutorials.
+Actors retain their personal-image and privacy rights. This grading sample does
+not grant permission to use an actor in advertising or imply their endorsement.
+
+Publisher preparation: Sony F65 RAW to ACES OpenEXR with Sony software, then
+OpenColorIO conversion to scene-linear Rec.709 for the movie pipeline.
+Changes made for this collection: select every second pixel in each direction,
+convert Rec.709/D65 RGB to ARRI Wide Gamut 3, apply -1 stop of uniform exposure,
+encode LogC3 EI 800 and quantize to PNG16. See inventory.json for exact matrices,
+reference pixels and source/output hashes. This is a derived camera photograph,
+not a frame from the composited or display-graded movie.
+
+Retain this title, credit, source link, license link and modification notice
+when redistributing the sample or derivatives, as required by CC BY 3.0.
