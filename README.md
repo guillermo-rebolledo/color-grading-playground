@@ -50,3 +50,15 @@ Linux CI installs browser system dependencies with `npx playwright install --wit
 - [Khronos float framebuffer extension](https://registry.khronos.org/webgl/extensions/EXT_color_buffer_float/) for required renderability.
 - [WHATWG image bitmap options](https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html) for orientation, alpha, and explicit decoding behavior.
 - [W3C sRGB transfer functions](https://www.w3.org/TR/css-color-4/#color-conversion-code) for the piecewise encoding/decoding equations.
+
+## Deployment
+
+The GitHub repository is connected to the `color-grading-playground` Vercel project in `guillermo-ortizs-projects`.
+
+- Every push or merge to `main` triggers a production deployment through Vercel's Git integration.
+- Other branches and pull requests receive preview deployments.
+- `vercel.json` records the Vite preset, `npm ci` installation, `npm run build` command, `dist` output, and enabled Git deployments. Node.js 24 is pinned in `package.json` and the Vercel project settings.
+- No application environment variables or GitHub Actions deployment secrets are required. The existing Checks workflow runs independently; it does not gate Vercel deployment.
+- The local CLI project link is kept in the ignored `.vercel` directory. For a new checkout, run `vercel link --yes --project color-grading-playground --scope guillermo-ortizs-projects` after logging in.
+
+Manage deployments and the production-branch setting in the [Vercel project dashboard](https://vercel.com/guillermo-ortizs-projects/color-grading-playground).
