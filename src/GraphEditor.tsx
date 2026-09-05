@@ -26,11 +26,13 @@ function GradeNode({
 }: NodeProps<Node<GradingNode["data"]>>) {
   const colour = useGraph((s) => s.graph.colour);
   const title =
-    type === "cdl"
-      ? "CDL"
-      : type === "cst"
-        ? "CST"
-        : type[0].toUpperCase() + type.slice(1);
+    type === "whiteBalance"
+      ? "White Balance"
+      : type === "cdl"
+        ? "CDL"
+        : type === "cst"
+          ? "CST"
+          : type[0].toUpperCase() + type.slice(1);
   return (
     <div className={`graph-node ${selected ? "active" : ""}`}>
       {type !== "source" && (
@@ -46,19 +48,21 @@ function GradeNode({
         <span>RGB</span>
       </div>
       <p>
-        {type === "cst"
-          ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
-          : type === "exposure"
-            ? `${(data.stops ?? 0).toFixed(2)} stops`
-            : type === "cdl"
-              ? "Unbounded SOP · Rec.709 luma"
-              : type === "contrast"
-                ? `Amount ${data.contrast} · Pivot ${data.pivot}`
-                : type === "saturation"
-                  ? `Saturation ${data.saturation} · Vibrance ${data.vibrance}`
-                  : type === "source"
-                    ? encodingLabel(colour.input)
-                    : encodingLabel(colour.output)}
+        {type === "whiteBalance"
+          ? `${data.temperature} K · Tint ${data.tint}`
+          : type === "cst"
+            ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
+            : type === "exposure"
+              ? `${(data.stops ?? 0).toFixed(2)} stops`
+              : type === "cdl"
+                ? "Unbounded SOP · Rec.709 luma"
+                : type === "contrast"
+                  ? `Amount ${data.contrast} · Pivot ${data.pivot}`
+                  : type === "saturation"
+                    ? `Saturation ${data.saturation} · Vibrance ${data.vibrance}`
+                    : type === "source"
+                      ? encodingLabel(colour.input)
+                      : encodingLabel(colour.output)}
       </p>
       {type !== "output" && (
         <Handle
@@ -78,6 +82,7 @@ const nodeTypes = {
   cdl: GradeNode,
   contrast: GradeNode,
   saturation: GradeNode,
+  whiteBalance: GradeNode,
   output: GradeNode,
 };
 const isTyping = (target: EventTarget | null) =>
@@ -127,16 +132,19 @@ export function GraphEditor() {
               "cdl",
               "contrast",
               "saturation",
+              "whiteBalance",
               "output",
             ] as const
           ).map((type) => (
             <button key={type} onClick={() => state.add(type)}>
               Add{" "}
-              {type === "cdl"
-                ? "CDL"
-                : type === "cst"
-                  ? "CST"
-                  : type[0].toUpperCase() + type.slice(1)}
+              {type === "whiteBalance"
+                ? "White Balance"
+                : type === "cdl"
+                  ? "CDL"
+                  : type === "cst"
+                    ? "CST"
+                    : type[0].toUpperCase() + type.slice(1)}
             </button>
           ))}
           <button onClick={state.undo} disabled={!state.past.length}>

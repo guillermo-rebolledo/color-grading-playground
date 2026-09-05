@@ -1,5 +1,8 @@
+import { whiteBalanceMatrix } from "./whiteBalance";
+import { gamutMatrices } from "./colourMatrices";
 import {
   defaultColour,
+  matrixShader,
   encodingKey,
   validEncoding,
   transformShader,
@@ -8,12 +11,21 @@ import {
   type ColourSettings,
 } from "./colour";
 export type NodeType =
-  "source" | "exposure" | "cst" | "cdl" | "contrast" | "saturation" | "output";
+  | "source"
+  | "exposure"
+  | "cst"
+  | "cdl"
+  | "contrast"
+  | "saturation"
+  | "whiteBalance"
+  | "output";
 export type GradingNode = {
   id: string;
   type: NodeType;
   position: { x: number; y: number };
   data: {
+    temperature?: number;
+    tint?: number;
     stops?: number;
     slope?: [number, number, number];
     offset?: [number, number, number];
@@ -120,6 +132,7 @@ export function inspectGraph(
         "cdl",
         "contrast",
         "saturation",
+        "whiteBalance",
         "output",
       ].includes(node.type)
     )
@@ -149,6 +162,17 @@ export function inspectGraph(
         Math.fround(node.data.pivot!) <= 0)
     )
       throw new Error("Contrast amount and pivot must be finite and positive.");
+    if (
+      node.type === "whiteBalance" &&
+      (!Number.isFinite(node.data.temperature) ||
+        node.data.temperature! < 1667 ||
+        node.data.temperature! > 25000 ||
+        !Number.isFinite(node.data.tint) ||
+        Math.abs(node.data.tint!) > 100)
+    )
+      throw new Error(
+        "White Balance requires temperature 1667–25000 K and tint −100 to +100.",
+      );
     if (node.type === "cdl") {
       for (const key of ["slope", "offset", "power"] as const) {
         const value = node.data[key];
@@ -250,9 +274,12 @@ export function encodingFlow(
       warnings.push(
         `${node.id}: CST from encoding differs from its connected input. Check the declaration.`,
       );
-    if (node.type === "exposure" && input.transfer !== "linear")
+    if (
+      (node.type === "exposure" || node.type === "whiteBalance") &&
+      input.transfer !== "linear"
+    )
       warnings.push(
-        `${node.id}: Exposure expects linear light. Insert a CST before this node.`,
+        `${node.id}: ${node.type === "whiteBalance" ? "White Balance" : "Exposure"} expects linear light. Insert a CST before this node.`,
       );
     encodings.set(
       node.id,
@@ -302,6 +329,13 @@ export function compileGraph(graph: GradingGraph) {
     const input = index.get(
       graph.edges.find((e) => e.target === node.id)!.source,
     )!;
+    if (node.type === "whiteBalance") {
+      const primaries = flow.inputs.get(node.id)!.primaries;
+      const gamut = gamutMatrices[primaries];
+      const adaptation = `mat3(${whiteBalanceMatrix(primaries, node.data.temperature!, node.data.tint!).map(scalar).join(", ")})`;
+      const xyz = matrixShader(gamut.toXYZ, `v${input}`);
+      return `vec3 v${i} = ${matrixShader(gamut.fromXYZ, `${adaptation} * ${xyz}`)};`;
+    }
     if (node.type === "exposure") {
       return `vec3 v${i} = v${input} * exp2(${scalar(node.data.stops!)});`;
     }

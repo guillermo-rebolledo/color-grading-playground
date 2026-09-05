@@ -110,7 +110,10 @@ export function transformShader(value: string, from: Encoding, to: Encoding) {
   return transfer(linear, to.transfer, true);
 }
 
-function matrixShader(matrix: readonly (readonly number[])[], value: string) {
+export function matrixShader(
+  matrix: readonly (readonly number[])[],
+  value: string,
+) {
   // GLSL matrix constructors consume columns.
   const columns = [0, 1, 2].flatMap((c) =>
     matrix.map((row) => row[c].toFixed(12)),

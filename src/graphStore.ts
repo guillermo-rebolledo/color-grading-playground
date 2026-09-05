@@ -128,7 +128,10 @@ export const useGraph = create<GraphState>()((set, get) => ({
       type,
       position: { x: 260, y: 144 + (graph.nodes.length % 3) * 112 },
       data:
-        type === "cdl" || type === "contrast" || type === "saturation"
+        type === "cdl" ||
+        type === "contrast" ||
+        type === "saturation" ||
+        type === "whiteBalance"
           ? structuredClone(adjustmentDefaults[type])
           : type === "cst"
             ? {
