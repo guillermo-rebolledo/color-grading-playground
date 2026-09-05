@@ -2,7 +2,7 @@
 
 A client-side still-image grading workspace with an editable node graph. Open a JPEG or PNG, then scrub or type an exposure from −6 to +6 stops. Reset with the Reset button or a double-click on the numeric control or slider. Images stay on your device.
 
-This implements [MEM-201](https://linear.app/memoji-inc/issue/MEM-201/upload-preview-and-adjust-exposure) , [MEM-202](https://linear.app/memoji-inc/issue/MEM-202/build-and-edit-grading-graphs), and [MEM-203](https://linear.app/memoji-inc/issue/MEM-203/configure-colour-management-and-cst-nodes). Start with Source → Exposure → Output, then add Exposure and Colour Space Transform (CST) nodes. High-bit-depth file import, camera-log transfers, LUT export, persistence, and offline caching are subsequent tickets.
+This implements [MEM-201](https://linear.app/memoji-inc/issue/MEM-201/upload-preview-and-adjust-exposure), [MEM-202](https://linear.app/memoji-inc/issue/MEM-202/build-and-edit-grading-graphs), and [MEM-203](https://linear.app/memoji-inc/issue/MEM-203/configure-colour-management-and-cst-nodes). Start with Source → Exposure → Output, then add Exposure and Colour Space Transform (CST) nodes. High-bit-depth file import, camera-log transfers, LUT export, persistence, and offline caching are subsequent tickets.
 
 ## Run
 

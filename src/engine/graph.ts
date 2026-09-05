@@ -1,5 +1,6 @@
 import {
   defaultColour,
+  encodingKey,
   validEncoding,
   transformShader,
   sameEncoding,
@@ -225,13 +226,15 @@ export function compileGraph(graph: GradingGraph) {
     ])
     .sort((a, b) => String(a).localeCompare(String(b)));
   const key = JSON.stringify([
-    graph.colour,
+    [graph.colour.input, graph.colour.working, graph.colour.output].map(
+      encodingKey,
+    ),
     ordered.map((n) => [
       n.type,
       n.type === "output"
         ? (n.data.clamp ?? "clamp")
         : n.type === "cst"
-          ? [n.data.from, n.data.to]
+          ? [encodingKey(n.data.from!), encodingKey(n.data.to!)]
           : null,
     ]),
     edges,
