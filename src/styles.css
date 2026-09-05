@@ -636,3 +636,75 @@ dd {
     transition: none;
   }
 }
+
+.flow-canvas {
+  height: 350px;
+}
+.flow-canvas .graph-node {
+  width: 185px;
+}
+.graph-toolbar {
+  min-height: 52px;
+  height: auto;
+  padding-block: 8px;
+  flex-wrap: wrap;
+}
+.graph-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.graph-actions button,
+.output-policy select {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 6px 10px;
+}
+.graph-feedback {
+  min-height: 34px;
+  padding: 8px 23px;
+  color: var(--muted);
+  font-size: 11px;
+  border-bottom: 1px solid var(--line);
+}
+.preview-paused {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  text-align: center;
+  background: #171a19f5;
+  color: #ecc1aa;
+  line-height: 1.8;
+  padding: 24px;
+}
+.output-policy {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.react-flow__handle {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+}
+.react-flow__edge-path {
+  stroke: #9cbba5;
+  stroke-width: 2;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: white;
+  stroke-width: 3;
+}
+/* Output is also a built-in React Flow type; its wrapper must not style our custom node. */
+.flow-canvas .react-flow__node-output {
+  padding: 0;
+  border: 0;
+  background: none;
+  width: auto;
+  text-align: left;
+  border-radius: 0;
+  box-shadow: none;
+}

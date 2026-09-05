@@ -1,8 +1,8 @@
 # Color Grading Playground
 
-A client-side still-image exposure workspace. Open a JPEG or PNG, then scrub or type an exposure from −6 to +6 stops. Reset with the Reset button or a double-click on the numeric control or slider. Images stay on your device.
+A client-side still-image grading workspace with an editable node graph. Open a JPEG or PNG, then scrub or type an exposure from −6 to +6 stops. Reset with the Reset button or a double-click on the numeric control or slider. Images stay on your device.
 
-This implements [MEM-201](https://linear.app/memoji-inc/issue/MEM-201/upload-preview-and-adjust-exposure): the first runnable slice of the node-based grader. The Source → Exposure → Output pipeline is fixed. Editable graphs, other colour encodings, high-bit-depth import, LUT export, persistence, and offline caching are subsequent tickets.
+This implements [MEM-201](https://linear.app/memoji-inc/issue/MEM-201/upload-preview-and-adjust-exposure) and [MEM-202](https://linear.app/memoji-inc/issue/MEM-202/build-and-edit-grading-graphs). Start with Source → Exposure → Output, then add and connect more Exposure nodes. Other colour encodings, high-bit-depth import, LUT export, persistence, and offline caching are subsequent tickets.
 
 ## Run
 
@@ -21,9 +21,21 @@ Vite prints the local address. To build a static distribution, run `npm run buil
 - EXIF orientation is applied during local `createImageBitmap` decoding. RGB remains straight alpha with browser colour conversion disabled. The original dimensions shown in the UI are the oriented dimensions.
 - The preview is reduced to at most 2048 pixels on its long edge. Only this preview is retained by the renderer; uploaded bytes are not sent to a server or persisted.
 - The shader decodes piecewise sRGB, multiplies linear RGB by `2^stops`, re-encodes piecewise sRGB, and clamps at Output. Alpha is unchanged and the browser composites it once over the checkerboard.
-- The shader program is compiled once per engine instance. Exposure changes bind a uniform and render the fixed graph again; there is no CPU colour evaluator.
+- Each reachable topology compiles to one shader program. Exposure changes bind uniforms; previously seen topologies reuse their cached program. Cache keys include node types, typed connections, and Output clamp policy, and exclude numeric parameters, IDs, positions, selection, and image data. There is no CPU colour evaluator.
 
-The public `GradingEngine` accepts top-to-bottom, straight-alpha sRGB `ImageData` or `ImageBitmap`, renders an exposure, and exposes top-to-bottom RGBA float pixel readback for integrations and verification. The graded pass uses an `RGBA16F` framebuffer, then blits to the visible canvas. `dispose()` releases GPU resources.
+The public `GradingEngine` accepts top-to-bottom, straight-alpha sRGB `ImageData` or `ImageBitmap`, renders a versioned `GradingGraph` (or a single exposure value for existing integrations), and exposes top-to-bottom RGBA float pixel readback for integrations and verification. The graded pass uses an `RGBA16F` framebuffer, then blits to the visible canvas. `dispose()` releases GPU resources.
+
+## Editing graphs
+
+- Add Source, Exposure, or Output from the graph toolbar. Source and Output are unique; delete an existing endpoint before replacing it. New nodes are selected in the inspector. Graph editing works before an image is loaded.
+- Drag nodes to move them on the 16-unit grid. Shift-drag empty canvas to box select, or Shift-click nodes to add to a selection. Use the canvas controls to zoom and fit.
+- Drag an RGB output port to an RGB input. An input accepts one connection. Select an edge and press Delete/Backspace (or use Delete selection) before replacing it. Invalid ports, occupied inputs, and cycles produce feedback. Mask connections are rejected because these three node types only have RGB ports.
+- Exposure supports typing, keyboard arrows, slider scrubbing, and double-click reset. Output selects clamping or unbounded values; the browser display still clips values outside its display range.
+- Copy/Paste or Ctrl/Cmd+C/V copies selected nodes and their internal edges using an in-memory graph clipboard. New IDs remain stable through undo/redo. Pasting a duplicate Source/Output is rejected as a whole; copy adjustments alone, or remove the original endpoints first. Text inputs retain native clipboard and undo behavior.
+- Undo/Redo or Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z (also Ctrl+Y) restores graph structure, positions, and parameters. One scrub, numeric editing session, or drag is one step. History keeps the latest 100 immutable graph snapshots and supports future node data without node-specific undo commands. Graph selection and the uploaded image are outside edit history.
+- An incomplete disconnected Exposure is a draft and does not affect active output. Missing active inputs or endpoints pause the preview with an explanation until repaired; the app does not display stale pixels as the current grade. Invalid parameter values, IDs, schemas, typed edges, or cycles are rejected by the engine before evaluation.
+
+`createGraph()` and `GradingEngine.validate(graph, draft?)` are public entry points for graph creation and validation. Schema version 1 stores stable node/edge IDs, parameters, Output's compile-time clamp policy, and canvas positions. Zustand owns the editable graph and history. This slice keeps all work in memory; reloading starts a fresh project.
 
 ## Compatibility
 
@@ -43,7 +55,7 @@ npm run build
 npm test
 ```
 
-Linux CI installs browser system dependencies with `npx playwright install --with-deps chromium`. Tests run at the agreed public engine and browser-workflow boundaries. They cover analytical exposure values, alpha, pixel orientation, no recompilation on parameter changes, JPEG EXIF orientation, PNG compositing, preview size, numeric entry/reset, malformed-file recovery, and unsupported-device feedback. No real user images are used as fixtures.
+Linux CI installs browser system dependencies with `npx playwright install --with-deps chromium`. Tests run at the agreed public engine and browser-workflow boundaries. They cover analytical exposure values, alpha, pixel orientation, no recompilation on parameter changes, JPEG EXIF orientation, PNG compositing, preview size, numeric entry/reset, malformed-file recovery, and unsupported-device feedback. Graph tests additionally cover topology and enum cache reuse, serial exposure highlight recovery, validation failures, typed connections, internal-edge copy/paste, stable IDs, keyboard history, box selection, snapping, and scrub coalescing. No real user images are used as fixtures.
 
 ## References
 

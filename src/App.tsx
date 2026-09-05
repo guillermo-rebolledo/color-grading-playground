@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { GradingEngine } from "./engine/GradingEngine";
 import { loadImage } from "./engine/loadImage";
+import { useGraph } from "./graphStore";
+import { GraphEditor } from "./GraphEditor";
 import "./styles.css";
 
 type ImageInfo = {
@@ -15,10 +17,14 @@ function ExposureControl({
   value,
   disabled,
   onChange,
+  onBegin,
+  onEnd,
 }: {
   value: number;
   disabled: boolean;
   onChange: (value: number) => void;
+  onBegin: () => void;
+  onEnd: () => void;
 }) {
   const [draft, setDraft] = useState(value.toFixed(2));
   const editing = useRef(false);
@@ -75,10 +81,12 @@ function ExposureControl({
           }}
           onFocus={() => {
             editing.current = true;
+            onBegin();
           }}
           onBlur={() => {
             editing.current = false;
             commit();
+            onEnd();
           }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
@@ -98,6 +106,30 @@ function ExposureControl({
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(Number(event.target.value))}
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          onBegin();
+        }}
+        onPointerUp={onEnd}
+        onPointerCancel={onEnd}
+        onLostPointerCapture={onEnd}
+        onKeyDown={(event) => {
+          if (
+            [
+              "ArrowLeft",
+              "ArrowRight",
+              "ArrowUp",
+              "ArrowDown",
+              "Home",
+              "End",
+              "PageUp",
+              "PageDown",
+            ].includes(event.key)
+          )
+            onBegin();
+        }}
+        onKeyUp={onEnd}
+        onBlur={onEnd}
         onDoubleClick={() => onChange(0)}
       />
       <div className="range-labels">
@@ -120,8 +152,11 @@ export default function App() {
   const fileInput = useRef<HTMLInputElement>(null);
   const request = useRef(0);
   const [image, setImage] = useState<ImageInfo | null>(null);
-  const [stops, setStops] = useState(0);
-  const stopsRef = useRef(stops);
+  const graphState = useGraph();
+  const { graph } = graphState;
+  const selected = graph.nodes.find((n) => n.selected);
+  const graphError = GradingEngine.validate(graph);
+  const [renderError, setRenderError] = useState("");
   const [error, setError] = useState("");
   const [capabilityError, setCapabilityError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -151,18 +186,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    stopsRef.current = stops;
-    if (image && engine.current && !capabilityError) {
+    if (image && engine.current && !capabilityError && !graphError) {
       const frame = requestAnimationFrame(() => {
         try {
-          engine.current?.render(stops);
+          engine.current?.render(graph);
+          setRenderError("");
         } catch (cause) {
-          setCapabilityError(message(cause));
+          setRenderError(message(cause));
         }
       });
       return () => cancelAnimationFrame(frame);
     }
-  }, [stops, image, capabilityError]);
+  }, [graph, graphError, image, capabilityError]);
 
   async function openFile(file: File | undefined) {
     if (!file || !engine.current || capabilityError) return;
@@ -174,7 +209,10 @@ export default function App() {
       try {
         if (current !== request.current || !engine.current) return;
         engine.current.setImage(loaded.bitmap);
-        engine.current.render(stopsRef.current);
+        const currentGraph = useGraph.getState().graph;
+        if (!GradingEngine.validate(currentGraph))
+          engine.current.render(currentGraph);
+
         setImage({
           name: loaded.name,
           originalWidth: loaded.originalWidth,
@@ -191,7 +229,7 @@ export default function App() {
       if (current === request.current) setLoading(false);
     }
   }
-  const disabled = !image || !!capabilityError;
+  const disabled = !!capabilityError;
   return (
     <main
       className="app-shell"
@@ -298,6 +336,13 @@ export default function App() {
                 <p>{capabilityError}</p>
               </div>
             )}
+            {image && (graphError || renderError) && (
+              <div className="preview-paused" role="alert">
+                Preview paused: {graphError || renderError}
+                <br />
+                Connect a valid graph to resume.
+              </div>
+            )}
             {loading && (
               <div className="loading-indicator" role="status">
                 Opening image…
@@ -338,15 +383,59 @@ export default function App() {
             <div className="selected-node">
               <span className="node-symbol">±</span>
               <div>
-                <h3>Exposure</h3>
-                <p>Linear light adjustment</p>
+                <h3>
+                  {selected
+                    ? selected.type[0].toUpperCase() + selected.type.slice(1)
+                    : "Select a node"}
+                </h3>
+                <p>
+                  {selected?.type === "exposure"
+                    ? "Linear light adjustment"
+                    : "RGB grading graph"}
+                </p>
               </div>
             </div>
-            <ExposureControl
-              value={stops}
-              disabled={disabled}
-              onChange={setStops}
-            />
+            {selected?.type === "exposure" && (
+              <ExposureControl
+                key={selected.id}
+                value={selected.data.stops!}
+                disabled={disabled}
+                onChange={(value) => graphState.parameter(selected.id, value)}
+                onBegin={graphState.begin}
+                onEnd={graphState.end}
+              />
+            )}
+            {selected?.type === "output" && (
+              <label className="output-policy">
+                Output range
+                <select
+                  aria-label="Output range"
+                  value={selected.data.clamp ?? "clamp"}
+                  onChange={(event) =>
+                    graphState.edit({
+                      ...graph,
+                      nodes: graph.nodes.map((n) =>
+                        n.id === selected.id
+                          ? {
+                              ...n,
+                              data: {
+                                ...n.data,
+                                clamp:
+                                  event.target.value === "unbounded"
+                                    ? "unbounded"
+                                    : "clamp",
+                              },
+                            }
+                          : n,
+                      ),
+                    })
+                  }
+                >
+                  <option value="clamp">Clamp to 0–1</option>
+                  <option value="unbounded">Allow out-of-range</option>
+                </select>
+              </label>
+            )}
             <div className="space-info">
               <span className="eyebrow">COLOUR PIPELINE</span>
               <dl>
@@ -370,55 +459,14 @@ export default function App() {
             </p>
           </div>
           <div className="inspector-footer">
-            A simple place to start.
+            Build a grade, one connection at a time.
             <br />
-            <span>One image. One adjustment.</span>
+            <span>Your edits are reversible.</span>
           </div>
         </aside>
       </section>
 
-      <section className="graph-panel" aria-label="Fixed grading pipeline">
-        <div className="panel-bar">
-          <h2>Pipeline</h2>
-          <span>Source → Exposure → Output</span>
-          <span className="fixed-label">Fixed graph</span>
-        </div>
-        <div className="graph-canvas">
-          <div className="graph-node">
-            <div className="node-top">
-              <span className="node-symbol">▧</span>
-              <h3>Source</h3>
-              <span>01</span>
-            </div>
-            <p>{image ? "sRGB image" : "Waiting for image"}</p>
-            <i className="port output" />
-          </div>
-          <div className="edge" aria-hidden="true" />
-          <div className="graph-node active">
-            <i className="port input" />
-            <div className="node-top">
-              <span className="node-symbol">±</span>
-              <h3>Exposure</h3>
-              <span>02</span>
-            </div>
-            <p>
-              {stops >= 0 ? "+" : ""}
-              {stops.toFixed(2)} <span>stops</span>
-            </p>
-            <i className="port output" />
-          </div>
-          <div className="edge" aria-hidden="true" />
-          <div className="graph-node">
-            <i className="port input" />
-            <div className="node-top">
-              <span className="node-symbol">↗</span>
-              <h3>Output</h3>
-              <span>03</span>
-            </div>
-            <p>sRGB display</p>
-          </div>
-        </div>
-      </section>
+      <GraphEditor />
       <footer className="footer">
         <span>Colour, one pixel at a time.</span>
         <p>
