@@ -1,0 +1,40 @@
+{
+  "name": "color-grading-playground",
+  "version": "0.1.0",
+  "description": "Client-side color grading playground",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:engine": "playwright test tests/engine.spec.ts",
+    "preview": "vite preview",
+    "format:check": "prettier --check ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guillermo-rebolledo/color-grading-playground.git"
+  },
+  "keywords": [],
+  "type": "module",
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.4.1",
+    "@types/pngjs": "^6.0.5",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
