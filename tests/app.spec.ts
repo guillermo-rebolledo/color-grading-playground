@@ -394,13 +394,11 @@ test("rebuild the active graph with Delete and resume live exposure rendering", 
     fixture.data[i + 3] = 255;
   }
   await page.goto("/");
-  await page
-    .getByLabel("Choose image")
-    .setInputFiles({
-      name: "gray.png",
-      mimeType: "image/png",
-      buffer: PNG.sync.write(fixture),
-    });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "gray.png",
+    mimeType: "image/png",
+    buffer: PNG.sync.write(fixture),
+  });
   await page.locator('.react-flow__node[data-id="exposure"]').click();
   await page.keyboard.press("Delete");
   await expect(page.locator(".react-flow__node")).toHaveCount(2);
