@@ -72,6 +72,11 @@ ARRI LogC3 EI 800 and Sony S-Log3 use their published piecewise log/linear-toe
 functions. See [camera-log workflows](camera-log.md) for pinned references,
 coefficients, gamut chromaticities, precision charts, and encoding metadata.
 
+DaVinci Intermediate and Apple Log, including direct DaVinci Wide Gamut support,
+are documented in [Intermediate and Apple Log](intermediate-apple-log.md).
+Apple Log retains its published quadratic toe and floor, rather than extending
+a linear toe to all negative values.
+
 ## Gamuts and white adaptation
 
 | Primaries  | Red xy       | Green xy     | Blue xy      | White xy            |
