@@ -872,3 +872,50 @@ dd {
 .sample-provenance a {
   color: var(--accent);
 }
+
+.curve-plot {
+  width: 100%;
+  aspect-ratio: 1;
+  touch-action: none;
+  color: #d9e3ed;
+  background: #111820;
+}
+.curve-grid {
+  fill: none;
+  stroke: #3a4551;
+  stroke-width: 0.6;
+}
+.curve-plot circle {
+  fill: currentColor;
+  stroke: #111820;
+  stroke-width: 2;
+  cursor: grab;
+}
+.curve-plot circle:focus {
+  outline: none;
+  stroke: #fff;
+  stroke-width: 3;
+}
+.curve-r {
+  color: #f48e89;
+}
+.curve-g {
+  color: #92d5a6;
+}
+.curve-b {
+  color: #94b9f6;
+}
+.curve-actions {
+  display: flex;
+  gap: 8px;
+}
+.curve-controls fieldset label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+.curve-controls input {
+  width: 100px;
+}

@@ -1,3 +1,4 @@
+import { CurveControls } from "./CurveControls";
 import { useEffect, useRef, useState } from "react";
 import type { GradingNode } from "./engine/GradingEngine";
 import { useGraph } from "./graphStore";
@@ -201,6 +202,8 @@ function ColourWheel({
 
 export function AdjustmentControls({ node }: { node: GradingNode }) {
   const { updateParameters, end } = useGraph();
+  if (node.type === "curves")
+    return <CurveControls key={node.id} node={node} />;
   if (
     node.type !== "cdl" &&
     node.type !== "contrast" &&

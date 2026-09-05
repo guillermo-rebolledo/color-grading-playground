@@ -1,3 +1,10 @@
+import {
+  bakeCurve,
+  curveChannels,
+  curveShader,
+  validateCurves,
+  type Curves,
+} from "./curves";
 import { whiteBalanceMatrix } from "./whiteBalance";
 import { gamutMatrices } from "./colourMatrices";
 import {
@@ -17,6 +24,7 @@ export type NodeType =
   | "cdl"
   | "contrast"
   | "saturation"
+  | "curves"
   | "whiteBalance"
   | "output";
 export type GradingNode = {
@@ -24,6 +32,7 @@ export type GradingNode = {
   type: NodeType;
   position: { x: number; y: number };
   data: {
+    curves?: Curves;
     temperature?: number;
     tint?: number;
     stops?: number;
@@ -119,6 +128,7 @@ export function inspectGraph(
       );
   }
   for (const node of graph.nodes) {
+    if (node.type === "curves") validateCurves(node.data.curves);
     if (
       node.type === "cst" &&
       (!validEncoding(node.data.from) || !validEncoding(node.data.to))
@@ -133,6 +143,7 @@ export function inspectGraph(
         "contrast",
         "saturation",
         "whiteBalance",
+        "curves",
         "output",
       ].includes(node.type)
     )
@@ -321,6 +332,7 @@ export function compileGraph(graph: GradingGraph) {
     edges,
   ]);
   const uniforms: number[] = [];
+  const curves: ReturnType<typeof bakeCurve>[] = [];
   const scalar = (value: number) => `parameter${uniforms.push(value) - 1}`;
   const vector = (values: number[]) => `vec3(${values.map(scalar).join(", ")})`;
   const lines = ordered.map((node, i) => {
@@ -329,6 +341,17 @@ export function compileGraph(graph: GradingGraph) {
     const input = index.get(
       graph.edges.find((e) => e.target === node.id)!.source,
     )!;
+    if (node.type === "curves") {
+      const calls = curveChannels.map((channel) => {
+        const curve = bakeCurve(node.data.curves![channel]);
+        const name = `curve${curves.push(curve) - 1}`;
+        const start = scalar(curve.startSlope),
+          end = scalar(curve.endSlope);
+        return (value: string) =>
+          `sampleCurve(${name}, ${value}, ${start}, ${end})`;
+      });
+      return `vec3 v${i} = vec3(${["r", "g", "b"].map((c, j) => calls[j + 1](calls[0](`v${input}.${c}`))).join(", ")});`;
+    }
     if (node.type === "whiteBalance") {
       const primaries = flow.inputs.get(node.id)!.primaries;
       const gamut = gamutMatrices[primaries];
@@ -369,9 +392,11 @@ vec3 v${i} = mix(vec3(dot(sop${i}, vec3(0.2126, 0.7152, 0.0722))), sop${i}, ${sc
   return {
     key,
     uniforms,
-    declarations: uniforms
-      .map((_, i) => `uniform float parameter${i};`)
-      .join("\n"),
+    curves,
+    declarations:
+      curves.map((_, i) => `uniform highp sampler2D curve${i};`).join("\n") +
+      (curves.length ? curveShader : "") +
+      uniforms.map((_, i) => `uniform float parameter${i};`).join("\n"),
     body:
       lines.join("\n") + `\nresult = vec4(v${ordered.length - 1}, source.a);`,
   };
