@@ -5,12 +5,16 @@ export const transfers = {
   rec709: "Rec.709 OETF",
   gamma22: "Gamma 2.2",
   gamma24: "Gamma 2.4",
+  logc3: "ARRI LogC3 EI 800",
+  slog3: "Sony S-Log3",
 } as const;
 export const primaries = {
   rec709: "Rec.709 · D65",
   rec2020: "Rec.2020 · D65",
   "dci-p3": "DCI-P3 · DCI white",
   "display-p3": "Display P3 · D65",
+  "arri-wide-gamut3": "ARRI Wide Gamut 3 · D65",
+  "sgamut3-cine": "S-Gamut3.Cine · D65",
 } as const;
 export type Encoding = {
   transfer: keyof typeof transfers;
@@ -53,6 +57,12 @@ float decodeSrgb(float c) { if(c <= 0.04045) return c / 12.92; return pow((c + 0
 float encodeSrgb(float c) { if(c <= 0.0031308) return c * 12.92; return 1.055 * pow(c, 1.0 / 2.4) - 0.055; }
 float decode709(float c) { if(c < 0.081) return c / 4.5; return pow((c + 0.099) / 1.099, 1.0 / 0.45); }
 float encode709(float c) { if(c < 0.018) return c * 4.5; return 1.099 * pow(c, 0.45) - 0.099; }
+// ARRI Log C V3, 2017-03-09, EI 800 exposure-value coefficients.
+float decodeLogC3(float c) { if(c <= 5.367655 * 0.010591 + 0.092809) return (c - 0.092809) / 5.367655; return (pow(10.0, (c - 0.385537) / 0.247190) - 0.052272) / 5.555556; }
+float encodeLogC3(float c) { if(c <= 0.010591) return 5.367655 * c + 0.092809; return 0.247190 * log(5.555556 * c + 0.052272) / log(10.0) + 0.385537; }
+// Sony Technical Summary appendix, scene reflection, full-range CV / 1023.
+float decodeSLog3(float c) { if(c < 171.2102946929 / 1023.0) return (c * 1023.0 - 95.0) * 0.01125 / (171.2102946929 - 95.0); return pow(10.0, (c * 1023.0 - 420.0) / 261.5) * 0.19 - 0.01; }
+float encodeSLog3(float c) { if(c < 0.01125) return (c * (171.2102946929 - 95.0) / 0.01125 + 95.0) / 1023.0; return (420.0 + log((c + 0.01) / 0.19) / log(10.0) * 261.5) / 1023.0; }
 `;
 function transfer(value: string, type: Encoding["transfer"], encode: boolean) {
   if (type === "linear") return value;
@@ -60,7 +70,13 @@ function transfer(value: string, type: Encoding["transfer"], encode: boolean) {
     const gamma = type === "gamma22" ? "2.2" : "2.4";
     return `(sign(${value}) * pow(abs(${value}), vec3(${encode ? `1.0 / ${gamma}` : gamma})))`;
   }
-  const fn = `${encode ? "encode" : "decode"}${type === "srgb" ? "Srgb" : "709"}`;
+  const suffix = {
+    srgb: "Srgb",
+    rec709: "709",
+    logc3: "LogC3",
+    slog3: "SLog3",
+  }[type];
+  const fn = `${encode ? "encode" : "decode"}${suffix}`;
   return `vec3(${["r", "g", "b"].map((c) => `${fn}((${value}).${c})`).join(",")})`;
 }
 export function transformShader(value: string, from: Encoding, to: Encoding) {
