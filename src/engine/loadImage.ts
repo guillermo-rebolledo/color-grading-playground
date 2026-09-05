@@ -7,7 +7,7 @@ export interface LoadedImage {
   originalHeight: number;
 }
 
-/** Decode locally, honoring EXIF orientation but explicitly treating RGB as sRGB. */
+/** Decode locally, honoring EXIF orientation without applying embedded colour profiles. */
 export async function loadImage(file: File): Promise<LoadedImage> {
   if (!["image/jpeg", "image/png"].includes(file.type))
     throw new Error("Choose a JPEG or PNG image.");

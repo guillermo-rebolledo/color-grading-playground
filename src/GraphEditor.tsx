@@ -13,14 +13,19 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useGraph, connectionError } from "./graphStore";
-import { GradingEngine, type GradingNode } from "./engine/GradingEngine";
+import {
+  GradingEngine,
+  encodingLabel,
+  type GradingNode,
+} from "./engine/GradingEngine";
 
 function GradeNode({
   type,
   data,
   selected,
 }: NodeProps<Node<GradingNode["data"]>>) {
-  const title = type[0].toUpperCase() + type.slice(1);
+  const colour = useGraph((s) => s.graph.colour);
+  const title = type === "cst" ? "CST" : type[0].toUpperCase() + type.slice(1);
   return (
     <div className={`graph-node ${selected ? "active" : ""}`}>
       {type !== "source" && (
@@ -36,11 +41,13 @@ function GradeNode({
         <span>RGB</span>
       </div>
       <p>
-        {type === "exposure"
-          ? `${(data.stops ?? 0).toFixed(2)} stops`
-          : type === "source"
-            ? "sRGB image"
-            : "sRGB display"}
+        {type === "cst"
+          ? `${encodingLabel(data.from!)} → ${encodingLabel(data.to!)}`
+          : type === "exposure"
+            ? `${(data.stops ?? 0).toFixed(2)} stops`
+            : type === "source"
+              ? encodingLabel(colour.input)
+              : encodingLabel(colour.output)}
       </p>
       {type !== "output" && (
         <Handle
@@ -53,7 +60,12 @@ function GradeNode({
     </div>
   );
 }
-const nodeTypes = { source: GradeNode, exposure: GradeNode, output: GradeNode };
+const nodeTypes = {
+  source: GradeNode,
+  exposure: GradeNode,
+  cst: GradeNode,
+  output: GradeNode,
+};
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   !!target.closest(
@@ -68,6 +80,7 @@ export function GraphEditor() {
     if (flow) void flow.fitView({ padding: 0.2, maxZoom: 1.25 });
   }, [flow, graph.nodes.length]);
   const error = GradingEngine.validate(graph);
+  const warnings = GradingEngine.warnings(graph);
   const removeSelection = () =>
     state.remove(
       graph.nodes.filter((n) => n.selected).map((n) => n.id),
@@ -92,9 +105,10 @@ export function GraphEditor() {
       <div className="panel-bar graph-toolbar">
         <h2>Graph</h2>
         <div className="graph-actions">
-          {(["source", "exposure", "output"] as const).map((type) => (
+          {(["source", "exposure", "cst", "output"] as const).map((type) => (
             <button key={type} onClick={() => state.add(type)}>
-              Add {type[0].toUpperCase() + type.slice(1)}
+              Add{" "}
+              {type === "cst" ? "CST" : type[0].toUpperCase() + type.slice(1)}
             </button>
           ))}
           <button onClick={state.undo} disabled={!state.past.length}>
@@ -129,6 +143,11 @@ export function GraphEditor() {
             ? `Preview paused: ${error}`
             : "Live graph · Drag RGB ports to connect · Shift-drag to box select · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
       </div>
+      {warnings.length > 0 && (
+        <div className="graph-feedback" role="status">
+          {warnings.join(" ")}
+        </div>
+      )}
       <div className="flow-canvas">
         <ReactFlow<GradingNode>
           onInit={setFlow}
