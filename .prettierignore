@@ -1,0 +1,8 @@
+node_modules
+dist
+test-results
+playwright-report
+AGENTS.md
+CLAUDE.md
+docs/agents
+package-lock.json
