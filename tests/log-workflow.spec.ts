@@ -1,3 +1,4 @@
+import { openNeutralGraph } from "./fixtures";
 import { test, expect } from "@playwright/test";
 import { PNG } from "pngjs";
 
@@ -12,7 +13,7 @@ for (const profile of [
   test(`${profile.name} precision chart grades live and keeps log output display managed`, async ({
     page,
   }) => {
-    await page.goto("/");
+    await openNeutralGraph(page);
     await page
       .getByLabel("Load precision chart")
       .selectOption(profile.transfer);

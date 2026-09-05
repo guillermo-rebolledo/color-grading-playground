@@ -159,6 +159,11 @@ export default function App() {
   const [image, setImage] = useState<ImageInfo | null>(null);
   const graphState = useGraph();
   const { graph } = graphState;
+  const solo = graph.nodes.some(
+    (n) => n.id === graphState.solo && n.type === "qualifier",
+  )
+    ? graphState.solo
+    : null;
   const selected = graph.nodes.find((n) => n.selected);
   const graphError = GradingEngine.validate(graph);
   const [renderError, setRenderError] = useState("");
@@ -195,7 +200,7 @@ export default function App() {
     if (image && engine.current && !capabilityError && !graphError) {
       const frame = requestAnimationFrame(() => {
         try {
-          engine.current?.render(graph);
+          engine.current?.render(graph, solo ?? undefined);
           setRenderError("");
         } catch (cause) {
           setRenderError(message(cause));
@@ -203,7 +208,7 @@ export default function App() {
       });
       return () => cancelAnimationFrame(frame);
     }
-  }, [graph, graphError, image, capabilityError]);
+  }, [graph, graphError, image, capabilityError, solo]);
 
   async function openFile(file: File | undefined, sample?: Sample) {
     if ((!file && !sample) || !engine.current || capabilityError) return;
@@ -459,12 +464,15 @@ export default function App() {
               <div>
                 <h3>
                   {selected
-                    ? selected.type === "cdl"
-                      ? "CDL"
-                      : selected.type === "cst"
-                        ? "Colour Space Transform"
-                        : selected.type[0].toUpperCase() +
-                          selected.type.slice(1)
+                    ? (selected.data.label ??
+                      (selected.type === "qualifier"
+                        ? "HSL Qualifier"
+                        : selected.type === "cdl"
+                          ? "CDL"
+                          : selected.type === "cst"
+                            ? "Colour Space Transform"
+                            : selected.type[0].toUpperCase() +
+                              selected.type.slice(1)))
                     : "Select a node"}
                 </h3>
                 <p>

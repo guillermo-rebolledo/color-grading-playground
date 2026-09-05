@@ -1,3 +1,4 @@
+import { openNeutralGraph } from "./fixtures";
 import { test, expect } from "@playwright/test";
 
 test("load a private image, adjust exposure, reset, and recover from a bad file", async ({
@@ -8,7 +9,7 @@ test("load a private image, adjust exposure, reset, and recover from a bad file"
     if (["POST", "PUT", "PATCH"].includes(request.method()))
       uploads.push(request.url());
   });
-  await page.goto("/");
+  await openNeutralGraph(page);
   const png = await page.evaluate(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 40;
@@ -46,7 +47,7 @@ test("load a private image, adjust exposure, reset, and recover from a bad file"
 test("numeric entry supports signed decimals and scrubbing resets on double click", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   const png = await page.evaluate(() => {
     const canvas = document.createElement("canvas");
     return canvas.toDataURL().split(",")[1];
@@ -76,7 +77,7 @@ test("numeric entry supports signed decimals and scrubbing resets on double clic
 test("honors JPEG EXIF orientation in the visible preview", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   const jpeg = await page.evaluate(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 40;
@@ -122,7 +123,7 @@ test("renders PNG transparency without premultiplying the grade twice", async ({
     source.data[i + 2] = 20;
     source.data[i + 3] = 128;
   }
-  await page.goto("/");
+  await openNeutralGraph(page);
   await page.getByLabel("Choose image").setInputFiles({
     name: "alpha.png",
     mimeType: "image/png",
@@ -159,7 +160,7 @@ test("explains missing GPU capability instead of enabling a broken preview", asy
       },
     });
   });
-  await page.goto("/");
+  await openNeutralGraph(page);
   await expect(page.getByRole("alert")).toContainText("WebGL2 is unavailable");
   await expect(page.getByRole("button", { name: "Open image" })).toBeDisabled();
   await expect(page.getByRole("slider")).toBeDisabled();
@@ -171,7 +172,7 @@ test("caps uploaded preview dimensions while keeping original size visible", asy
   const { PNG } = await import("pngjs");
   const source = new PNG({ width: 4096, height: 16 });
   source.data.fill(255);
-  await page.goto("/");
+  await openNeutralGraph(page);
   await page.getByLabel("Choose image").setInputFiles({
     name: "wide.png",
     mimeType: "image/png",
@@ -194,7 +195,7 @@ test("a tall image fits the viewer instead of stretching the workspace", async (
   const { PNG } = await import("pngjs");
   const source = new PNG({ width: 400, height: 1600 });
   source.data.fill(128);
-  await page.goto("/");
+  await openNeutralGraph(page);
   await page.getByLabel("Choose image").setInputFiles({
     name: "portrait.png",
     mimeType: "image/png",
@@ -209,7 +210,7 @@ test("a tall image fits the viewer instead of stretching the workspace", async (
 test("copy and paste selected adjustments and undo graph and parameter edits", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   await page.getByRole("button", { name: "Add Exposure", exact: true }).click();
   await expect(page.locator(".react-flow__node")).toHaveCount(4);
   const value = page.getByRole("spinbutton", { name: "Exposure in stops" });
@@ -236,7 +237,7 @@ test("copy and paste selected adjustments and undo graph and parameter edits", a
 test("connect branches, reject occupied ports, and copy internal edges with keyboard history", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   await page.getByRole("button", { name: "Add Exposure", exact: true }).click();
   await page.getByRole("button", { name: "Fit View", exact: true }).click();
   const nodes = page.locator(".react-flow__node");
@@ -295,7 +296,7 @@ test("connect branches, reject occupied ports, and copy internal edges with keyb
 test("one scrub is one undo step and node moves snap and undo", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   const slider = page.getByRole("slider", { name: "Scrub exposure" });
   const box = (await slider.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -333,7 +334,7 @@ test("one scrub is one undo step and node moves snap and undo", async ({
 test("box selection and endpoint deletion are reversible, and incomplete output pauses preview", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   const png = await page.evaluate(() => {
     const canvas = document.createElement("canvas");
     return canvas.toDataURL().split(",")[1];
@@ -393,7 +394,7 @@ test("rebuild the active graph with Delete and resume live exposure rendering", 
     fixture.data[i + 2] = 128;
     fixture.data[i + 3] = 255;
   }
-  await page.goto("/");
+  await openNeutralGraph(page);
   await page.getByLabel("Choose image").setInputFiles({
     name: "gray.png",
     mimeType: "image/png",
@@ -448,7 +449,7 @@ test("rebuild the active graph with Delete and resume live exposure rendering", 
 test("keyboard undo and redo work from the focused exposure slider", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   const slider = page.getByRole("slider", { name: "Scrub exposure" });
   const value = page.getByRole("spinbutton", { name: "Exposure in stops" });
   await slider.focus();
@@ -463,7 +464,7 @@ test("keyboard undo and redo work from the focused exposure slider", async ({
 test("project colour settings and CST edits share reversible graph history", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openNeutralGraph(page);
   await expect(page.getByLabel("Input transfer", { exact: true })).toHaveValue(
     "srgb",
   );
