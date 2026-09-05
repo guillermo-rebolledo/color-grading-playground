@@ -191,3 +191,92 @@ test("shows current output scopes while editing and hides measurements when the 
   await expect(page.getByLabel("Scope status")).toContainText("Scopes paused");
   await expect(page.getByRole("img", { name: "RGB histogram" })).toHaveCount(0);
 });
+
+test("discards an in-flight response while grading and animation frames continue", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const result = await page.evaluate(async () => {
+    const { GradingEngine, createGraph } = await import(
+      /* @vite-ignore */ "/src/engine/GradingEngine.ts" as string
+    );
+    const engine = new GradingEngine(document.createElement("canvas"));
+    const graph = createGraph();
+    graph.colour.input = graph.colour.output = { ...graph.colour.working };
+    engine.setImage({
+      width: 1,
+      height: 1,
+      data: new Float32Array([0.25, 0.25, 0.25, 1]),
+    });
+    const post = Worker.prototype.postMessage;
+    let release: (() => void) | undefined;
+    let started!: () => void;
+    const busy = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    Worker.prototype.postMessage = function (
+      message: unknown,
+      options?: Transferable[] | StructuredSerializeOptions,
+    ) {
+      const send = () =>
+        post.call(
+          this,
+          message,
+          Array.isArray(options) ? { transfer: options } : options,
+        );
+      if (!release) {
+        release = send;
+        started();
+      } else send();
+    };
+    try {
+      const first = engine.measureScopes(graph);
+      await busy;
+      graph.nodes[1].data.stops = 1;
+      graph.colour.output = { ...graph.colour.output, transfer: "srgb" };
+      const latest = engine.measureScopes(graph);
+      const cancelled = await first;
+      let finished = false;
+      void latest.then(() => {
+        finished = true;
+      });
+      const start = performance.now();
+      let frames = 0;
+      for (let i = 0; i < 3; i++) {
+        engine.render(graph);
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => {
+            frames++;
+            resolve();
+          }),
+        );
+      }
+      const elapsed = performance.now() - start;
+      const waiting = !finished;
+      const edited = Array.from(engine.readPixels()) as number[];
+      release!();
+      const report = await latest;
+      return {
+        cancelled,
+        frames,
+        elapsed,
+        waiting,
+        edited,
+        transfer: report.encoding.transfer,
+        half: report.histogram[0][188],
+        old: report.histogram[0][64],
+      };
+    } finally {
+      Worker.prototype.postMessage = post;
+      engine.dispose();
+    }
+  });
+  expect(result.cancelled).toBeNull();
+  expect(result.waiting).toBe(true);
+  expect(result.frames).toBe(3);
+  expect(result.elapsed).toBeLessThan(1000);
+  expect(result.edited[0]).toBeCloseTo(0.735357, 4);
+  expect(result.transfer).toBe("srgb");
+  expect(result.half).toBe(1);
+  expect(result.old).toBe(0);
+});

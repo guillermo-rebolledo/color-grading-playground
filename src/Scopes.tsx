@@ -162,19 +162,21 @@ export function Scopes({
                 ? `${report.width} × ${report.height} · ${report.sampleCount.toLocaleString()} measured pixels · transparent pixels excluded`
                 : "Updating scopes…"))}
       </p>
-      {report && (
-        <>
-          <div className="scope-plots">
-            <ScopePlot report={report} parade={false} />
-            <ScopePlot report={report} parade />
-          </div>
-          <p className="scope-description">
-            RGB counts below 0: {report.below.join(" / ")} · above 1:{" "}
-            {report.above.join(" / ")} · non-finite excluded:{" "}
-            {report.nonFinite.join(" / ")}
-          </p>
-        </>
-      )}
+      <div className="scope-measurement">
+        {report && (
+          <>
+            <div className="scope-plots">
+              <ScopePlot report={report} parade={false} />
+              <ScopePlot report={report} parade />
+            </div>
+            <p className="scope-description">
+              RGB counts below 0: {report.below.join(" / ")} · above 1:{" "}
+              {report.above.join(" / ")} · non-finite excluded:{" "}
+              {report.nonFinite.join(" / ")}
+            </p>
+          </>
+        )}
+      </div>
     </section>
   );
 }

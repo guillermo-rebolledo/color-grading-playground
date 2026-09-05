@@ -1193,3 +1193,13 @@ dd {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Keep graph ports stationary while measurements are invalidated or replaced. */
+.scope-measurement {
+  min-height: 214px;
+}
+@media (max-width: 700px) {
+  .scope-measurement {
+    min-height: 414px;
+  }
+}
