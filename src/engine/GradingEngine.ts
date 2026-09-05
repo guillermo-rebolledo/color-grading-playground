@@ -19,6 +19,7 @@ import { previewSize } from "./previewSize";
 import { isCubeSize } from "./cube";
 export {
   cubeSizes,
+  cubeTitleLength,
   defaultCubeSize,
   isCubeSize,
   cubeFileBytes,
@@ -82,8 +83,10 @@ export class GradingEngine {
   private framebuffer: WebGLFramebuffer | null = null;
   private disposed = false;
   private curveTextures: WebGLTexture[] = [];
-  private lattice: { format: LatticeFormat; internalFormat: number } | null =
-    null;
+  private latticeTarget: {
+    format: LatticeFormat;
+    internalFormat: number;
+  } | null = null;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", {
@@ -339,10 +342,13 @@ export class GradingEngine {
    */
   latticeSupport(): { format: LatticeFormat } {
     this.assertAvailable();
-    if (this.lattice) return { format: this.lattice.format };
+    if (this.latticeTarget) return { format: this.latticeTarget.format };
     const gl = this.gl;
+    // A linear identity lattice pushed one stop spans 0–2, covering values above one.
     const probe = createGraph();
     probe.colour.input = probe.colour.output = { ...probe.colour.working };
+    probe.nodes[1].data.stops = 1;
+    probe.nodes[2].data.clamp = "unbounded";
     const reasons: string[] = [];
     for (const [format, internalFormat, tolerance] of [
       ["RGBA32F", gl.RGBA32F, 1e-6],
@@ -356,7 +362,7 @@ export class GradingEngine {
             (step, channel) => {
               error = Math.max(
                 error,
-                Math.abs(samples[i * 4 + channel] - step / 3),
+                Math.abs(samples[i * 4 + channel] - (2 * step) / 3),
               );
             },
           );
@@ -364,7 +370,7 @@ export class GradingEngine {
           throw new Error(
             `${format} readback error ${error.toExponential(2)} exceeds ${tolerance}.`,
           );
-        this.lattice = { format, internalFormat };
+        this.latticeTarget = { format, internalFormat };
         return { format };
       } catch (cause) {
         reasons.push(
@@ -390,7 +396,7 @@ export class GradingEngine {
     return this.drawLattice(
       graph,
       size,
-      this.lattice!.internalFormat,
+      this.latticeTarget!.internalFormat,
       tileRows,
     );
   }
@@ -403,24 +409,26 @@ export class GradingEngine {
   ) {
     const gl = this.gl;
     const rows = size * size;
-    const limit = Math.min(
+    const textureLimit = Math.min(
       gl.getParameter(gl.MAX_TEXTURE_SIZE) as number,
       gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number,
-      (gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array)[1],
     );
-    if (size > limit)
+    const viewport = gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array;
+    if (size > Math.min(textureLimit, viewport[0]))
       throw new Error(
         "This graphics device cannot render a lattice this wide.",
       );
     if (tileRows !== undefined && (!Number.isInteger(tileRows) || tileRows < 1))
       throw new Error("Tile rows must be a positive integer.");
-    const tile = Math.min(rows, limit, tileRows ?? rows);
+    const tile = Math.min(rows, textureLimit, viewport[1], tileRows ?? rows);
     const program = this.prepare(graph);
     gl.uniform1i(gl.getUniformLocation(program, "lattice"), size);
     const rowLocation = gl.getUniformLocation(program, "latticeRow");
     const texture = gl.createTexture();
     const framebuffer = gl.createFramebuffer();
     const samples = new Float32Array(size * rows * 4);
+    // Clear any stale error so allocation and readback failures are attributed here.
+    gl.getError();
     try {
       if (!texture || !framebuffer)
         throw new Error("Could not allocate LUT resources.");
@@ -480,6 +488,7 @@ export class GradingEngine {
     } finally {
       gl.uniform1i(gl.getUniformLocation(program, "lattice"), 0);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
       gl.deleteTexture(texture);
       gl.deleteFramebuffer(framebuffer);
     }

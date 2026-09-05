@@ -7,21 +7,25 @@ export function isCubeSize(value: number): value is CubeSize {
   return (cubeSizes as readonly number[]).includes(value);
 }
 
-/** Printable ASCII, no quotes or control characters, at most 240 characters. */
+/** Adobe Cube titles are one quoted line; this is the longest title written or accepted. */
+export const cubeTitleLength = 240;
+
+/** Printable ASCII, no quotes or control characters, at most cubeTitleLength characters. */
 export function sanitizeCubeTitle(title: string) {
   const clean = title
     .replace(/[^\x20-\x7e]+/g, " ")
     .replace(/"/g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 240)
+    .slice(0, cubeTitleLength)
     .trim();
   return clean || "Grade";
 }
 
-/** Upper bound for a 0–1 lattice: headers with a 240-byte title, then 27 bytes per row. */
+/** Upper bound for a 0–1 lattice: four header lines with the longest title, then 27 bytes per row. */
 export function cubeFileBytes(size: number) {
-  return 340 + size ** 3 * 27;
+  const headers = cubeTitleLength + 100;
+  return headers + size ** 3 * 27;
 }
 
 const cell = (value: number) => (Object.is(value, -0) ? 0 : value).toFixed(6);

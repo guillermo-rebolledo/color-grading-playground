@@ -18,10 +18,11 @@ engine can preview is therefore exportable, and future nodes reuse this path.
   reachable node. Legal-range or out-of-domain sources are not expanded or
   extrapolated; the LUT covers the same full-range 0–1 container as the
   Source tag.
-- The range control is the Output node's clamp policy, shown again in the
-  export panel. The default clamps rows to 0–1; **Allow out-of-range** keeps
-  negative and above-one values in the file. Non-finite values abort the
-  export with an explanation instead of writing a partial file.
+- The range control edits the Output node's clamp policy; the inspector and
+  the export panel share one control and one undo step. The default clamps
+  rows to 0–1; **Allow out-of-range** keeps negative and above-one values in
+  the file. Non-finite values abort the export with an explanation instead of
+  writing a partial file.
 - 65³ files are about 7 MB; the panel warns before writing one. 33³ is
   sufficient for most grades.
 
@@ -45,9 +46,9 @@ tile height as a verification hook; forced tiling yields identical samples.
 
 `GradingEngine.latticeSupport()` probes once per engine and caches the result:
 
-1. Render a 4³ identity lattice through a linear identity graph into an
-   RGBA32F target and read it back as floats. Every sample must be within
-   1e−6 of its exact value.
+1. Render a 4³ identity lattice through a linear graph at +1 stop with an
+   unbounded Output, so samples span 0–2, into an RGBA32F target and read it
+   back as floats. Every sample must be within 1e−6 of its exact value.
 2. If that fails, repeat with an RGBA16F target. Half-float is accepted only
    when its own framebuffer check passes and every sample is within 1e−3 of
    its exact value. The panel then notes the reduced precision.

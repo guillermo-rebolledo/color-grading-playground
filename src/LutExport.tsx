@@ -4,14 +4,43 @@ import {
   GradingEngine,
   cubeFileBytes,
   cubeSizes,
+  cubeTitleLength,
   defaultCubeSize,
   encodingLabel,
   isCubeSize,
   sanitizeCubeTitle,
   serializeCube,
   type CubeSize,
+  type GradingNode,
   type LatticeFormat,
 } from "./engine/GradingEngine";
+
+/** The Output node's clamp policy; the inspector and LUT export edit the same value. */
+export function OutputRangeSelect({
+  output,
+  label,
+}: {
+  output: GradingNode | undefined;
+  label: string;
+}) {
+  const updateParameters = useGraph((s) => s.updateParameters);
+  return (
+    <select
+      aria-label={label}
+      value={output?.data.clamp ?? "clamp"}
+      disabled={!output}
+      onChange={(event) =>
+        output &&
+        updateParameters(output.id, {
+          clamp: event.target.value === "unbounded" ? "unbounded" : "clamp",
+        })
+      }
+    >
+      <option value="clamp">Clamp to 0–1</option>
+      <option value="unbounded">Allow out-of-range</option>
+    </select>
+  );
+}
 
 /** Result of the one-time float lattice probe; a reason disables export. */
 export type LatticeSupport = { format: LatticeFormat } | { reason: string };
@@ -81,7 +110,7 @@ export function LutExport({
         <input
           aria-label="LUT title"
           value={title}
-          maxLength={240}
+          maxLength={cubeTitleLength}
           onChange={(event) => setTitle(event.target.value)}
         />
       </label>
@@ -104,20 +133,7 @@ export function LutExport({
       </label>
       <label>
         Output range
-        <select
-          aria-label="LUT output range"
-          value={clamp}
-          disabled={!output}
-          onChange={(event) =>
-            output &&
-            graphState.updateParameters(output.id, {
-              clamp: event.target.value === "unbounded" ? "unbounded" : "clamp",
-            })
-          }
-        >
-          <option value="clamp">Clamp to 0–1</option>
-          <option value="unbounded">Allow out-of-range</option>
-        </select>
+        <OutputRangeSelect output={output} label="LUT output range" />
       </label>
       <p className="lut-summary">
         Maps {encodingLabel(graph.colour.input)} codes 0–1 to{" "}

@@ -43,11 +43,13 @@ async function evaluate(
 ) {
   return page.evaluate(
     async ({ graphSource, colours }) => {
-      const { GradingEngine, createGraph } = (await import(
+      const { GradingEngine, createGraph, createStarterGraph } = (await import(
         /* @vite-ignore */ "/src/engine/GradingEngine.ts" as string
       )) as typeof import("../src/engine/GradingEngine");
-      void createGraph;
-      const graph = eval(graphSource) as ReturnType<typeof createGraph>;
+      // The graph source may call either factory.
+      const graph = eval(graphSource) as ReturnType<
+        typeof createGraph | typeof createStarterGraph
+      >;
       const engine = new GradingEngine(document.createElement("canvas"));
       try {
         engine.setImage({
@@ -98,6 +100,8 @@ test("lattice samples come from the preview program, match image evaluation, and
       const compiled = compiles;
       const lattice = Array.from(engine.renderLattice(graph, 17));
       const tiled = Array.from(engine.renderLattice(graph, 17, 5));
+      const latticeCompiles = compiles - compiled;
+      // The identity ordering graph below is a different topology and may compile.
       const identity = createGraph();
       identity.colour.input = identity.colour.output = {
         transfer: "linear",
@@ -117,7 +121,7 @@ test("lattice samples come from the preview program, match image evaluation, and
       }
       return {
         support,
-        latticeCompiles: compiles - compiled,
+        latticeCompiles,
         lattice,
         tiled,
         ordering,
@@ -440,6 +444,23 @@ test("the inspector exports a titled cube that shares the Output range and warns
   expect(cube.size).toBe(17);
   expect(cube.table.length).toBe(17 ** 3 * 3);
   await expect(page.getByText("Saved Warm-Look-1.cube")).toBeVisible();
+  // The downloaded rows reproduce the unbounded starter grade at lattice points.
+  const lattice: [number, number, number][] = [
+    [0, 0, 0],
+    [1, 1, 1],
+    [0.5, 0.25, 0.75],
+    [1, 0.125, 0],
+  ];
+  const expected = await evaluate(
+    page,
+    `(() => { const g = createStarterGraph(); g.nodes.find((n) => n.type === "output").data.clamp = "unbounded"; return g; })()`,
+    lattice,
+  );
+  lattice.forEach((probe, i) =>
+    applyCube(cube, probe).forEach((value, channel) =>
+      expect(value).toBeCloseTo(expected[i][channel], 5),
+    ),
+  );
   // Removing the Output node disables export with a reason instead of failing.
   await page.evaluate(async () => {
     const { useGraph } = await import(

@@ -8,7 +8,7 @@ import { createLogChart, isLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
 import { ViewerNavigation } from "./ViewerNavigation";
-import { LutExport, type LatticeSupport } from "./LutExport";
+import { LutExport, OutputRangeSelect, type LatticeSupport } from "./LutExport";
 import type { GradingGraph } from "./engine/GradingEngine";
 import "./styles.css";
 
@@ -628,21 +628,7 @@ export default function App() {
             {selected?.type === "output" && (
               <label className="output-policy">
                 Output range
-                <select
-                  aria-label="Output range"
-                  value={selected.data.clamp ?? "clamp"}
-                  onChange={(event) =>
-                    graphState.updateParameters(selected.id, {
-                      clamp:
-                        event.target.value === "unbounded"
-                          ? "unbounded"
-                          : "clamp",
-                    })
-                  }
-                >
-                  <option value="clamp">Clamp to 0–1</option>
-                  <option value="unbounded">Allow out-of-range</option>
-                </select>
+                <OutputRangeSelect output={selected} label="Output range" />
               </label>
             )}
             <div className="space-info">
