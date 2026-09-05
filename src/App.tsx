@@ -3,7 +3,7 @@ import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
 import { GradingEngine, encodingLabel } from "./engine/GradingEngine";
 import { loadImage } from "./engine/loadImage";
-import { createLogChart, logCharts } from "./logCharts";
+import { createLogChart, isLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
 import "./styles.css";
@@ -307,7 +307,7 @@ export default function App() {
           disabled={disabled}
           onChange={(event) => {
             const profile = event.target.value;
-            if (profile === "logc3" || profile === "slog3") openChart(profile);
+            if (isLogChart(profile)) openChart(profile);
           }}
         >
           <option value="" disabled>

@@ -24,6 +24,10 @@ export const logCharts = {
   { name: string; encoding: Encoding; greys: number[] }
 >;
 
+export function isLogChart(profile: string): profile is keyof typeof logCharts {
+  return Object.hasOwn(logCharts, profile);
+}
+
 export function createLogChart(profile: keyof typeof logCharts): FloatImage {
   const { greys } = logCharts[profile];
   const black = greys[0],
