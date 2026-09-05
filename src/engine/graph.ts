@@ -278,10 +278,9 @@ export function inspectGraph(
   graph.nodes.forEach((n) => visit(n.id));
   const ordered: GradingNode[] = [];
   const output = solo
-    ? graph.nodes.find((n) => n.id === solo && n.type === "qualifier")
+    ? graph.nodes.find((n) => n.id === solo)
     : graph.nodes.find((n) => n.type === "output");
-  if (solo && !output)
-    throw new Error("Choose an HSL Qualifier to solo its mask.");
+  if (solo && !output) throw new Error("Choose an existing node to solo.");
   const collected = new Set<string>();
   const collect = (node: GradingNode) => {
     if (collected.has(node.id)) return;
@@ -355,7 +354,7 @@ export function encodingFlow(
           : input,
     );
   }
-  return { inputs, warnings };
+  return { inputs, encodings, warnings };
 }
 
 export function compileGraph(graph: GradingGraph, solo?: string) {

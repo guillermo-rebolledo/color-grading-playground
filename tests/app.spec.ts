@@ -316,6 +316,7 @@ test("one scrub is one undo step and node moves snap and undo", async ({
   await page.getByRole("button", { name: "Redo", exact: true }).click();
   await expect(value).toHaveValue(changed);
   const node = page.locator('.react-flow__node[data-id="exposure"]');
+  await page.locator(".flow-canvas").scrollIntoViewIfNeeded();
   const before = await node.getAttribute("style");
   const n = (await node.boundingBox())!;
   await page.mouse.move(n.x + 50, n.y + 20);

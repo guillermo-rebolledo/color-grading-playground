@@ -7,6 +7,8 @@ import { loadImage } from "./engine/loadImage";
 import { createLogChart, isLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
+import { ViewerNavigation } from "./ViewerNavigation";
+import type { GradingGraph } from "./engine/GradingEngine";
 import "./styles.css";
 
 type ImageInfo = {
@@ -159,11 +161,21 @@ export default function App() {
   const [image, setImage] = useState<ImageInfo | null>(null);
   const graphState = useGraph();
   const { graph } = graphState;
-  const solo = graph.nodes.some(
-    (n) => n.id === graphState.solo && n.type === "qualifier",
-  )
+  const solo = graph.nodes.some((n) => n.id === graphState.solo)
     ? graphState.solo
     : null;
+  const [comparison, setComparison] = useState<"off" | "before" | "A" | "B">(
+    "off",
+  );
+  const [snapshots, setSnapshots] = useState<{
+    A?: GradingGraph;
+    B?: GradingGraph;
+  }>({});
+  const [wipe, setWipe] = useState(0.5);
+  const [outOfRange, setOutOfRange] = useState(false);
+  useEffect(() => {
+    if (graphState.solo && !solo) useGraph.setState({ solo: null });
+  }, [graphState.solo, solo]);
   const selected = graph.nodes.find((n) => n.selected);
   const graphError = GradingEngine.validate(graph);
   const [renderError, setRenderError] = useState("");
@@ -200,7 +212,18 @@ export default function App() {
     if (image && engine.current && !capabilityError && !graphError) {
       const frame = requestAnimationFrame(() => {
         try {
-          engine.current?.render(graph, solo ?? undefined);
+          engine.current?.renderViewer(graph, {
+            solo: solo ?? undefined,
+            before: comparison === "before",
+            snapshot:
+              comparison === "A"
+                ? snapshots.A
+                : comparison === "B"
+                  ? snapshots.B
+                  : undefined,
+            wipe,
+            outOfRange,
+          });
           setRenderError("");
         } catch (cause) {
           setRenderError(message(cause));
@@ -208,7 +231,17 @@ export default function App() {
       });
       return () => cancelAnimationFrame(frame);
     }
-  }, [graph, graphError, image, capabilityError, solo]);
+  }, [
+    graph,
+    graphError,
+    image,
+    capabilityError,
+    solo,
+    comparison,
+    snapshots,
+    wipe,
+    outOfRange,
+  ]);
 
   async function openFile(file: File | undefined, sample?: Sample) {
     if ((!file && !sample) || !engine.current || capabilityError) return;
@@ -373,19 +406,89 @@ export default function App() {
                 ? "Display: sRGB · Rec.709 primaries"
                 : "Start with a still image"}
             </span>
-            <span className="view-mode">Fit</span>
           </div>
+          <div className="viewer-toolbar">
+            <label>
+              Compare{" "}
+              <select
+                aria-label="Compare view"
+                value={comparison}
+                disabled={!image}
+                onChange={(event) => {
+                  const mode = event.target.value;
+                  if (
+                    mode === "off" ||
+                    mode === "before" ||
+                    mode === "A" ||
+                    mode === "B"
+                  )
+                    setComparison(mode);
+                }}
+              >
+                <option value="off">Off</option>
+                <option value="before">Before / current</option>
+                <option value="A" disabled={!snapshots.A}>
+                  A / current
+                </option>
+                <option value="B" disabled={!snapshots.B}>
+                  B / current
+                </option>
+              </select>
+            </label>
+            {(["A", "B"] as const).map((slot) => (
+              <button
+                key={slot}
+                disabled={!image || !!graphError || !!capabilityError}
+                onClick={() =>
+                  setSnapshots((previous) => ({
+                    ...previous,
+                    [slot]: structuredClone(graph),
+                  }))
+                }
+              >
+                Capture {slot}
+              </button>
+            ))}
+            <button
+              disabled={!image}
+              aria-pressed={outOfRange}
+              onClick={() => setOutOfRange(!outOfRange)}
+            >
+              Out-of-range
+            </button>
+            <span>
+              {comparison !== "off"
+                ? `${comparison === "before" ? "Before" : `Snapshot ${comparison}`} ← wipe → `
+                : ""}
+              {solo
+                ? `Solo: ${graph.nodes.find((n) => n.id === solo)?.data.label ?? solo}`
+                : "Current grade"}
+            </span>
+          </div>
+          {outOfRange && (
+            <p className="viewer-legend">
+              Blue: below 0 · Orange: above 1 · Magenta: both. Any RGB channel
+              before output clamping, in output encoding (solo: node encoding).
+              Masks excluded.
+            </p>
+          )}
           <div
             className={`viewer ${image ? "has-image" : ""}`}
             aria-busy={loading}
           >
-            <div className="image-frame">
+            <ViewerNavigation
+              width={image?.width ?? 1}
+              height={image?.height ?? 1}
+              comparison={!!image && comparison !== "off"}
+              wipe={wipe}
+              onWipe={setWipe}
+            >
               <canvas
                 ref={canvas}
                 aria-label="Graded image preview"
                 className={image ? "" : "empty-canvas"}
               />
-            </div>
+            </ViewerNavigation>
             {!image && !capabilityError && (
               <div className="empty-state">
                 <div className="empty-frame" aria-hidden="true">

@@ -46,6 +46,14 @@ void main() {
 /** Full-range straight RGBA for numeric evaluation; never browser colour-converted. */
 export type FloatImage = { width: number; height: number; data: Float32Array };
 
+export type ViewerOptions = {
+  solo?: string;
+  before?: boolean;
+  snapshot?: GradingGraph;
+  wipe?: number;
+  outOfRange?: boolean;
+};
+
 export class GradingEngine {
   private readonly gl: WebGL2RenderingContext;
   private readonly programs = new Map<string, WebGLProgram>();
@@ -301,14 +309,24 @@ export class GradingEngine {
     );
   }
 
-  private prepareDisplay(output: Encoding) {
+  private prepareDisplay(
+    output: Encoding,
+    outOfRange = false,
+    clampOutput = false,
+  ) {
     const key = `viewer:${output.transfer}:${output.primaries}`;
     let program = this.programs.get(key);
     if (!program) {
       program = this.createProgram(
         fragmentSource(
-          "",
-          `result = vec4(clamp(${transformShader("source.rgb", output, displayEncoding)}, 0.0, 1.0), source.a);`,
+          "uniform bool rangeWarning; uniform bool clampOutput;",
+          `vec3 encoded = clampOutput ? clamp(source.rgb, 0.0, 1.0) : source.rgb;
+          vec3 displayed = clamp(${transformShader("encoded", output, displayEncoding)}, 0.0, 1.0);
+          bool below = any(lessThan(source.rgb, vec3(0.0)));
+          bool above = any(greaterThan(source.rgb, vec3(1.0)));
+          if (rangeWarning && source.a > 0.0 && (below || above))
+            displayed = below && above ? vec3(1.0, 0.0, 1.0) : below ? vec3(0.0, 0.4, 1.0) : vec3(1.0, 0.2, 0.0);
+          result = vec4(displayed, source.a);`,
           false,
         ),
       );
@@ -317,12 +335,108 @@ export class GradingEngine {
     const gl = this.gl;
     gl.useProgram(program);
     gl.uniform1i(gl.getUniformLocation(program, "sourceImage"), 0);
+    gl.uniform1i(
+      gl.getUniformLocation(program, "rangeWarning"),
+      Number(outOfRange),
+    );
+    gl.uniform1i(
+      gl.getUniformLocation(program, "clampOutput"),
+      Number(clampOutput),
+    );
   }
 
   render(input: number | GradingGraph, solo?: string) {
     this.assertAvailable();
     const graph = typeof input === "number" ? createGraph() : input;
     if (typeof input === "number") graph.nodes[1].data.stops = input;
+    this.drawGrade(graph, solo);
+    this.drawDisplay(this.viewEncoding(graph, solo));
+  }
+
+  private viewEncoding(graph: GradingGraph, solo?: string): Encoding {
+    if (!solo) return graph.colour.output;
+    if (graph.nodes.find((n) => n.id === solo)?.type === "qualifier")
+      return displayEncoding;
+    return encodingFlow(graph, inspectGraph(graph, false, solo)).encodings.get(
+      solo,
+    )!;
+  }
+
+  /** Viewer diagnostics leave readPixels() on the active grading output. */
+  renderViewer(graph: GradingGraph, options: ViewerOptions = {}) {
+    this.assertAvailable();
+    if (
+      !options.solo &&
+      !options.before &&
+      !options.snapshot &&
+      !options.outOfRange
+    ) {
+      this.render(graph);
+      return;
+    }
+    try {
+      this.drawView(graph, options.solo, options.outOfRange);
+      if (options.before || options.snapshot) {
+        const reference = options.snapshot ?? createGraph();
+        if (!options.snapshot) {
+          reference.colour = graph.colour;
+          reference.nodes.find((n) => n.type === "output")!.data =
+            graph.nodes.find((n) => n.type === "output")!.data;
+        }
+        this.drawView(
+          reference,
+          undefined,
+          options.outOfRange,
+          options.wipe ?? 0.5,
+        );
+      }
+    } finally {
+      this.gl.disable(this.gl.SCISSOR_TEST);
+      this.drawGrade(graph);
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
+  }
+
+  private drawView(
+    graph: GradingGraph,
+    solo?: string,
+    outOfRange = false,
+    wipe?: number,
+  ) {
+    const mask = graph.nodes.find((n) => n.id === solo)?.type === "qualifier";
+    const diagnostic = outOfRange && !mask;
+    const unclamped = diagnostic
+      ? {
+          ...graph,
+          nodes: graph.nodes.map((n) =>
+            n.type === "output"
+              ? { ...n, data: { ...n.data, clamp: "unbounded" as const } }
+              : n,
+          ),
+        }
+      : graph;
+    this.drawGrade(unclamped, solo);
+    const gl = this.gl;
+    if (wipe !== undefined) {
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(
+        0,
+        0,
+        Math.round(this.canvas.width * Math.max(0, Math.min(1, wipe))),
+        this.canvas.height,
+      );
+    }
+    const hasOutput =
+      !solo || graph.nodes.find((n) => n.id === solo)?.type === "output";
+    const clampOutput =
+      diagnostic &&
+      hasOutput &&
+      graph.nodes.find((n) => n.type === "output")?.data.clamp !== "unbounded";
+    this.drawDisplay(this.viewEncoding(graph, solo), diagnostic, clampOutput);
+    gl.disable(gl.SCISSOR_TEST);
+  }
+
+  private drawGrade(graph: GradingGraph, solo?: string) {
     this.prepare(graph, solo);
     if (!this.source) throw new Error("Load an image before rendering.");
     const gl = this.gl;
@@ -331,11 +445,17 @@ export class GradingEngine {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  private drawDisplay(
+    encoding: Encoding,
+    outOfRange = false,
+    clampOutput = false,
+  ) {
+    const gl = this.gl;
     // Display conversion is a separate pass. The float target retains output encoding.
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    this.prepareDisplay(
-      solo ? { transfer: "srgb", primaries: "rec709" } : graph.colour.output,
-    );
+    this.prepareDisplay(encoding, outOfRange, clampOutput);
     gl.bindTexture(gl.TEXTURE_2D, this.target);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     if (gl.getError() !== gl.NO_ERROR)
