@@ -1,3 +1,4 @@
+import { Scopes } from "./Scopes";
 import { createShareLink, readSharedProject } from "./sharedProject";
 import {
   parseProject,
@@ -745,6 +746,14 @@ export default function App() {
               </span>
             )}
           </div>
+          <Scopes
+            engine={engine.current}
+            graph={graph}
+            image={image}
+            paused={
+              loading || !!capabilityError || !!graphError || !!renderError
+            }
+          />
           {image?.sample && <SampleProvenance sample={image.sample} />}
           {error && (
             <div className="file-error" role="alert">
