@@ -131,7 +131,12 @@ test("renders PNG transparency without premultiplying the grade twice", async ({
   const canvas = page.getByLabel("Graded image preview");
   await expect(canvas).toBeVisible();
   const screenshot = PNG.sync.read(await canvas.screenshot());
-  const pixel = Array.from(screenshot.data.subarray(0, 3));
+  // Sample inside the canvas: its CSS position can fall between device pixels.
+  const center =
+    (Math.floor(screenshot.height / 2) * screenshot.width +
+      Math.floor(screenshot.width / 2)) *
+    4;
+  const pixel = Array.from(screenshot.data.subarray(center, center + 3));
   // Half-transparent source over the viewer's dark checker, with browser compositing once.
   expect(pixel[0]).toBeGreaterThan(105);
   expect(pixel[0]).toBeLessThan(116);
@@ -199,4 +204,180 @@ test("a tall image fits the viewer instead of stretching the workspace", async (
   await expect(canvas).toBeVisible();
   const bounds = await canvas.boundingBox();
   expect(bounds!.height).toBeLessThan(700);
+});
+
+test("copy and paste selected adjustments and undo graph and parameter edits", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add Exposure", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(4);
+  const value = page.getByRole("spinbutton", { name: "Exposure in stops" });
+  await value.fill("2");
+  await value.press("Enter");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(value).toHaveValue("0.00");
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(value).toHaveValue("2.00");
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await page.getByRole("button", { name: "Paste", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(5);
+  await expect(value).toHaveValue("2.00");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(4);
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(5);
+  await page
+    .getByRole("button", { name: "Delete selection", exact: true })
+    .click();
+  await expect(page.locator(".react-flow__node")).toHaveCount(4);
+});
+
+test("connect branches, reject occupied ports, and copy internal edges with keyboard history", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add Exposure", exact: true }).click();
+  await page.getByRole("button", { name: "Fit View", exact: true }).click();
+  const nodes = page.locator(".react-flow__node");
+  const original = page.locator('.react-flow__node[data-id="exposure"]');
+  const added = nodes
+    .filter({
+      has: page.getByRole("heading", { name: "Exposure", exact: true }),
+    })
+    .last();
+  const dragPort = async (
+    from: import("@playwright/test").Locator,
+    to: import("@playwright/test").Locator,
+  ) => {
+    const a = (await from.boundingBox())!,
+      b = (await to.boundingBox())!;
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 });
+    await page.mouse.up();
+  };
+  await dragPort(
+    original.getByLabel("Exposure RGB output"),
+    added.getByLabel("Exposure RGB input"),
+  );
+  await expect(page.locator(".react-flow__edge")).toHaveCount(3);
+  await dragPort(
+    added.getByLabel("Exposure RGB output"),
+    page.getByLabel("Output RGB input"),
+  );
+  await expect(page.getByRole("status")).toContainText(
+    "already has a connection",
+  );
+  await expect(page.locator(".react-flow__edge")).toHaveCount(3);
+  await original.click();
+  await added.click({ modifiers: ["Shift"] });
+  await page.keyboard.press("Control+c");
+  await page.keyboard.press("Control+v");
+  await expect(nodes).toHaveCount(6);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(4);
+  const nodeIds = await nodes.evaluateAll((elements) =>
+    elements.map((e) => e.getAttribute("data-id")),
+  );
+  expect(new Set(nodeIds).size).toBe(6);
+  await page.keyboard.press("Control+z");
+  await expect(nodes).toHaveCount(4);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(3);
+  await page.keyboard.press("Control+Shift+z");
+  await expect(nodes).toHaveCount(6);
+  expect(
+    await nodes.evaluateAll((elements) =>
+      elements.map((e) => e.getAttribute("data-id")),
+    ),
+  ).toEqual(nodeIds);
+});
+
+test("one scrub is one undo step and node moves snap and undo", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const slider = page.getByRole("slider", { name: "Scrub exposure" });
+  const box = (await slider.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.8, box.y + box.height / 2, {
+    steps: 20,
+  });
+  await page.mouse.up();
+  const value = page.getByRole("spinbutton", { name: "Exposure in stops" });
+  const changed = await value.inputValue();
+  expect(Number(changed)).toBeGreaterThan(2);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(value).toHaveValue("0.00");
+  await expect(
+    page.getByRole("button", { name: "Undo", exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await expect(value).toHaveValue(changed);
+  const node = page.locator('.react-flow__node[data-id="exposure"]');
+  const before = await node.getAttribute("style");
+  const n = (await node.boundingBox())!;
+  await page.mouse.move(n.x + 50, n.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(n.x + 89, n.y + 89, { steps: 10 });
+  await page.mouse.up();
+  const after = await node.getAttribute("style");
+  expect(after).not.toBe(before);
+  const position = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(after!)!;
+  expect(Number(position[1]) % 16).toBe(0);
+  expect(Number(position[2]) % 16).toBe(0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(node).toHaveAttribute("style", before!);
+});
+
+test("box selection and endpoint deletion are reversible, and incomplete output pauses preview", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement("canvas");
+    return canvas.toDataURL().split(",")[1];
+  });
+  await page.getByLabel("Choose image").setInputFiles({
+    name: "graph.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
+  await page.getByRole("button", { name: "Fit View", exact: true }).click();
+  const flow = page.locator(".flow-canvas");
+  await flow.scrollIntoViewIfNeeded();
+  const nodes = page.locator(".react-flow__node");
+  const source = (await nodes.first().boundingBox())!,
+    output = (await nodes.last().boundingBox())!;
+  await page.keyboard.down("Shift");
+  await page.mouse.move(source.x - 20, source.y - 20);
+  await page.mouse.down();
+  await page.mouse.move(
+    output.x + output.width + 20,
+    output.y + output.height + 20,
+    { steps: 10 },
+  );
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+  await expect(page.locator(".react-flow__node.selected")).toHaveCount(3);
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await page.getByRole("button", { name: "Paste", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "duplicate Source or Output",
+  );
+  await page
+    .getByRole("button", { name: "Delete selection", exact: true })
+    .click();
+  await expect(nodes).toHaveCount(0);
+  await expect(page.getByRole("alert")).toContainText("Preview paused");
+  await page.getByRole("button", { name: "Paste", exact: true }).click();
+  await expect(nodes).toHaveCount(3);
+  await expect(page.locator(".react-flow__edge")).toHaveCount(2);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(nodes).toHaveCount(0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(
+    page.locator('.react-flow__node[data-id="source"]'),
+  ).toBeVisible();
 });

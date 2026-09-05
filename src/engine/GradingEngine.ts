@@ -1,3 +1,11 @@
+import {
+  compileGraph,
+  createGraph,
+  inspectGraph,
+  type GradingGraph,
+} from "./graph";
+export { createGraph } from "./graph";
+export type { GradingGraph, GradingNode, GradingEdge, NodeType } from "./graph";
 import { previewSize } from "./previewSize";
 
 const vertexSource = `#version 300 es
@@ -9,12 +17,11 @@ void main() {
   gl_Position = vec4(position * 2.0 - 1.0, 0.0, 1.0);
 }`;
 
-// The fixed Source → Exposure → Output graph is one grading pass. All
-// user-adjustable values are uniforms; no recompilation on exposure edits.
-const fragmentSource = `#version 300 es
+// A reachable graph compiles to one pass; numeric parameters remain uniforms.
+const fragmentSource = (declarations: string, body: string) => `#version 300 es
 precision highp float;
 uniform sampler2D sourceImage;
-uniform float stops;
+${declarations}
 in vec2 uv;
 out vec4 result;
 vec3 decodeSrgb(vec3 c) {
@@ -25,15 +32,12 @@ vec3 encodeSrgb(vec3 c) {
 }
 void main() {
   vec4 source = texture(sourceImage, vec2(uv.x, 1.0 - uv.y));
-  vec3 linearRgb = decodeSrgb(source.rgb);
-  vec3 exposed = linearRgb * exp2(stops);
-  result = vec4(clamp(encodeSrgb(exposed), 0.0, 1.0), source.a);
+  ${body}
 }`;
 
 export class GradingEngine {
   private readonly gl: WebGL2RenderingContext;
-  private readonly program: WebGLProgram;
-  private readonly stopsLocation: WebGLUniformLocation;
+  private readonly programs = new Map<string, WebGLProgram>();
   private source: WebGLTexture | null = null;
   private target: WebGLTexture | null = null;
   private framebuffer: WebGLFramebuffer | null = null;
@@ -64,19 +68,13 @@ export class GradingEngine {
         "This graphics device does not provide the precision required for grading.",
       );
     }
-    this.program = this.createProgram();
-    const location = gl.getUniformLocation(this.program, "stops");
-    if (location === null)
-      throw new Error("The exposure control could not be initialized.");
-    this.stopsLocation = location;
-    gl.useProgram(this.program);
-    gl.uniform1i(gl.getUniformLocation(this.program, "sourceImage"), 0);
+    this.prepare(createGraph());
     gl.disable(gl.DITHER);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
   }
 
-  private createProgram(): WebGLProgram {
+  private createProgram(fragment: string): WebGLProgram {
     const gl = this.gl;
     const shaders: WebGLShader[] = [];
     const program = gl.createProgram();
@@ -84,7 +82,7 @@ export class GradingEngine {
     try {
       for (const [kind, source] of [
         [gl.VERTEX_SHADER, vertexSource],
-        [gl.FRAGMENT_SHADER, fragmentSource],
+        [gl.FRAGMENT_SHADER, fragment],
       ] as const) {
         const shader = gl.createShader(kind);
         if (!shader) throw new Error("Could not allocate a grading shader.");
@@ -197,16 +195,41 @@ export class GradingEngine {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   }
 
-  render(stops: number) {
+  static validate(graph: GradingGraph, draft = false): string | null {
+    try {
+      inspectGraph(graph, draft);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Invalid graph.";
+    }
+  }
+
+  private prepare(graph: GradingGraph) {
+    const compiled = compileGraph(graph);
+    let program = this.programs.get(compiled.key);
+    if (!program) {
+      program = this.createProgram(
+        fragmentSource(compiled.declarations, compiled.body),
+      );
+      this.programs.set(compiled.key, program);
+    }
+    const gl = this.gl;
+    gl.useProgram(program);
+    gl.uniform1i(gl.getUniformLocation(program, "sourceImage"), 0);
+    compiled.uniforms.forEach((value, i) =>
+      gl.uniform1f(gl.getUniformLocation(program, `stops${i}`), value),
+    );
+  }
+
+  render(input: number | GradingGraph) {
     this.assertAvailable();
-    if (!Number.isFinite(stops) || stops < -6 || stops > 6)
-      throw new Error("Exposure must be between −6 and +6 stops.");
+    const graph = typeof input === "number" ? createGraph() : input;
+    if (typeof input === "number") graph.nodes[1].data.stops = input;
+    this.prepare(graph);
     if (!this.source) throw new Error("Load an image before rendering.");
     const gl = this.gl;
-    gl.useProgram(this.program);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.source);
-    gl.uniform1f(this.stopsLocation, stops);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -257,6 +280,7 @@ export class GradingEngine {
     gl.deleteTexture(this.source);
     gl.deleteTexture(this.target);
     gl.deleteFramebuffer(this.framebuffer);
-    gl.deleteProgram(this.program);
+    this.programs.forEach((program) => gl.deleteProgram(program));
+    this.programs.clear();
   }
 }
