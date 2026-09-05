@@ -21,6 +21,7 @@
   "type": "module",
   "dependencies": {
     "@xyflow/react": "^12.11.6",
+    "lz-string": "^1.5.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zustand": "^5.0.15"

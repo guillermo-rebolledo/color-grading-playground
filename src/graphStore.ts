@@ -18,6 +18,7 @@ type GraphState = {
   transaction: GradingGraph | null;
   clipboard: GradingGraph | null;
   feedback: string;
+  restore: (graph: GradingGraph) => void;
   edit: (graph: GradingGraph) => void;
   select: (nodes: GradingNode[], edges?: GradingEdge[]) => void;
   begin: () => void;
@@ -64,6 +65,16 @@ export const useGraph = create<GraphState>()((set, get) => ({
   transaction: null,
   clipboard: null,
   feedback: "",
+  restore: (graph) =>
+    set({
+      graph,
+      past: [],
+      future: [],
+      transaction: null,
+      clipboard: null,
+      solo: null,
+      feedback: "",
+    }),
   edit: (graph) => {
     const state = get();
     if (sameContent(state.graph, graph)) return;

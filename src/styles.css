@@ -960,7 +960,9 @@ dd {
 }
 .viewer-toolbar button,
 .viewer-navigation button,
-.viewer-toolbar select {
+.viewer-toolbar select,
+.project-toolbar button,
+.project-toolbar input {
   color: inherit;
   background: #24282a;
   border: 1px solid var(--line);
@@ -971,7 +973,8 @@ dd {
 .viewer-navigation button[aria-pressed="true"] {
   border-color: #a7c8ac;
 }
-.viewer-toolbar button:disabled {
+.viewer-toolbar button:disabled,
+.project-toolbar button:disabled {
   opacity: 0.4;
 }
 .viewer-toolbar span {
@@ -1043,4 +1046,26 @@ dd {
 .viewer .wipe-handle:focus-visible {
   outline: 2px solid #a7c8ac;
   outline-offset: 3px;
+}
+
+.project-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 32px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.project-toolbar [role="alert"] {
+  color: #ffc08d;
+}
+.share-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.share-link input {
+  width: min(400px, 55vw);
 }
