@@ -1,3 +1,4 @@
+import { SamplePicker, SampleProvenance, type Sample } from "./SamplePicker";
 import { AdjustmentControls } from "./AdjustmentControls";
 import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
@@ -10,6 +11,7 @@ import "./styles.css";
 
 type ImageInfo = {
   name: string;
+  sample?: Sample;
   originalWidth: number;
   originalHeight: number;
   width: number;
@@ -162,6 +164,7 @@ export default function App() {
   const [renderError, setRenderError] = useState("");
   const [error, setError] = useState("");
   const [capabilityError, setCapabilityError] = useState("");
+  const [showSamples, setShowSamples] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
@@ -202,22 +205,31 @@ export default function App() {
     }
   }, [graph, graphError, image, capabilityError]);
 
-  async function openFile(file: File | undefined) {
-    if (!file || !engine.current || capabilityError) return;
+  async function openFile(file: File | undefined, sample?: Sample) {
+    if ((!file && !sample) || !engine.current || capabilityError) return;
     const current = ++request.current;
     setError("");
     setLoading(true);
     try {
-      const loaded = await loadImage(file);
+      if (sample) {
+        const response = await fetch(`/samples/${sample.file}`);
+        if (!response.ok)
+          throw new Error(
+            `Could not load ${sample.title}. Try again or choose another sample.`,
+          );
+        file = new File([await response.blob()], sample.file);
+      }
+      const loaded = await loadImage(file!);
       try {
         if (current !== request.current || !engine.current) return;
         engine.current.setImage(loaded.bitmap);
-        const currentGraph = useGraph.getState().graph;
-        if (!GradingEngine.validate(currentGraph))
-          engine.current.render(currentGraph);
+        const state = useGraph.getState();
+        if (sample)
+          state.updateColour({ ...state.graph.colour, input: sample.encoding });
 
         setImage({
-          name: loaded.name,
+          name: sample?.title ?? loaded.name,
+          sample,
           originalWidth: loaded.originalWidth,
           originalHeight: loaded.originalHeight,
           width: loaded.bitmap.width,
@@ -300,6 +312,13 @@ export default function App() {
         >
           <span aria-hidden="true">＋</span> Open image
         </button>
+        <button
+          className="upload-button"
+          aria-expanded={showSamples}
+          onClick={() => setShowSamples(!showSamples)}
+        >
+          Browse samples
+        </button>
         <select
           aria-label="Load precision chart"
           className="chart-select"
@@ -333,6 +352,13 @@ export default function App() {
         />
       </header>
 
+      {showSamples && (
+        <SamplePicker
+          selected={image?.sample?.id}
+          disabled={disabled}
+          onSelect={(sample) => void openFile(undefined, sample)}
+        />
+      )}
       <section className="workspace">
         <div className="viewer-column">
           <div className="panel-bar">
@@ -411,6 +437,7 @@ export default function App() {
               </span>
             )}
           </div>
+          {image?.sample && <SampleProvenance sample={image.sample} />}
           {error && (
             <div className="file-error" role="alert">
               {error}

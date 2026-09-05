@@ -13,11 +13,14 @@ file, SHA-256, source URL/revision/hash, license, actual encoding, source
 chromaticities, code range, preparation matrix/exposure, measurements and reference
 pixels. All nine files are **RGB PNG, 16-bit unsigned integer, full range**:
 normalize each code by **65535**. They have no embedded ICC, sRGB or gamma chunks,
-and no alpha. Import them using **Open image**, then set both Input fields to the
-pair below. These are scene-linear HDR photographs converted to log, not native
+and no alpha. Use **Browse samples** to choose a scene with an sRGB preview. Selection loads
+the PNG16 through the precision-preserving importer and applies both Input fields
+from the verified inventory, retaining graph edits and working/output settings.
+Failed loads retain the previous image and tags. Manual **Open image** imports
+still require setting both Input fields to the pair below. These are scene-linear HDR photographs converted to log, not native
 ARRI/Sony/Blackmagic log captures. The log names describe the prepared files.
 The skin-tone image originates from a Sony F65 camera, supplied as linear EXR.
-Sample browsing and automatic tag selection belong to MEM-209. When distributing
+The viewer shows source, credit, license, preparation and range for the selected sample. When distributing
 or displaying the actor sample, retain its [title, credit and license notice](../public/samples/licenses/TearsOfSteel.txt).
 
 | File                                                         | Scene                                                         | Transfer / primaries                      | Preparation exposure |
@@ -186,3 +189,24 @@ scene coverage, pinned notices and recorded blockers. Coverage is derived from
 the successfully prepared inventory rather than manually flipping a readiness
 flag. Acquisition and metadata were verified on 2026-09-05. No outreach or
 purchases were needed.
+
+## Gallery previews
+
+MEM-209 adds committed thumbnails in `public/samples/previews/`. To regenerate,
+start `npm run dev -- --host 127.0.0.1`, then run
+`node scripts/prepare-sample-previews.mjs`. The script loads each original through
+the public importer and grading engine with its verified encoding, renders the
+neutral grade to sRGB/Rec.709 with SDR display clipping, then scales to fit
+240 × 150 and writes eight-bit PNG. These thumbnails are display-only derivatives;
+the grading path always loads the unchanged full-range RGB16 original. Thumbnail
+precision and SDR clipping never affect grading. The existing packaged RGB16 PNGs
+already use accepted decoder variants, so no asset normalization is needed.
+
+Source/license notices accompany the gallery and selected sample. Retagging an
+sRGB JPEG cannot recover highlight detail lost through clipping, tone mapping or
+eight-bit quantization; changing the tag only reinterprets existing values.
+
+`tests/sample-picker.spec.ts` exercises the accessible gallery across all nine
+assets and three encodings, automatic tags, preserved exposure edits, source
+links, request/decode failure recovery, and superseded loads. The independent
+source-derived numeric checks remain in `tests/samples.spec.ts`.
