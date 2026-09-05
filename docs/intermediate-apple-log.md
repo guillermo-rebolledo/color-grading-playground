@@ -60,8 +60,8 @@ Both transforms live in the shared GPU grading evaluator.
 
 Schema version 1 stores `davinci-intermediate` and `apple-log` transfer enums,
 and `davinci-wide-gamut` primaries. JSON graph round trips and undo/redo retain
-these in project and CST encodings. Disk persistence and LUT export are separate
-implementation slices.
+these in project and CST encodings. Both encodings export through
+[LUT export](lut-export.md); disk persistence is a separate implementation slice.
 
 Tests use independent literal Float32 reference vectors, including breakpoint
 neighbors, black/grey, negative and above-one values. Encode/gamut tolerance is
