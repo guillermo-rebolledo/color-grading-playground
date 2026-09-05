@@ -219,11 +219,11 @@ test("rejects invalid graphs at the public engine boundary without changing rend
     "Unsupported graph schema version.",
     "Graph requires exactly one Source.",
     "Graph requires exactly one Output.",
-    "Output requires an RGB input. Connect it to Source.",
+    "output requires an RGB input (rgb). Connect it to Source.",
     "Exposure must be between −6 and +6 stops.",
-    "Connect RGB outputs to RGB inputs. Mask ports are not supported by these nodes.",
+    "Connect RGB outputs to RGB inputs and mask outputs to mask inputs.",
     "Connection would create a cycle.",
-    "This RGB input already has a connection. Remove it first.",
+    "This input already has a connection. Remove it first.",
   ]);
   expect(result.pixel).toBeCloseTo(0.501961, 3);
 });

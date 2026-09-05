@@ -2,7 +2,7 @@ import { adjustmentDefaults } from "./adjustmentDefaults";
 import { create } from "zustand";
 import {
   GradingEngine,
-  createGraph,
+  createStarterGraph,
   type GradingGraph,
   type GradingNode,
   type GradingEdge,
@@ -11,6 +11,7 @@ import {
 } from "./engine/GradingEngine";
 
 type GraphState = {
+  solo: string | null;
   graph: GradingGraph;
   past: GradingGraph[];
   future: GradingGraph[];
@@ -56,7 +57,8 @@ export function connectionError(graph: GradingGraph, edge: GradingEdge) {
 
 // Immutable whole-graph snapshots keep history independent of individual node types.
 export const useGraph = create<GraphState>()((set, get) => ({
-  graph: createGraph(),
+  graph: createStarterGraph(),
+  solo: null,
   past: [],
   future: [],
   transaction: null,
@@ -132,6 +134,8 @@ export const useGraph = create<GraphState>()((set, get) => ({
         type === "contrast" ||
         type === "saturation" ||
         type === "curves" ||
+        type === "blend" ||
+        type === "qualifier" ||
         type === "whiteBalance"
           ? structuredClone(adjustmentDefaults[type])
           : type === "cst"

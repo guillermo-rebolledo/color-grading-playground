@@ -1,4 +1,10 @@
 import {
+  qualifierDefaults,
+  qualifierShader,
+  validateQualifier,
+  type Band,
+} from "./qualifier";
+import {
   bakeCurve,
   curveChannels,
   curveShader,
@@ -26,12 +32,19 @@ export type NodeType =
   | "saturation"
   | "curves"
   | "whiteBalance"
+  | "blend"
+  | "qualifier"
   | "output";
 export type GradingNode = {
   id: string;
   type: NodeType;
   position: { x: number; y: number };
   data: {
+    label?: string;
+    hue?: Band;
+    sat?: Band;
+    value?: Band;
+    amount?: number;
     curves?: Curves;
     temperature?: number;
     tint?: number;
@@ -106,6 +119,7 @@ export function createGraph(): GradingGraph {
 export function inspectGraph(
   graph: GradingGraph,
   draft = false,
+  solo?: string,
 ): GradingNode[] {
   if (graph.version !== 1) throw new Error("Unsupported graph schema version.");
   if (
@@ -128,6 +142,16 @@ export function inspectGraph(
       );
   }
   for (const node of graph.nodes) {
+    if (node.data.label !== undefined && typeof node.data.label !== "string")
+      throw new Error("Node labels must be text.");
+    if (node.type === "qualifier") validateQualifier(node.data);
+    if (
+      node.type === "blend" &&
+      (!Number.isFinite(node.data.amount) ||
+        node.data.amount! < 0 ||
+        node.data.amount! > 1)
+    )
+      throw new Error("Blend amount must be between 0 and 1.");
     if (node.type === "curves") validateCurves(node.data.curves);
     if (
       node.type === "cst" &&
@@ -136,6 +160,8 @@ export function inspectGraph(
       throw new Error("CST requires supported from and to encoding pairs.");
     if (
       ![
+        "blend",
+        "qualifier",
         "source",
         "exposure",
         "cst",
@@ -220,20 +246,23 @@ export function inspectGraph(
       target = nodes.get(edge.target);
     if (!source || !target)
       throw new Error("Connection refers to a missing node.");
+    const outputPort = source.type === "qualifier" ? "mask" : "rgb";
+    const targetPorts = target.type === "blend" ? ["a", "b", "mask"] : ["rgb"];
+    const inputType = edge.targetHandle === "mask" ? "mask" : "rgb";
     if (
       source.type === "output" ||
       target.type === "source" ||
-      edge.sourceHandle !== "rgb" ||
-      edge.targetHandle !== "rgb"
+      edge.sourceHandle !== outputPort ||
+      !targetPorts.includes(edge.targetHandle) ||
+      outputPort !== inputType
     )
       throw new Error(
-        "Connect RGB outputs to RGB inputs. Mask ports are not supported by these nodes.",
+        "Connect RGB outputs to RGB inputs and mask outputs to mask inputs.",
       );
-    if (inputs.has(target.id))
-      throw new Error(
-        "This RGB input already has a connection. Remove it first.",
-      );
-    inputs.set(target.id, source.id);
+    const key = `${target.id}:${edge.targetHandle}`;
+    if (inputs.has(key))
+      throw new Error("This input already has a connection. Remove it first.");
+    inputs.set(key, source.id);
   }
   const visited = new Set<string>(),
     visiting = new Set<string>();
@@ -241,24 +270,36 @@ export function inspectGraph(
     if (visiting.has(id)) throw new Error("Connection would create a cycle.");
     if (visited.has(id)) return;
     visiting.add(id);
-    const input = inputs.get(id);
-    if (input) visit(input);
+    for (const edge of graph.edges.filter((e) => e.target === id))
+      visit(edge.source);
     visiting.delete(id);
     visited.add(id);
   };
   graph.nodes.forEach((n) => visit(n.id));
   const ordered: GradingNode[] = [];
-  const output = graph.nodes.find((n) => n.type === "output");
+  const output = solo
+    ? graph.nodes.find((n) => n.id === solo && n.type === "qualifier")
+    : graph.nodes.find((n) => n.type === "output");
+  if (solo && !output)
+    throw new Error("Choose an HSL Qualifier to solo its mask.");
+  const collected = new Set<string>();
   const collect = (node: GradingNode) => {
-    const input = inputs.get(node.id);
-    if (node.type !== "source" && !input) {
-      if (!draft)
+    if (collected.has(node.id)) return;
+    const required =
+      node.type === "source"
+        ? []
+        : node.type === "blend"
+          ? ["a", "b"]
+          : ["rgb"];
+    for (const port of required) {
+      if (!inputs.has(`${node.id}:${port}`) && !draft)
         throw new Error(
-          `${node.type === "cdl" ? "CDL" : node.type === "cst" ? "CST" : node.type[0].toUpperCase() + node.type.slice(1)} requires an RGB input. Connect it to Source.`,
+          `${node.type} requires an RGB input (${port}). Connect it to Source.`,
         );
-      return;
     }
-    if (input) collect(nodes.get(input)!);
+    for (const edge of graph.edges.filter((e) => e.target === node.id))
+      collect(nodes.get(edge.source)!);
+    collected.add(node.id);
     ordered.push(node);
   };
   if (output) collect(output);
@@ -278,9 +319,22 @@ export function encodingFlow(
       encodings.set(node.id, graph.colour.working);
       continue;
     }
-    const edge = graph.edges.find((e) => e.target === node.id)!;
+    const edge = graph.edges.find(
+      (e) =>
+        e.target === node.id &&
+        e.targetHandle === (node.type === "blend" ? "a" : "rgb"),
+    )!;
     const input = encodings.get(edge.source)!;
     inputs.set(node.id, input);
+    if (node.type === "blend") {
+      const branch = graph.edges.find(
+        (e) => e.target === node.id && e.targetHandle === "b",
+      )!;
+      if (!sameEncoding(input, encodings.get(branch.source)!))
+        warnings.push(
+          `${node.id}: Blend has incompatible branch encodings. Insert an explicit CST to match them.`,
+        );
+    }
     if (node.type === "cst" && !sameEncoding(input, node.data.from!))
       warnings.push(
         `${node.id}: CST from encoding differs from its connected input. Check the declaration.`,
@@ -304,8 +358,8 @@ export function encodingFlow(
   return { inputs, warnings };
 }
 
-export function compileGraph(graph: GradingGraph) {
-  const ordered = inspectGraph(graph);
+export function compileGraph(graph: GradingGraph, solo?: string) {
+  const ordered = inspectGraph(graph, false, solo);
   const flow = encodingFlow(graph, ordered);
   const index = new Map(ordered.map((n, i) => [n.id, i]));
   const edges = graph.edges
@@ -318,6 +372,7 @@ export function compileGraph(graph: GradingGraph) {
     ])
     .sort((a, b) => String(a).localeCompare(String(b)));
   const key = JSON.stringify([
+    Boolean(solo),
     [graph.colour.input, graph.colour.working, graph.colour.output].map(
       encodingKey,
     ),
@@ -339,8 +394,23 @@ export function compileGraph(graph: GradingGraph) {
     if (node.type === "source")
       return `vec3 v${i} = ${transformShader("source.rgb", graph.colour.input, graph.colour.working)};`;
     const input = index.get(
-      graph.edges.find((e) => e.target === node.id)!.source,
+      graph.edges.find(
+        (e) =>
+          e.target === node.id &&
+          e.targetHandle === (node.type === "blend" ? "a" : "rgb"),
+      )!.source,
     )!;
+    if (node.type === "qualifier")
+      return `float v${i} = qualify(v${input}, ${vector(node.data.hue!)}, ${vector(node.data.sat!)}, ${vector(node.data.value!)});`;
+    if (node.type === "blend") {
+      const branch = (port: string) =>
+        graph.edges.find(
+          (e) => e.target === node.id && e.targetHandle === port,
+        );
+      const b = index.get(branch("b")!.source)!;
+      const mask = branch("mask");
+      return `vec3 v${i} = mix(v${input}, v${b}, ${scalar(node.data.amount!)} * ${mask ? `clamp(v${index.get(mask.source)}, 0.0, 1.0)` : "1.0"});`;
+    }
     if (node.type === "curves") {
       const calls = curveChannels.map((channel) => {
         const curve = bakeCurve(node.data.curves![channel]);
@@ -394,10 +464,79 @@ vec3 v${i} = mix(vec3(dot(sop${i}, vec3(0.2126, 0.7152, 0.0722))), sop${i}, ${sc
     uniforms,
     curves,
     declarations:
+      (ordered.some((n) => n.type === "qualifier") ? qualifierShader : "") +
       curves.map((_, i) => `uniform highp sampler2D curve${i};`).join("\n") +
       (curves.length ? curveShader : "") +
       uniforms.map((_, i) => `uniform float parameter${i};`).join("\n"),
     body:
-      lines.join("\n") + `\nresult = vec4(v${ordered.length - 1}, source.a);`,
+      lines.join("\n") +
+      `\nresult = vec4(${solo ? `vec3(v${ordered.length - 1})` : `v${ordered.length - 1}`}, source.a);`,
   };
+}
+
+/** The user-facing template; createGraph remains the neutral engine configuration. */
+export function createStarterGraph(): GradingGraph {
+  const graph = createGraph();
+  graph.nodes.find((n) => n.id === "output")!.position = { x: 1040, y: 0 };
+  graph.nodes.push(
+    {
+      id: "cool",
+      type: "cdl",
+      position: { x: 520, y: -120 },
+      data: {
+        label: "Cool CDL",
+        slope: [0.94, 1, 1.08],
+        offset: [0, 0, 0],
+        power: [1, 1, 1],
+        saturation: 1,
+      },
+    },
+    {
+      id: "warm",
+      type: "cdl",
+      position: { x: 520, y: 0 },
+      data: {
+        label: "Warm CDL",
+        slope: [1.08, 1, 0.94],
+        offset: [0, 0, 0],
+        power: [1, 1, 1],
+        saturation: 1,
+      },
+    },
+    {
+      id: "qualifier",
+      type: "qualifier",
+      position: { x: 520, y: 140 },
+      data: { ...structuredClone(qualifierDefaults), value: [0.45, 1, 0.2] },
+    },
+    {
+      id: "blend",
+      type: "blend",
+      position: { x: 780, y: 0 },
+      data: { amount: 1 },
+    },
+  );
+  const edge = (
+    source: string,
+    target: string,
+    targetHandle = "rgb",
+    sourceHandle = "rgb",
+  ): GradingEdge => ({
+    id: `${source}-${target}-${targetHandle}`,
+    source,
+    target,
+    sourceHandle,
+    targetHandle,
+  });
+  graph.edges = [
+    edge("source", "exposure"),
+    edge("exposure", "cool"),
+    edge("exposure", "warm"),
+    edge("exposure", "qualifier"),
+    edge("cool", "blend", "a"),
+    edge("warm", "blend", "b"),
+    edge("qualifier", "blend", "mask", "mask"),
+    edge("blend", "output"),
+  ];
+  return graph;
 }

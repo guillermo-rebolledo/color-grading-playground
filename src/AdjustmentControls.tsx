@@ -202,6 +202,91 @@ function ColourWheel({
 
 export function AdjustmentControls({ node }: { node: GradingNode }) {
   const { updateParameters, end } = useGraph();
+  if (node.type === "blend" || node.type === "qualifier")
+    return (
+      <div className="adjustment-controls">
+        <button
+          className="text-button"
+          onClick={() => {
+            end();
+            updateParameters(
+              node.id,
+              structuredClone(
+                adjustmentDefaults[node.type as "blend" | "qualifier"],
+              ),
+            );
+          }}
+        >
+          Reset {node.type === "blend" ? "Blend" : "HSL Qualifier"}
+        </button>
+        {node.type === "blend" ? (
+          <>
+            <p className="encoding-note">
+              Mix A → B by amount × mask (0–1). A disconnected mask is one.
+              Branches use their declared encoding; match them with explicit CST
+              nodes.
+            </p>
+            <NumericControl
+              label="Blend amount"
+              value={node.data.amount!}
+              neutral={1}
+              min={0}
+              max={1}
+              onChange={(amount) => updateParameters(node.id, { amount })}
+            />
+          </>
+        ) : (
+          <>
+            <p className="encoding-note">
+              HSV on current RGB code values, clamped to 0–1 for qualification
+              only. Hue wraps in degrees; gray requires the full 0–360 hue
+              range. Softness extends outside each inclusive band; zero gives
+              hard edges. Component memberships multiply.
+            </p>
+            <button
+              onClick={() =>
+                useGraph.setState((s) => ({
+                  solo: s.solo === node.id ? null : node.id,
+                }))
+              }
+            >
+              {useGraph.getState().solo === node.id
+                ? "Exit mask solo"
+                : "Solo mask"}
+            </button>
+            {(["hue", "sat", "value"] as const).map((key) => (
+              <fieldset key={key}>
+                <legend>
+                  {key === "hue"
+                    ? "Hue"
+                    : key === "sat"
+                      ? "Saturation"
+                      : "Value"}
+                </legend>
+                {(["min", "max", "softness"] as const).map((part, i) => (
+                  <NumericControl
+                    key={part}
+                    label={`${key === "hue" ? "Hue" : key === "sat" ? "Saturation" : "Value"} ${part}`}
+                    value={node.data[key]![i]}
+                    neutral={adjustmentDefaults.qualifier[key][i]}
+                    min={0}
+                    max={key === "hue" ? 360 : 1}
+                    step={key === "hue" ? 1 : 0.01}
+                    onChange={(value) => {
+                      const band: [number, number, number] = [
+                        ...node.data[key]!,
+                      ];
+                      band[i] = value;
+                      updateParameters(node.id, { [key]: band });
+                    }}
+                  />
+                ))}
+              </fieldset>
+            ))}
+          </>
+        )}
+      </div>
+    );
   if (node.type === "curves")
     return <CurveControls key={node.id} node={node} />;
   if (

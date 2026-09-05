@@ -1,3 +1,4 @@
+import { openNeutralGraph } from "./fixtures";
 import { test, expect } from "@playwright/test";
 import { PNG } from "pngjs";
 
@@ -12,7 +13,7 @@ for (const profile of [
   test(`${profile.transfer} source, working, output and CST selections retain separate primaries`, async ({
     page,
   }) => {
-    await page.goto("/");
+    await openNeutralGraph(page);
     // Independent full-range, near-18% neutral code fixtures (8-bit quantized).
     const png = new PNG({ width: 32, height: 32 });
     for (let i = 0; i < png.data.length; i += 4) {
