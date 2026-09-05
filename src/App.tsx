@@ -1,4 +1,16 @@
-import { SamplePicker, SampleProvenance, type Sample } from "./SamplePicker";
+import { createShareLink, readSharedProject } from "./sharedProject";
+import {
+  parseProject,
+  restoreProject,
+  saveProject,
+  type ProjectSource,
+} from "./projects";
+import {
+  SamplePicker,
+  SampleProvenance,
+  samples,
+  type Sample,
+} from "./SamplePicker";
 import { AdjustmentControls } from "./AdjustmentControls";
 import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
@@ -158,6 +170,15 @@ export default function App() {
   const engine = useRef<GradingEngine | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const request = useRef(0);
+  const imageFile = useRef<File | null>(null);
+  const [source, setSource] = useState<ProjectSource | null>(null);
+  const [ready, setReady] = useState(false);
+  const [shareLink, setShareLink] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [projectStatus, setProjectStatus] = useState(
+    "Opening local workspace…",
+  );
+  const [projectError, setProjectError] = useState("");
   const [image, setImage] = useState<ImageInfo | null>(null);
   const graphState = useGraph();
   const { graph } = graphState;
@@ -209,6 +230,120 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    let generation = 0;
+    async function restore() {
+      const current = ++generation;
+      const isCurrent = () => active && current === generation;
+      setReady(false);
+      try {
+        const shared = location.hash.startsWith("#project=");
+        const saved = shared
+          ? { project: readSharedProject(location.hash), image: null }
+          : await restoreProject();
+        // Keep initialization asynchronous even for links so StrictMode cleanup runs first.
+        await Promise.resolve();
+        if (!isCurrent()) return;
+        if (saved) {
+          ++request.current;
+          setImage(null);
+          imageFile.current = null;
+          setComparison("off");
+          setSnapshots({});
+          setError("");
+          setProjectError("");
+          if (shared)
+            history.replaceState(null, "", location.pathname + location.search);
+          useGraph.setState({
+            graph: saved.project.graph,
+            past: [],
+            future: [],
+            transaction: null,
+            clipboard: null,
+            solo: null,
+            feedback: "",
+          });
+          setSource(saved.project.source);
+          const source = saved.project.source;
+          let loaded = true;
+          if (source?.kind === "upload")
+            loaded =
+              !!saved.image && (await openFile(saved.image, undefined, true));
+          if (source?.kind === "sample") {
+            const sample = samples.find((sample) => sample.id === source.id);
+            loaded = !!sample && (await openFile(undefined, sample, true));
+          }
+          if (source?.kind === "chart") {
+            loaded = isLogChart(source.id);
+            if (loaded && isLogChart(source.id)) openChart(source.id, true);
+          }
+          if (!isCurrent()) return;
+          if (!loaded)
+            setProjectError(
+              `Source “${source?.name}” is unavailable. Upload your own image or choose a sample; the restored grade and source tags are preserved.`,
+            );
+          setProjectStatus(
+            shared
+              ? "Shared grade opened. Save to keep it on this device."
+              : "Restored from this device",
+          );
+        } else setProjectStatus("Save your project to resume on this device.");
+      } catch (cause) {
+        if (isCurrent()) {
+          setProjectError(message(cause));
+          setProjectStatus("Project was not restored.");
+        }
+      } finally {
+        if (isCurrent()) setReady(true);
+      }
+    }
+    void restore();
+    const followLink = () => {
+      if (location.hash.startsWith("#project=")) void restore();
+    };
+    window.addEventListener("hashchange", followLink);
+    return () => {
+      active = false;
+      window.removeEventListener("hashchange", followLink);
+    };
+  }, []);
+
+  function currentProject() {
+    const graph = useGraph.getState().graph;
+    return parseProject({
+      version: 1,
+      graph,
+      source: source ? { ...source, encoding: graph.colour.input } : null,
+    });
+  }
+
+  function share() {
+    try {
+      setShareLink(createShareLink(currentProject()));
+      setProjectError("");
+    } catch (cause) {
+      setProjectError(message(cause));
+    }
+  }
+
+  useEffect(() => {
+    setShareLink("");
+  }, [graph, source]);
+
+  async function save() {
+    setSaving(true);
+    setProjectError("");
+    try {
+      await saveProject(currentProject(), imageFile.current);
+      setProjectStatus("Saved on this device. Save again after editing.");
+    } catch (cause) {
+      setProjectError(message(cause));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  useEffect(() => {
     if (image && engine.current && !capabilityError && !graphError) {
       const frame = requestAnimationFrame(() => {
         try {
@@ -243,8 +378,12 @@ export default function App() {
     outOfRange,
   ]);
 
-  async function openFile(file: File | undefined, sample?: Sample) {
-    if ((!file && !sample) || !engine.current || capabilityError) return;
+  async function openFile(
+    file: File | undefined,
+    sample?: Sample,
+    restoring = false,
+  ): Promise<boolean> {
+    if ((!file && !sample) || !engine.current || capabilityError) return false;
     const current = ++request.current;
     setError("");
     setLoading(true);
@@ -259,12 +398,23 @@ export default function App() {
       }
       const loaded = await loadImage(file!);
       try {
-        if (current !== request.current || !engine.current) return;
+        if (current !== request.current || !engine.current) return false;
         engine.current.setImage(loaded.bitmap);
         const state = useGraph.getState();
-        if (sample)
+        if (sample && !restoring)
           state.updateColour({ ...state.graph.colour, input: sample.encoding });
 
+        if (!restoring) setProjectError("");
+        imageFile.current = sample ? null : file!;
+        if (!restoring)
+          setSource({
+            kind: sample ? "sample" : "upload",
+            id: sample?.id ?? crypto.randomUUID(),
+            name: sample?.title ?? loaded.name,
+            encoding: structuredClone(
+              sample?.encoding ?? state.graph.colour.input,
+            ),
+          });
         setImage({
           name: sample?.title ?? loaded.name,
           sample,
@@ -273,16 +423,18 @@ export default function App() {
           width: loaded.bitmap.width,
           height: loaded.bitmap.height,
         });
+        return true;
       } finally {
         if ("close" in loaded.bitmap) loaded.bitmap.close();
       }
     } catch (cause) {
       if (current === request.current) setError(message(cause));
+      return false;
     } finally {
       if (current === request.current) setLoading(false);
     }
   }
-  function openChart(profile: keyof typeof logCharts) {
+  function openChart(profile: keyof typeof logCharts, restoring = false) {
     if (!engine.current || capabilityError) return;
     ++request.current;
     setLoading(false);
@@ -291,10 +443,20 @@ export default function App() {
       const chart = createLogChart(profile);
       engine.current.setImage(chart);
       const state = useGraph.getState();
-      state.updateColour({
-        ...state.graph.colour,
-        input: { ...logCharts[profile].encoding },
-      });
+      if (!restoring)
+        state.updateColour({
+          ...state.graph.colour,
+          input: { ...logCharts[profile].encoding },
+        });
+      if (!restoring) setProjectError("");
+      imageFile.current = null;
+      if (!restoring)
+        setSource({
+          kind: "chart",
+          id: profile,
+          name: logCharts[profile].name,
+          encoding: { ...logCharts[profile].encoding },
+        });
       setImage({
         name: `${logCharts[profile].name} · synthetic precision chart`,
         originalWidth: chart.width,
@@ -310,6 +472,7 @@ export default function App() {
   return (
     <main
       className="app-shell"
+      inert={!ready}
       onDragEnter={(event) => {
         event.preventDefault();
         dragDepth.current++;
@@ -390,6 +553,31 @@ export default function App() {
         />
       </header>
 
+      <section className="project-toolbar" aria-label="Project">
+        <button
+          disabled={!ready || saving || loading}
+          onClick={() => void save()}
+        >
+          Save project
+        </button>
+        <button disabled={!ready || loading} onClick={share}>
+          Share grade
+        </button>
+        {shareLink && (
+          <label className="share-link">
+            Share link{" "}
+            <input
+              aria-label="Share link"
+              readOnly
+              value={shareLink}
+              onFocus={(event) => event.target.select()}
+            />{" "}
+            <span>Copy this link. Image bytes stay on your device.</span>
+          </label>
+        )}
+        <span aria-label="Project status">{projectStatus}</span>
+        {projectError && <span role="alert">{projectError}</span>}
+      </section>
       {showSamples && (
         <SamplePicker
           selected={image?.sample?.id}
