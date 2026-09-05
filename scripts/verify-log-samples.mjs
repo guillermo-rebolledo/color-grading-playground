@@ -31,7 +31,12 @@ for (const asset of inventory.assets) {
   assert.match(asset.file, /^[a-z-]+\.png$/);
   assert.equal(asset.license, "BSD-3-Clause");
   assert.equal(asset.licenseFile, "licenses/OpenEXR.txt");
-  assert.ok(readFileSync(new URL(asset.licenseFile, root)).length > 1000);
+  // Pinned upstream notice, with trailing blank lines removed only.
+  assert.equal(
+    hash(readFileSync(new URL(asset.licenseFile, root))),
+    "1ac1b0e8619b04100193171de793d00fb602e4b02275260f0ded14dcb45e4940",
+    "Redistribution license notice changed",
+  );
   assert.equal(asset.bitDepth, 16);
   assert.equal(asset.codeRange, "full");
   assert.equal(asset.codeNormalization, "uint16 / 65535");
