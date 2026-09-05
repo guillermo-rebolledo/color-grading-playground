@@ -7,6 +7,8 @@ export const transfers = {
   gamma24: "Gamma 2.4",
   logc3: "ARRI LogC3 EI 800",
   slog3: "Sony S-Log3",
+  "davinci-intermediate": "DaVinci Intermediate",
+  "apple-log": "Apple Log",
 } as const;
 export const primaries = {
   rec709: "Rec.709 · D65",
@@ -15,6 +17,7 @@ export const primaries = {
   "display-p3": "Display P3 · D65",
   "arri-wide-gamut3": "ARRI Wide Gamut 3 · D65",
   "sgamut3-cine": "S-Gamut3.Cine · D65",
+  "davinci-wide-gamut": "DaVinci Wide Gamut · D65",
 } as const;
 export type Encoding = {
   transfer: keyof typeof transfers;
@@ -50,7 +53,7 @@ export function sameEncoding(a: Encoding, b: Encoding) {
 export function encodingLabel(value: Encoding) {
   return `${transfers[value.transfer]} / ${primaries[value.primaries]}`;
 }
-// Piecewise toes extend linearly below zero; pure gamma uses a signed power.
+// Toe extensions are profile-specific; Apple Log retains its published floor.
 // See docs/colour-management.md for normative sources and exact thresholds.
 export const transferShader = `
 float decodeSrgb(float c) { if(c <= 0.04045) return c / 12.92; return pow((c + 0.055) / 1.055, 2.4); }
@@ -63,6 +66,20 @@ float encodeLogC3(float c) { if(c <= 0.010591) return 5.367655 * c + 0.092809; r
 // Sony Technical Summary appendix, scene reflection, full-range CV / 1023.
 float decodeSLog3(float c) { if(c < 171.2102946929 / 1023.0) return (c * 1023.0 - 95.0) * 0.01125 / (171.2102946929 - 95.0); return pow(10.0, (c * 1023.0 - 420.0) / 261.5) * 0.19 - 0.01; }
 float encodeSLog3(float c) { if(c < 0.01125) return (c * (171.2102946929 - 95.0) / 0.01125 + 95.0) / 1023.0; return (420.0 + log((c + 0.01) / 0.19) / log(10.0) * 261.5) / 1023.0; }
+// Blackmagic DaVinci Wide Gamut Intermediate v1.1, August 2021.
+float decodeIntermediate(float c) { if(c <= 0.02740668) return c / 10.44426855; return exp2(c / 0.07329248 - 7.0) - 0.0075; }
+float encodeIntermediate(float c) { if(c <= 0.00262409) return c * 10.44426855; return (log2(c + 0.0075) + 7.0) * 0.07329248; }
+// Apple Log Profile White Paper, September 2023 p5. Not Apple Log 2.
+float decodeAppleLog(float c) {
+  if(c >= 47.28711236 * 0.06641088 * 0.06641088) return exp2((c - 0.69336945) / 0.08550479) - 0.00964052;
+  if(c >= 0.0) return sqrt(c / 47.28711236) - 0.05641088;
+  return -0.05641088;
+}
+float encodeAppleLog(float c) {
+  if(c >= 0.01) return 0.08550479 * log2(c + 0.00964052) + 0.69336945;
+  if(c >= -0.05641088) return 47.28711236 * (c + 0.05641088) * (c + 0.05641088);
+  return 0.0;
+}
 `;
 function transfer(value: string, type: Encoding["transfer"], encode: boolean) {
   if (type === "linear") return value;
@@ -75,6 +92,8 @@ function transfer(value: string, type: Encoding["transfer"], encode: boolean) {
     rec709: "709",
     logc3: "LogC3",
     slog3: "SLog3",
+    "davinci-intermediate": "Intermediate",
+    "apple-log": "AppleLog",
   }[type];
   const fn = `${encode ? "encode" : "decode"}${suffix}`;
   return `vec3(${["r", "g", "b"].map((c) => `${fn}((${value}).${c})`).join(",")})`;

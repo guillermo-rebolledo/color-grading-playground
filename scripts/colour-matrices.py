@@ -1,6 +1,7 @@
 """Regenerate fixed RGB/XYZ and Bradford matrices: python3 scripts/colour-matrices.py.
 Chromaticities: ITU-R BT.709-6, BT.2020-2, SMPTE RP 431-2,
-ARRI Log C Usage in VFX (2017-03-09), Sony S-Log3 Technical Summary V1.0.
+ARRI Log C Usage in VFX (2017-03-09), Sony S-Log3 Technical Summary V1.0,
+Blackmagic DaVinci Wide Gamut Intermediate v1.1 (August 2021).
 See docs/colour-management.md. All matrices are row-major, relative white Y=1.
 """
 from pathlib import Path
@@ -46,6 +47,7 @@ spaces = {
     'display-p3': (p3, d65),
     'dci-p3': (p3, dci),
     'arri-wide-gamut3': ([(0.6840, 0.3130), (0.2210, 0.8480), (0.0861, -0.1020)], d65),
+    'davinci-wide-gamut': ([(0.8000, 0.3130), (0.1682, 0.9877), (0.0790, -0.1155)], d65),
     'sgamut3-cine': ([(0.7660, 0.2750), (0.2250, 0.8000), (0.0890, -0.0870)], d65),
 }
 b = [[0.8951, 0.2664, -0.1614], [-0.7502, 1.7135, 0.0367], [0.0389, -0.0685, 1.0296]]
