@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
 
 /** Exposure in stops: a typed field and a scrub, resettable by either. */
@@ -32,94 +33,88 @@ export function ExposureControl({
   }
   return (
     <div className="exposure-control">
-      <div className="control-heading">
-        <label htmlFor="exposure">Exposure</label>
-        <button
-          className="text-button"
-          disabled={disabled}
-          onClick={() => onChange(0)}
-          aria-label="Reset exposure"
+      <div className="parameter-row exposure-row">
+        <div className="control-heading">
+          <label htmlFor="exposure">Exposure</label>
+        </div>
+        <div
+          className="numeric-control"
+          onDoubleClick={() => {
+            if (!disabled) {
+              onChange(0);
+              setDraft("0.00");
+            }
+          }}
         >
-          Reset ↺
-        </button>
-      </div>
-      <div
-        className="numeric-control"
-        onDoubleClick={() => {
-          if (!disabled) {
-            onChange(0);
-            setDraft("0.00");
-          }
-        }}
-      >
+          <Input
+            id="exposure"
+            aria-label="Exposure in stops"
+            type="number"
+            min="-6"
+            max="6"
+            step="0.01"
+            disabled={disabled}
+            value={draft}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              const parsed = event.target.valueAsNumber;
+              if (Number.isFinite(parsed) && parsed >= -6 && parsed <= 6)
+                onChange(parsed);
+            }}
+            onFocus={() => {
+              editing.current = true;
+              onBegin();
+            }}
+            onBlur={() => {
+              editing.current = false;
+              commit();
+              onEnd();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                commit();
+                event.currentTarget.blur();
+              }
+            }}
+          />
+          <span>stops</span>
+        </div>
         <input
-          id="exposure"
-          aria-label="Exposure in stops"
-          type="number"
+          aria-label="Scrub exposure"
+          type="range"
           min="-6"
           max="6"
           step="0.01"
+          value={value}
           disabled={disabled}
-          value={draft}
-          onChange={(event) => {
-            setDraft(event.target.value);
-            const parsed = event.target.valueAsNumber;
-            if (Number.isFinite(parsed) && parsed >= -6 && parsed <= 6)
-              onChange(parsed);
-          }}
-          onFocus={() => {
-            editing.current = true;
+          onChange={(event) => onChange(Number(event.target.value))}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
             onBegin();
           }}
-          onBlur={() => {
-            editing.current = false;
-            commit();
-            onEnd();
-          }}
+          onPointerUp={onEnd}
+          onPointerCancel={onEnd}
+          onLostPointerCapture={onEnd}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              commit();
-              event.currentTarget.blur();
-            }
+            if (
+              [
+                "ArrowLeft",
+                "ArrowRight",
+                "ArrowUp",
+                "ArrowDown",
+                "Home",
+                "End",
+                "PageUp",
+                "PageDown",
+              ].includes(event.key)
+            )
+              onBegin();
           }}
+          onKeyUp={onEnd}
+          onBlur={onEnd}
+          onDoubleClick={() => onChange(0)}
         />
-        <span>stops</span>
       </div>
-      <input
-        aria-label="Scrub exposure"
-        type="range"
-        min="-6"
-        max="6"
-        step="0.01"
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(Number(event.target.value))}
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          onBegin();
-        }}
-        onPointerUp={onEnd}
-        onPointerCancel={onEnd}
-        onLostPointerCapture={onEnd}
-        onKeyDown={(event) => {
-          if (
-            [
-              "ArrowLeft",
-              "ArrowRight",
-              "ArrowUp",
-              "ArrowDown",
-              "Home",
-              "End",
-              "PageUp",
-              "PageDown",
-            ].includes(event.key)
-          )
-            onBegin();
-        }}
-        onKeyUp={onEnd}
-        onBlur={onEnd}
-        onDoubleClick={() => onChange(0)}
-      />
       <div className="range-labels">
         <span>−6</span>
         <span>0</span>

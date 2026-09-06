@@ -1,10 +1,10 @@
-import { CurveControls } from "./CurveControls";
+import { Input } from "@/components/ui/input";
+import { CurveControls } from "@/CurveControls";
 import { useEffect, useRef, useState } from "react";
-import type { GradingNode } from "./engine/GradingEngine";
-import { useGraph } from "./graphStore";
-import { nodeTypeTitle } from "./nodeTitles";
+import type { GradingNode } from "@/engine/GradingEngine";
+import { useGraph } from "@/graphStore";
 
-import { adjustmentDefaults } from "./adjustmentDefaults";
+import { adjustmentDefaults } from "@/adjustmentDefaults";
 
 function NumericControl({
   label,
@@ -34,10 +34,13 @@ function NumericControl({
     setDraft(String(neutral));
   };
   return (
-    <div className="adjustment-number">
+    <div
+      className="adjustment-number"
+      data-channel={label.match(/ ([RGB])$/)?.[1].toLowerCase()}
+    >
       <label>
-        {label}
-        <input
+        <span>{label}</span>
+        <Input
           type="number"
           aria-label={label}
           step={step}
@@ -202,24 +205,10 @@ function ColourWheel({
 }
 
 export function AdjustmentControls({ node }: { node: GradingNode }) {
-  const { updateParameters, end } = useGraph();
+  const { updateParameters } = useGraph();
   if (node.type === "blend" || node.type === "qualifier")
     return (
       <div className="adjustment-controls">
-        <button
-          className="text-button"
-          onClick={() => {
-            end();
-            updateParameters(
-              node.id,
-              structuredClone(
-                adjustmentDefaults[node.type as "blend" | "qualifier"],
-              ),
-            );
-          }}
-        >
-          Reset {nodeTypeTitle(node.type)}
-        </button>
         {node.type === "blend" ? (
           <>
             <p className="encoding-note">
@@ -297,8 +286,6 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
     node.type !== "whiteBalance"
   )
     return null;
-  const defaults = adjustmentDefaults[node.type];
-  const title = nodeTypeTitle(node.type);
   const scalar = (
     key:
       "contrast" | "pivot" | "saturation" | "vibrance" | "temperature" | "tint",
@@ -320,15 +307,6 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
   );
   return (
     <div className="adjustment-controls">
-      <button
-        className="text-button"
-        onClick={() => {
-          end();
-          updateParameters(node.id, structuredClone(defaults));
-        }}
-      >
-        Reset {title}
-      </button>
       {node.type === "whiteBalance" ? (
         <p className="encoding-note">
           Linear-light CAT02 · 6500 K / zero tint preserves the declared branch
@@ -351,9 +329,27 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
       {node.type === "cdl" && (
         <>
           <p id="wheel-help" className="encoding-note">
-            Drag wheels or use arrow keys; Home or double-click resets. RGB
-            fields provide precise channel values.
+            Drag wheels or use arrow keys (0.02 disc units per press); Home or
+            double-click resets the vector. Values outside the disc stay
+            editable in the RGB fields; the marker shows their direction at the
+            rim.
           </p>
+          <div className="cdl-wheels">
+            {(["slope", "offset", "power"] as const).map((parameter) => (
+              <div key={parameter}>
+                <span>{parameter[0].toUpperCase() + parameter.slice(1)}</span>
+                <ColourWheel
+                  parameter={parameter}
+                  label={parameter[0].toUpperCase() + parameter.slice(1)}
+                  value={node.data[parameter]!}
+                  neutral={parameter === "offset" ? 0 : 1}
+                  onChange={(value) =>
+                    updateParameters(node.id, { [parameter]: value })
+                  }
+                />
+              </div>
+            ))}
+          </div>
           {(["slope", "offset", "power"] as const).map((key) => {
             const label = key[0].toUpperCase() + key.slice(1),
               neutral = key === "offset" ? 0 : 1;
@@ -362,13 +358,6 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
             return (
               <fieldset key={key}>
                 <legend>{label}</legend>
-                <ColourWheel
-                  parameter={key}
-                  label={label}
-                  value={node.data[key]!}
-                  neutral={neutral}
-                  onChange={update}
-                />
                 {(["R", "G", "B"] as const).map((channel, i) => (
                   <NumericControl
                     key={channel}

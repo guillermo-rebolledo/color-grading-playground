@@ -261,3 +261,33 @@
   transition: none;
   animation: none;
 }
+
+/* Inspector native scrubs retain their input semantics and share thumb states. */
+:where(.inspector input[type="range"]) {
+  --control-fill: var(--foreground);
+  --control-fill-hover: var(--ring);
+  --control-line: transparent;
+  --control-border-width: 0;
+}
+.inspector input[type="range"]:hover {
+  --control-fill: var(--control-fill-hover);
+}
+.inspector input[type="range"]:active {
+  --control-fill: var(--ring);
+}
+.inspector input[type="range"]:disabled {
+  opacity: 1;
+  --control-fill: var(--control-disabled-foreground);
+}
+.inspector input[type="range"]::-webkit-slider-thumb {
+  background: var(--control-fill);
+  border: 0;
+}
+.inspector input[type="range"]::-moz-range-thumb {
+  background: var(--control-fill);
+  border: 0;
+}
+.curve-plot circle:focus-visible {
+  stroke: var(--ring);
+  stroke-width: 3;
+}
