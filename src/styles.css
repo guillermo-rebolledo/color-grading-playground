@@ -146,7 +146,10 @@ button {
   overflow: hidden;
 }
 .viewer.has-image {
-  background-image: repeating-conic-gradient(#101010 0% 25%, #161616 0% 50%);
+  background-image: repeating-conic-gradient(
+    var(--surface-void) 0% 25%,
+    var(--background) 0% 50%
+  );
   background-size: 20px 20px;
 }
 .image-frame {
@@ -522,7 +525,7 @@ dd {
   inset: 12px;
   border: 2px dashed var(--primary);
   border-radius: 9px;
-  background: #131313e8;
+  background: color-mix(in srgb, var(--background) 91%, transparent);
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -677,7 +680,7 @@ dd {
   display: grid;
   align-content: center;
   text-align: center;
-  background: #131313f5;
+  background: color-mix(in srgb, var(--background) 96%, transparent);
   color: #ecc1aa;
   line-height: 1.8;
   padding: 24px;
@@ -1048,7 +1051,7 @@ dd {
   appearance: none;
   width: 16px;
   height: 36px;
-  background: #f0f0f0;
+  background: var(--foreground);
   border: 2px solid #222;
   border-radius: 4px;
   cursor: ew-resize;
@@ -1057,7 +1060,7 @@ dd {
 .viewer .wipe-handle::-moz-range-thumb {
   width: 12px;
   height: 32px;
-  background: #f0f0f0;
+  background: var(--foreground);
   border: 2px solid #222;
   border-radius: 4px;
   cursor: ew-resize;

@@ -29,7 +29,14 @@ Adopt Tailwind, shadcn/ui with Radix primitives, and `lucide-react` for icons.
   (`vite.config.ts`) and the type checker (`tsconfig.json`), because shadcn's
   generator writes imports against it.
 - `components.json` records the generator's configuration: new-york style,
-  neutral base colour, CSS variables, `lucide` icons.
+  neutral base colour, CSS variables, `lucide` icons. The packages a generated
+  component needs — `radix-ui`, `cn`, `class-variance-authority`,
+  `lucide-react` — are installed ahead of the first one, so `shadcn add` works
+  without touching `package.json`. No component is generated until a ticket
+  consumes it, because stock density has to be overridden as it lands.
+- New code imports through the alias (`@/components/ProjectBar`); existing
+  relative imports are left alone and convert with the region that touches
+  them, so a file is not churned twice.
 
 ## Consequences
 

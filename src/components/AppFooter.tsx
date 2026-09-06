@@ -1,3 +1,4 @@
+/** The standing note on what a node-based grade can represent. */
 export function AppFooter() {
   return (
     <footer className="footer">

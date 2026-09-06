@@ -13,7 +13,10 @@ export type Comparison = "off" | "before" | "A" | "B";
 
 /** The image and the tools for judging it: the title bar, the compare and
  * out-of-range toolbar, the preview surface with its overlays, and the image
- * bar carrying provenance. */
+ * bar carrying provenance.
+ *
+ * The region's rows are returned unwrapped: the viewer column is a flex column
+ * and an extra element would change how the viewer takes its height. */
 export function ViewerPanel({
   canvas,
   engine,

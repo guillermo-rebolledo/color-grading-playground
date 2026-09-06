@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+/** Exposure in stops: a typed field and a scrub, resettable by either. */
 export function ExposureControl({
   value,
   disabled,

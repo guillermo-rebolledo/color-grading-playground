@@ -19,20 +19,15 @@ test("serves its typefaces from its own build output", async ({
   await expect(page.getByLabel("Project status")).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
 
-  const faces = await page.evaluate(() =>
-    [...document.fonts].map((face) => face.family),
-  );
-  expect(faces).toContain("IBM Plex Sans");
-  expect(faces).toContain("IBM Plex Mono");
-
-  const rendered = await page.evaluate(() => ({
-    body: getComputedStyle(document.body).fontFamily,
-    loaded: [...document.fonts]
+  // A face only reaches "loaded" once the page renders text in it, so this
+  // says both families are in use, without asserting any computed style.
+  const loaded = await page.evaluate(() =>
+    [...document.fonts]
       .filter((face) => face.status === "loaded")
       .map((face) => face.family),
-  }));
-  expect(rendered.body).toContain("IBM Plex Sans");
-  expect(rendered.loaded).toContain("IBM Plex Sans");
+  );
+  expect(loaded).toContain("IBM Plex Sans");
+  expect(loaded).toContain("IBM Plex Mono");
 
   const fontRequests = await page.evaluate(() =>
     performance
