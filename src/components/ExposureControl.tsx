@@ -82,6 +82,7 @@ export function ExposureControl({
         <input
           aria-label="Scrub exposure"
           type="range"
+          data-slot="native-slider"
           min="-6"
           max="6"
           step="0.01"

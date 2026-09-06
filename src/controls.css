@@ -164,7 +164,8 @@
     select,
     [data-slot="input"],
     [data-slot="slider-thumb"],
-    .wipe-handle
+    .wipe-handle,
+    [data-slot="native-slider"]
   ):hover:not(:disabled, [data-disabled]) {
   --control-fill: var(--control-fill-hover);
   --control-line: var(--control-line-hover);
@@ -190,7 +191,11 @@
   --control-ink: var(--control-ink-pressed);
 }
 
-:where([data-slot="slider-thumb"], .wipe-handle):active {
+:where(
+  [data-slot="slider-thumb"],
+  .wipe-handle,
+  [data-slot="native-slider"]
+):active {
   --control-fill: var(--ring);
 }
 
@@ -198,7 +203,12 @@
  * above 4.5:1 against the recessed fill, so a disabled control can be read rather
  * than guessed at. It is stated after every kind of control, so an accent call
  * to action goes recessed like everything else rather than staying lit. */
-:where(button, select, [data-slot="input"]):disabled,
+:where(
+  button,
+  select,
+  [data-slot="input"],
+  [data-slot="native-slider"]
+):disabled,
 :where([data-slot="slider-thumb"])[data-disabled] {
   cursor: not-allowed;
   opacity: 1;
@@ -263,21 +273,12 @@
 }
 
 /* Inspector native scrubs retain their input semantics and share thumb states. */
-:where(.inspector input[type="range"]) {
+:where([data-slot="native-slider"]) {
   --control-fill: var(--foreground);
   --control-fill-hover: var(--ring);
+  --control-fill-disabled: var(--control-disabled-foreground);
   --control-line: transparent;
   --control-border-width: 0;
-}
-.inspector input[type="range"]:hover {
-  --control-fill: var(--control-fill-hover);
-}
-.inspector input[type="range"]:active {
-  --control-fill: var(--ring);
-}
-.inspector input[type="range"]:disabled {
-  opacity: 1;
-  --control-fill: var(--control-disabled-foreground);
 }
 .inspector input[type="range"]::-webkit-slider-thumb {
   background: var(--control-fill);

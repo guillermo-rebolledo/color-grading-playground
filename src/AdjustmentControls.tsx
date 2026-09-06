@@ -67,6 +67,7 @@ function NumericControl({
       </label>
       <input
         type="range"
+        data-slot="native-slider"
         aria-label={`Scrub ${label}`}
         min={min}
         max={max}
