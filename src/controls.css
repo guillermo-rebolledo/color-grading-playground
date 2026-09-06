@@ -123,6 +123,26 @@
   border-radius: 0;
 }
 
+/* The viewer keeps a native range so its wipe shares the image geometry.
+ * Its thumb joins the same states without painting a fill over the range track. */
+:where(.wipe-handle) {
+  --control-fill: var(--foreground);
+  --control-fill-hover: var(--ring);
+  --control-line: var(--line-strong);
+  --control-line-hover: var(--line-hover);
+  --control-border-width: 2px;
+}
+
+.wipe-handle::-webkit-slider-thumb {
+  background: var(--control-fill);
+  border: var(--control-border-width) solid var(--control-line);
+}
+
+.wipe-handle::-moz-range-thumb {
+  background: var(--control-fill);
+  border: var(--control-border-width) solid var(--control-line);
+}
+
 /* An accent fill is a call to action, and the one surface the accent ring
  * would disappear against, so there the ring is recoloured to the ink that
  * surface already uses. It is recoloured, never removed. */
@@ -143,7 +163,8 @@
     button,
     select,
     [data-slot="input"],
-    [data-slot="slider-thumb"]
+    [data-slot="slider-thumb"],
+    .wipe-handle
   ):hover:not(:disabled, [data-disabled]) {
   --control-fill: var(--control-fill-hover);
   --control-line: var(--control-line-hover);
@@ -169,7 +190,7 @@
   --control-ink: var(--control-ink-pressed);
 }
 
-:where([data-slot="slider-thumb"]):active {
+:where([data-slot="slider-thumb"], .wipe-handle):active {
   --control-fill: var(--ring);
 }
 
