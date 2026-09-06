@@ -24,6 +24,9 @@ import { ProjectBar } from "@/components/ProjectBar";
 import { ViewerPanel, type Comparison } from "@/components/ViewerPanel";
 import { Inspector } from "@/components/Inspector";
 import { AppFooter } from "@/components/AppFooter";
+import { WorkspaceStage } from "@/components/WorkspaceStage";
+import { UnsupportedDevice } from "@/components/UnsupportedDevice";
+import { useSupportedWidth } from "@/viewportSupport";
 import "./styles.css";
 
 export default function App() {
@@ -77,6 +80,7 @@ export default function App() {
   );
   const [showSamples, setShowSamples] = useState(false);
   const offline = useOffline();
+  const supportedWidth = useSupportedWidth();
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
@@ -372,136 +376,158 @@ export default function App() {
       setError(message(cause));
     }
   }
+  function retryGraphics() {
+    try {
+      if (engine.current) engine.current.recover();
+      else engine.current = new GradingEngine(canvas.current!);
+      refreshGraphics();
+    } catch (cause) {
+      setCapabilityError(message(cause));
+    }
+  }
   const disabled = !!capabilityError;
+  // The workspace is replaced only when none of it would work: too narrow a
+  // window. A capability failure leaves the graph editable, so it is explained
+  // in the viewer instead.
+  const unsupported = supportedWidth
+    ? null
+    : {
+        heading: "This window is too narrow to grade in",
+        detail:
+          "The workspace needs the image, the graph and the inspector on screen at once. This window is not wide enough to show them, and a narrower layout would not be a grading surface worth trusting. Widen the window to carry on.",
+      };
   return (
-    <main
-      className="app-shell"
-      inert={!ready}
-      onDragEnter={(event) => {
-        event.preventDefault();
-        dragDepth.current++;
-        setDragging(true);
-      }}
-      onDragOver={(event) => event.preventDefault()}
-      onDragLeave={(event) => {
-        event.preventDefault();
-        if (--dragDepth.current <= 0) {
+    <>
+      <main
+        className="app-shell"
+        hidden={!!unsupported}
+        inert={!ready}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          dragDepth.current++;
+          setDragging(true);
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDragLeave={(event) => {
+          event.preventDefault();
+          if (--dragDepth.current <= 0) {
+            dragDepth.current = 0;
+            setDragging(false);
+          }
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
           dragDepth.current = 0;
           setDragging(false);
-        }
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        dragDepth.current = 0;
-        setDragging(false);
-        void openFile(event.dataTransfer.files[0]);
-      }}
-    >
-      <Topbar
-        fileInput={fileInput}
-        disabled={disabled}
-        showSamples={showSamples}
-        onToggleSamples={() => setShowSamples(!showSamples)}
-        onOpenFile={(file) => void openFile(file)}
-        onOpenChart={(profile) => openChart(profile)}
-      />
-
-      <ProjectBar
-        ready={ready}
-        saving={saving}
-        loading={loading}
-        shareLink={shareLink}
-        projectStatus={projectStatus}
-        projectError={projectError}
-        offline={offline}
-        onSave={() => void save()}
-        onShare={share}
-      />
-      {showSamples && (
-        <SamplePicker
-          selected={image?.sample?.id}
+          void openFile(event.dataTransfer.files[0]);
+        }}
+      >
+        <Topbar
+          fileInput={fileInput}
           disabled={disabled}
-          offlineReady={offline.support === "ready" && offline.online}
-          onSelect={(sample) => void openFile(undefined, sample)}
+          showSamples={showSamples}
+          onToggleSamples={() => setShowSamples(!showSamples)}
+          onOpenFile={(file) => void openFile(file)}
+          onOpenChart={(profile) => openChart(profile)}
         />
-      )}
-      <section className="workspace">
-        <div className="viewer-column">
-          <ViewerPanel
-            canvas={canvas}
-            engine={() => engine.current}
-            image={image}
-            graph={graph}
-            solo={solo}
-            comparison={comparison}
-            onComparison={setComparison}
-            snapshots={snapshots}
-            onCapture={(slot) =>
-              setSnapshots((previous) => ({
-                ...previous,
-                [slot]: structuredClone(graph),
-              }))
-            }
-            wipe={wipe}
-            onWipe={setWipe}
-            outOfRange={outOfRange}
-            onOutOfRange={setOutOfRange}
-            loading={loading}
-            capabilityError={capabilityError}
-            graphError={graphError}
-            renderError={renderError}
-            graphicsWarning={graphicsWarning}
-            fidelityOverlay={fidelityOverlay}
-            onRetryGraphics={() => {
-              try {
-                if (engine.current) engine.current.recover();
-                else engine.current = new GradingEngine(canvas.current!);
-                refreshGraphics();
-              } catch (cause) {
-                setCapabilityError(message(cause));
+
+        <ProjectBar
+          ready={ready}
+          saving={saving}
+          loading={loading}
+          shareLink={shareLink}
+          projectStatus={projectStatus}
+          projectError={projectError}
+          offline={offline}
+          onSave={() => void save()}
+          onShare={share}
+        />
+        {showSamples && (
+          <SamplePicker
+            selected={image?.sample?.id}
+            disabled={disabled}
+            offlineReady={offline.support === "ready" && offline.online}
+            onSelect={(sample) => void openFile(undefined, sample)}
+          />
+        )}
+        <WorkspaceStage
+          viewer={
+            <>
+              <ViewerPanel
+                canvas={canvas}
+                engine={() => engine.current}
+                image={image}
+                graph={graph}
+                solo={solo}
+                comparison={comparison}
+                onComparison={setComparison}
+                snapshots={snapshots}
+                onCapture={(slot) =>
+                  setSnapshots((previous) => ({
+                    ...previous,
+                    [slot]: structuredClone(graph),
+                  }))
+                }
+                wipe={wipe}
+                onWipe={setWipe}
+                outOfRange={outOfRange}
+                onOutOfRange={setOutOfRange}
+                loading={loading}
+                capabilityError={capabilityError}
+                graphError={graphError}
+                renderError={renderError}
+                graphicsWarning={graphicsWarning}
+                fidelityOverlay={fidelityOverlay}
+                onRetryGraphics={retryGraphics}
+                onRetryPreview={() =>
+                  setGraphicsRevision((revision) => revision + 1)
+                }
+                onChooseImage={() => fileInput.current?.click()}
+              />
+              {image?.sample && <SampleProvenance sample={image.sample} />}
+              {error && (
+                <div className="file-error" role="alert">
+                  {error}
+                  <button
+                    aria-label="Dismiss error"
+                    onClick={() => setError("")}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+            </>
+          }
+          graph={<GraphEditor />}
+          scopes={
+            <Scopes
+              engine={engine.current}
+              graph={graph}
+              image={image}
+              paused={
+                loading || !!capabilityError || !!graphError || !!renderError
               }
-            }}
-            onRetryPreview={() =>
-              setGraphicsRevision((revision) => revision + 1)
-            }
-            onChooseImage={() => fileInput.current?.click()}
-          />
-          <Scopes
-            engine={engine.current}
-            graph={graph}
-            image={image}
-            paused={
-              loading || !!capabilityError || !!graphError || !!renderError
-            }
-          />
-          {image?.sample && <SampleProvenance sample={image.sample} />}
-          {error && (
-            <div className="file-error" role="alert">
-              {error}
-              <button aria-label="Dismiss error" onClick={() => setError("")}>
-                ×
-              </button>
-            </div>
-          )}
-        </div>
-
-        <Inspector
-          hasImage={!!image}
-          engine={() => engine.current}
-          capabilityError={capabilityError}
-          latticeSupport={latticeSupport}
-          onOverlay={setFidelityOverlay}
+            />
+          }
+          inspector={
+            <Inspector
+              hasImage={!!image}
+              engine={() => engine.current}
+              capabilityError={capabilityError}
+              latticeSupport={latticeSupport}
+              onOverlay={setFidelityOverlay}
+            />
+          }
         />
-      </section>
-
-      <GraphEditor />
-      <AppFooter />
-      {dragging && !capabilityError && (
-        <div className="drop-overlay">
-          <span>Drop your image to open</span>
-        </div>
-      )}
-    </main>
+        <AppFooter />
+        {dragging && !capabilityError && (
+          <div className="drop-overlay">
+            <span>Drop your image to open</span>
+          </div>
+        )}
+      </main>
+      {unsupported && <UnsupportedDevice {...unsupported} />}
+    </>
   );
 }
 

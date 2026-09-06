@@ -139,9 +139,8 @@ export function GraphEditor() {
     return () => window.removeEventListener("keydown", key);
   }, []);
   return (
-    <section className="graph-panel" aria-label="Grading graph">
+    <>
       <div className="panel-bar graph-toolbar">
-        <h2>Graph</h2>
         <div className="graph-actions">
           {(
             [
@@ -306,6 +305,6 @@ export function GraphEditor() {
           <Controls />
         </ReactFlow>
       </div>
-    </section>
+    </>
   );
 }

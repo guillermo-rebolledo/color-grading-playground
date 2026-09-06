@@ -42,6 +42,10 @@ Use **Load precision chart** to try ARRI LogC3 EI 800 / ARRI Wide Gamut 3 or Son
 
 `createGraph()` and `GradingEngine.validate(graph, draft?)` are public entry points for graph creation and validation. Schema version 1 stores stable node/edge IDs, parameters, explicit project/CST encoding pairs, Output's compile-time clamp policy, and canvas positions. Zustand owns the editable graph and history. Save project stores a versioned snapshot and the current uploaded image on this device; reloading restores the last save. Share grade generates a compressed URL fragment containing the graph and source tags, without uploaded image bytes.
 
+## Workspace
+
+The viewer owns the top of the stage, the node graph and the scopes share the dock beneath it, and the inspector is a fixed 328px rail — so the image and the graph are on screen together, with no scrolling. Both dock panels resize and collapse from the keyboard or the pointer, and their sizes persist locally without entering the project schema or the share link. 1280px is the minimum supported width; below it an unsupported-device screen replaces the workspace and states what grading requires, and a missing GPU capability gets the same explanation in the viewer while the graph stays editable. See [stage and docks](docs/workspace-shell.md).
+
 ## Compatibility
 
 WebGL2, `EXT_color_buffer_float`, and high-precision fragment floats are required. Framebuffer completeness and allocation errors are checked; unavailable capabilities produce a visible explanation. There is no WebGL1 or inaccurate integer fallback. Context loss preserves the editable graph and automatically rebuilds GPU resources on restoration. Transient recovery failures offer a retry. Numeric edits use half-resolution previews until release or 80 ms idle. See [GPU recovery and tested configurations](docs/gpu-recovery.md).
