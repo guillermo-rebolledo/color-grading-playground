@@ -5,3 +5,4 @@ playwright-report/
 *.local
 .vercel
 .env*
+dist-test/
