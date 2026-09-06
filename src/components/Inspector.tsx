@@ -26,7 +26,7 @@ export function Inspector({
   const { graph } = graphState;
   const selected = graph.nodes.find((n) => n.selected);
   return (
-    <aside className="inspector">
+    <aside className="inspector" aria-label="Inspector">
       <div className="panel-bar">
         <h2>Inspector</h2>
         <span>02</span>

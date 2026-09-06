@@ -147,11 +147,7 @@ export function Scopes({
       : null;
   const report = current?.report;
   return (
-    <section className="scopes" aria-label="Image scopes">
-      <div className="panel-bar">
-        <h2>Scopes</h2>
-        <span>Graded output</span>
-      </div>
+    <>
       <p className="scope-description">
         Measured: {encodingLabel(graph.colour.output)} · diagnostic range 0–1,
         after Output policy, before display conversion. Outside values
@@ -182,6 +178,6 @@ export function Scopes({
           </>
         )}
       </div>
-    </section>
+    </>
   );
 }

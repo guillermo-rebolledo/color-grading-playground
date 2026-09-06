@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { UnsupportedDevice } from "@/components/UnsupportedDevice";
 import { FidelityOverlay } from "@/FidelityOverlay";
 import { ViewerNavigation } from "@/ViewerNavigation";
 import { nodeTitle } from "@/nodeTitles";
@@ -15,8 +16,8 @@ export type Comparison = "off" | "before" | "A" | "B";
  * out-of-range toolbar, the preview surface with its overlays, and the image
  * bar carrying provenance.
  *
- * The region's rows are returned unwrapped: the viewer column is a flex column
- * and an extra element would change how the viewer takes its height. */
+ * The region's rows are returned unwrapped: the stage wraps them in the viewer
+ * region, and an extra element would change how the viewer takes its height. */
 export function ViewerPanel({
   canvas,
   engine,
@@ -179,11 +180,14 @@ export function ViewerPanel({
           </p>
         )}
         {capabilityError && (
-          <div className="capability-error" role="alert">
-            <h2>Preview unavailable</h2>
-            <p>{capabilityError}</p>
-            <button onClick={onRetryGraphics}>Retry graphics recovery</button>
-          </div>
+          <UnsupportedDevice
+            inline
+            heading="Preview unavailable"
+            detail={capabilityError}
+            action={
+              <button onClick={onRetryGraphics}>Retry graphics recovery</button>
+            }
+          />
         )}
         {image && (graphError || renderError) && (
           <div className="preview-paused" role="alert">
