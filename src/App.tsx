@@ -259,14 +259,15 @@ export default function App() {
         "The graphics connection was lost. Waiting for automatic restoration; your editable graph is safe.",
       );
     };
+    const restored = () => queueMicrotask(refreshGraphics);
     element.addEventListener("webglcontextlost", lost);
-    element.addEventListener("webglcontextrestored", refreshGraphics);
+    element.addEventListener("webglcontextrestored", restored);
     return () => {
       request.current++;
       engine.current?.dispose();
       engine.current = null;
       element.removeEventListener("webglcontextlost", lost);
-      element.removeEventListener("webglcontextrestored", refreshGraphics);
+      element.removeEventListener("webglcontextrestored", restored);
     };
   }, []);
 
@@ -750,20 +751,19 @@ export default function App() {
               <div className="capability-error" role="alert">
                 <h2>Preview unavailable</h2>
                 <p>{capabilityError}</p>
-                {engine.current && (
-                  <button
-                    onClick={() => {
-                      try {
-                        engine.current!.recover();
-                        refreshGraphics();
-                      } catch (cause) {
-                        setCapabilityError(message(cause));
-                      }
-                    }}
-                  >
-                    Retry graphics recovery
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    try {
+                      if (engine.current) engine.current.recover();
+                      else engine.current = new GradingEngine(canvas.current!);
+                      refreshGraphics();
+                    } catch (cause) {
+                      setCapabilityError(message(cause));
+                    }
+                  }}
+                >
+                  Retry graphics recovery
+                </button>
               </div>
             )}
             {image && (graphError || renderError) && (

@@ -266,7 +266,9 @@ test("browser keeps editing through loss and retries a failed restoration", asyn
   await expect(
     page.getByText("Graphics recovery failed:", { exact: false }).first(),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Retry graphics recovery" }).click();
+  await page
+    .getByRole("button", { name: "Retry graphics recovery" })
+    .click({ timeout: 5000 });
   await expect(
     page.getByRole("heading", { name: "Preview unavailable" }),
   ).toHaveCount(0);
@@ -415,4 +417,37 @@ test("65-cube automatically tiles at device limits and fidelity uses full previe
   expect(result.interactive).toEqual([20, 10]);
   expect(result.full).toEqual([40, 20]);
   expect(result.current).toBe(false);
+});
+
+test("initial program allocation failure can be retried without reloading", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const proto = WebGL2RenderingContext.prototype;
+    const create = proto.createProgram;
+    Reflect.set(proto, "createProgram", () => null);
+    window.addEventListener(
+      "resources-available",
+      () => {
+        proto.createProgram = create;
+      },
+      { once: true },
+    );
+  });
+  await page.goto("/");
+  await expect(
+    page
+      .getByText("Could not allocate a grading program.", { exact: true })
+      .first(),
+  ).toBeVisible();
+  await page.evaluate(() =>
+    window.dispatchEvent(new Event("resources-available")),
+  );
+  await page
+    .getByRole("button", { name: "Retry graphics recovery" })
+    .click({ timeout: 5000 });
+  await expect(
+    page.getByRole("heading", { name: "Preview unavailable" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("32-bit float", { exact: false })).toBeVisible();
 });

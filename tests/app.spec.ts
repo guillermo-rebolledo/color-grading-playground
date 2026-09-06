@@ -163,7 +163,8 @@ test("explains missing GPU capability instead of enabling a broken preview", asy
   await openNeutralGraph(page);
   await expect(page.getByRole("alert")).toContainText("WebGL2 is unavailable");
   await expect(page.getByRole("button", { name: "Open image" })).toBeDisabled();
-  await expect(page.getByRole("slider")).toBeDisabled();
+  // Graph edits stay available while GPU preview and image loading are paused.
+  await expect(page.getByRole("slider")).toBeEnabled();
 });
 
 test("caps uploaded preview dimensions while keeping original size visible", async ({
