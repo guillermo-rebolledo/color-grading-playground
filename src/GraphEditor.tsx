@@ -17,7 +17,9 @@ import {
   GradingEngine,
   encodingLabel,
   type GradingNode,
+  type NodeType,
 } from "./engine/GradingEngine";
+import { nodeTypeTitle } from "./nodeTitles";
 
 function GradeNode({
   type,
@@ -25,16 +27,7 @@ function GradeNode({
   selected,
 }: NodeProps<Node<GradingNode["data"]>>) {
   const colour = useGraph((s) => s.graph.colour);
-  const title =
-    type === "qualifier"
-      ? "HSL Qualifier"
-      : type === "whiteBalance"
-        ? "White Balance"
-        : type === "cdl"
-          ? "CDL"
-          : type === "cst"
-            ? "CST"
-            : type[0].toUpperCase() + type.slice(1);
+  const title = nodeTypeTitle(type as NodeType, true);
   return (
     <div className={`graph-node ${selected ? "active" : ""}`}>
       {type !== "source" &&
@@ -166,16 +159,7 @@ export function GraphEditor() {
             ] as const
           ).map((type) => (
             <button key={type} onClick={() => state.add(type)}>
-              Add{" "}
-              {type === "qualifier"
-                ? "HSL Qualifier"
-                : type === "whiteBalance"
-                  ? "White Balance"
-                  : type === "cdl"
-                    ? "CDL"
-                    : type === "cst"
-                      ? "CST"
-                      : type[0].toUpperCase() + type.slice(1)}
+              Add {nodeTypeTitle(type, true)}
             </button>
           ))}
           {state.solo && (

@@ -19,9 +19,10 @@ import { loadImage } from "./engine/loadImage";
 import { createLogChart, isLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
+import { nodeTitle } from "./nodeTitles";
 import { ViewerNavigation } from "./ViewerNavigation";
 import { LutExport, OutputRangeSelect, type LatticeSupport } from "./LutExport";
-import type { GradingGraph, GradingNode } from "./engine/GradingEngine";
+import type { GradingGraph } from "./engine/GradingEngine";
 import "./styles.css";
 
 type ImageInfo = {
@@ -950,23 +951,6 @@ export default function App() {
         </div>
       )}
     </main>
-  );
-}
-
-/** The inspector heading and solo indicator name every node type, not only labelled ones. */
-function nodeTitle(node: GradingNode | undefined) {
-  if (!node) return "";
-  return (
-    node.data.label ??
-    (node.type === "qualifier"
-      ? "HSL Qualifier"
-      : node.type === "whiteBalance"
-        ? "White Balance"
-        : node.type === "cdl"
-          ? "CDL"
-          : node.type === "cst"
-            ? "Colour Space Transform"
-            : node.type[0].toUpperCase() + node.type.slice(1))
   );
 }
 
