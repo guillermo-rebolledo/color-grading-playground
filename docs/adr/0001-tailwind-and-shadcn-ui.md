@@ -59,6 +59,11 @@ the correct pressure — it makes converting a region mean deleting its old
 rules — but it means a half-converted panel will look wrong rather than merely
 unstyled.
 
+> Reversed by [ADR 2](0002-control-states-in-a-cascade-layer.md). The legacy
+> stylesheet is now a cascade layer beneath `utilities`, because the legacy
+> element rules belong to no region and so could never be converted away from.
+> The pressure is kept by deleting a region's rules as it is redressed.
+
 **Stock shadcn density is wrong for this application** and is overridden per
 component (button heights, a toolbar variant, hairline cards, mono inputs,
 2px radii). Those overrides are documented in MEM-221 and land with the

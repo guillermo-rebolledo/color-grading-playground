@@ -1,10 +1,29 @@
 /* Tailwind without preflight. The hand-written stylesheet is still load-bearing
  * and is retired region by region; a global reset now would restyle every panel
  * before its redesign lands. Preflight is switched on with the last region that
- * leaves src/styles.css behind. */
+ * leaves src/styles.css behind.
+ *
+ * The order of the layers is the order of the redesign. The legacy stylesheet
+ * holds the regions that have not been redressed yet, so a Tailwind utility on
+ * a redressed component has to outrank it — which cascade layers give us
+ * without a specificity war. Control states come last because no component may
+ * opt out of them; see src/controls.css. */
+@layer theme, base, legacy, utilities, controls;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 @import "./tokens.css";
+@import "./styles.css" layer(legacy);
+@import "./controls.css" layer(controls);
+
+/* The one rule preflight would have given us that the generated primitives
+ * depend on: Tailwind's border utilities set a width and a colour but no
+ * style, and an unstyled border does not draw. Every shadcn primitive carries
+ * a data-slot, so this reaches exactly them. */
+@layer base {
+  [data-slot] {
+    border: 0 solid var(--border);
+  }
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -44,4 +63,8 @@
   --radius-sm: calc(var(--radius) - 1px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
+  --color-line-hover: var(--line-hover);
+  --color-control-pressed: var(--control-pressed);
+  --color-control-disabled: var(--control-disabled);
+  --color-control-disabled-foreground: var(--control-disabled-foreground);
 }

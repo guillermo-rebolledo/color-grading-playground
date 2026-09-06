@@ -1,0 +1,213 @@
+/* Control states and the motion budget, defined once for the whole product.
+ *
+ * Density belongs to the component that owns a control — the shadcn primitives
+ * in src/components/ui carry it, and the regions that have not been redressed
+ * yet still carry theirs in src/styles.css. What lives here is the part that
+ * may not vary: the four states every control shows, and the durations
+ * anything is allowed to animate for.
+ *
+ * This is the last cascade layer (see the @layer statement in tailwind.css), so
+ * a state defined here wins over both the legacy stylesheet and any Tailwind
+ * utility. That is deliberate: a component may not opt out of focus-visible.
+ *
+ *   Default          --secondary fill on a --line-strong border
+ *   Hover            lifts to the --input fill on a --line-hover border
+ *   Focus-visible    1px --ring border plus the --focus-ring soft ring
+ *   Pressed          --control-pressed fill on a --ring border
+ *   Disabled         --control-disabled fill, dimmer border, dimmed ink
+ *
+ * Inside this layer the states settle each other by source order, so every
+ * exclusion is wrapped in :where() to keep it out of the specificity sum. The
+ * order the rules appear in below is the whole argument: a hovered control
+ * still shows that it is pressed, and a pressed, hovered control still shows
+ * that it is focused.
+ *
+ * Focus-visible and disabled are stated for every focusable element. The fill
+ * states are stated for the controls that carry a surface: buttons, selects,
+ * and the field primitive. Native inputs draw themselves in too many shapes to
+ * share one fill — a range track, a checkbox, the borderless digits inside a
+ * numeric control — so a field takes the surface by being a field primitive,
+ * and the regions still on src/styles.css keep theirs until they are redressed.
+ *
+ * Surfaceless controls — a section header, a tab, a legacy text button — are
+ * not chips and never grow a fill, so they sit out every rule that paints one
+ * and take the same four states in ink at the end of the file.
+ *
+ * Motion is colour only on hover and press, height only on panel collapse.
+ * Both durations come from the budget in src/tokens.css, where a reduced-motion
+ * preference sets them to zero. */
+
+:where(button, select):not(
+  :where(
+    [data-slot="accordion-trigger"],
+    [data-slot="tabs-trigger"],
+    .text-button,
+    .file-error button
+  )
+) {
+  background: var(--secondary);
+  color: var(--foreground);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  transition:
+    background-color var(--motion-control) linear,
+    border-color var(--motion-control) linear,
+    color var(--motion-control) linear;
+}
+
+/* A field sits one step further up the ramp than a button: it is a place to
+ * put something, so it reads as recessed rather than raised. */
+:where([data-slot="input"]) {
+  background: var(--input);
+  color: var(--foreground);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  transition:
+    background-color var(--motion-control) linear,
+    border-color var(--motion-control) linear,
+    color var(--motion-control) linear;
+}
+
+/* Hover lifts the fill one step up the surface ramp and lightens the border. */
+:where(button, select):not(
+    :where(
+      :disabled,
+      [data-slot="accordion-trigger"],
+      [data-slot="tabs-trigger"],
+      .text-button,
+      .file-error button
+    )
+  ):hover {
+  background: var(--input);
+  border-color: var(--line-hover);
+}
+
+:where([data-slot="input"]):not(:where(:disabled)):hover {
+  border-color: var(--line-hover);
+}
+
+/* Pressed reads as pressed rather than tinted: a desaturated accent fill a
+ * colourist can tell from a hovered control at a glance, so whether
+ * out-of-range or a comparison mode is on is never in doubt. */
+:where(button, [role="button"])[aria-pressed="true"] {
+  background: var(--control-pressed);
+  border-color: var(--ring);
+}
+
+:where(button, [role="button"])[aria-pressed="true"]:not(
+    :where(:disabled)
+  ):hover {
+  background: color-mix(in srgb, var(--control-pressed) 82%, #ffffff);
+  border-color: var(--ring);
+}
+
+/* Disabled is unmistakably unavailable and still legible: the dimmed ink holds
+ * 4.6:1 against the recessed fill, so a disabled control can be read rather
+ * than guessed at. */
+:where(button, select, input, textarea):disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  color: var(--control-disabled-foreground);
+}
+
+:where(button, select, [data-slot="input"]):not(
+    :where(
+      [data-slot="accordion-trigger"],
+      [data-slot="tabs-trigger"],
+      .text-button,
+      .file-error button
+    )
+  ):disabled {
+  background: var(--control-disabled);
+  border-color: var(--input);
+}
+
+/* Focus-visible, on every focusable element in the product. The browser
+ * outline is replaced by a border and a ring rather than dropped, so the
+ * indicator survives on any surface and is never suppressed. */
+:where(*):focus-visible {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: var(--focus-ring);
+}
+
+/* An accent fill is the one surface the accent ring would disappear against,
+ * so there the ring is recoloured to the ink that surface already uses. It is
+ * recoloured, never removed. */
+.primary-button,
+[data-accent-surface] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: 1px solid var(--primary);
+}
+
+.primary-button:not(:where(:disabled)):hover,
+[data-accent-surface]:not(:where(:disabled)):hover {
+  background: color-mix(in srgb, var(--primary) 85%, #ffffff);
+  border-color: var(--primary);
+}
+
+.primary-button:focus-visible,
+[data-accent-surface]:focus-visible {
+  border-color: var(--primary-foreground);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--primary-foreground) 55%, transparent);
+}
+
+/* The surfaceless controls, with the same four states carried by ink and by
+ * the focus indicator instead of by a fill. Their geometry is left alone so a
+ * tab can keep its underline. */
+:where(
+  [data-slot="accordion-trigger"],
+  [data-slot="tabs-trigger"],
+  .text-button,
+  .file-error button
+) {
+  background: transparent;
+  transition: color var(--motion-control) linear;
+}
+
+:where(
+    [data-slot="accordion-trigger"],
+    [data-slot="tabs-trigger"],
+    .text-button,
+    .file-error button
+  ):not(:where(:disabled)):hover {
+  background: transparent;
+  color: var(--foreground);
+}
+
+/* Animating a panel collapse is the one height transition in the budget. */
+@keyframes control-accordion-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes control-accordion-close {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+[data-slot="accordion-content"][data-state="open"] {
+  animation: control-accordion-open var(--motion-collapse) ease-out;
+}
+
+[data-slot="accordion-content"][data-state="closed"] {
+  animation: control-accordion-close var(--motion-collapse) ease-out;
+}
+
+/* Nothing inside the viewer animates, ever — including the cases that feel
+ * like exceptions. */
+.viewer,
+.viewer * {
+  transition: none;
+  animation: none;
+}

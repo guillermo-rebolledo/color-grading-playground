@@ -24,7 +24,6 @@ import { ProjectBar } from "@/components/ProjectBar";
 import { ViewerPanel, type Comparison } from "@/components/ViewerPanel";
 import { Inspector } from "@/components/Inspector";
 import { AppFooter } from "@/components/AppFooter";
-import "./styles.css";
 
 export default function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
