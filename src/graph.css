@@ -1,0 +1,70 @@
+/* React Flow owns these elements. Component density and node-card layout
+ * live in GraphEditor; library surfaces share the application's tokens. */
+.flow-canvas .react-flow {
+  --xy-background-color: var(--background);
+  --xy-background-pattern-dots-color: var(--line-strong);
+  --xy-node-boxshadow-hover: none;
+  --xy-node-boxshadow-selected: none;
+  --xy-selection-background-color: var(--control-pressed);
+  --xy-selection-border: 1px solid var(--primary);
+  --xy-attribution-background-color: var(--card);
+}
+.flow-canvas .react-flow__handle {
+  width: 12px;
+  height: 12px;
+}
+.flow-canvas .rgb-port {
+  background: var(--port-rgb);
+  border-color: var(--port-rgb);
+}
+.flow-canvas .mask-port {
+  background: var(--port-mask);
+  border-color: var(--port-mask);
+  border-radius: 1px;
+}
+.flow-canvas .react-flow__edge-path {
+  stroke: var(--port-rgb);
+  stroke-width: 2;
+}
+.flow-canvas .mask-edge .react-flow__edge-path {
+  stroke: var(--port-mask);
+  stroke-dasharray: 5 4;
+}
+.flow-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--primary);
+  stroke-width: 3;
+}
+/* Output is also a built-in type; its wrapper must not style our node. */
+.flow-canvas .react-flow__node-output {
+  padding: 0;
+  border: 0;
+  background: none;
+  width: auto;
+  text-align: left;
+  border-radius: 0;
+  box-shadow: none;
+}
+.flow-canvas .react-flow__attribution a {
+  color: var(--text-faint);
+}
+.graph-toolbar .graph-navigation {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  box-shadow: none;
+}
+.graph-navigation .react-flow__controls-button {
+  width: 20px;
+  height: 20px;
+  padding: 2px;
+  border: 1px solid var(--line-strong);
+}
+.graph-navigation .react-flow__controls-button svg {
+  width: 14px;
+  height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  fill: none;
+}

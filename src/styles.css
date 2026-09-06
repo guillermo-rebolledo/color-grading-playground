@@ -315,77 +315,6 @@ dd {
 .inspector-footer span {
   color: var(--muted-foreground);
 }
-.graph-canvas {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 175px;
-  padding: 32px;
-  background-image: radial-gradient(
-    var(--line-strong) 0.7px,
-    transparent 0.7px
-  );
-  background-size: 16px 16px;
-}
-.graph-node {
-  position: relative;
-  width: 185px;
-  flex-shrink: 0;
-  background: var(--secondary);
-  border: 1px solid var(--line-strong);
-  border-radius: 5px;
-}
-.graph-node.active {
-  border-color: var(--primary);
-  background: var(--input);
-}
-.node-top {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 12px;
-  border-bottom: 1px solid var(--border);
-}
-.node-top h3 {
-  font-size: 12px;
-  font-weight: 500;
-  margin: 0;
-}
-.node-top > span:last-child {
-  margin-left: auto;
-  font: 9px var(--font-mono);
-  color: var(--muted-foreground);
-}
-.graph-node p {
-  font: 11px var(--font-mono);
-  padding: 12px;
-  margin: 0;
-  color: var(--foreground);
-}
-.graph-node p span {
-  color: var(--muted-foreground);
-}
-.port {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  background: var(--primary);
-  border: 2px solid var(--input);
-  border-radius: 50%;
-  top: calc(50% - 3px);
-}
-.port.input {
-  left: -4px;
-}
-.port.output {
-  right: -4px;
-}
-.edge {
-  height: 1px;
-  background: var(--port-rgb);
-  width: 65px;
-  flex-shrink: 1;
-}
 .footer {
   min-height: 49px;
   border-top: 1px solid var(--border);
@@ -447,31 +376,6 @@ dd {
   white-space: nowrap;
 }
 
-.flow-canvas {
-  flex: 1;
-  min-height: 140px;
-}
-.flow-canvas .graph-node {
-  width: 185px;
-}
-/* The dock is short: the toolbar scrolls sideways rather than wrapping into
- * rows that would eat the graph canvas. */
-.graph-toolbar {
-  min-height: 36px;
-  height: auto;
-  padding-block: 6px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-.graph-actions {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-}
-.graph-actions button {
-  white-space: nowrap;
-}
-.graph-actions button,
 .output-policy select {
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -479,47 +383,12 @@ dd {
   color: var(--foreground);
   padding: 6px 10px;
 }
-/* A fixed-height strip: the legend and graph messages vary in length, and a
- * strip that grew or shrank would resize the canvas under a connection drag. */
-.graph-feedback {
-  height: 22px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 4px 23px;
-  color: var(--muted-foreground);
-  font-size: 11px;
-  border-bottom: 1px solid var(--border);
-}
+
 .output-policy {
   display: grid;
   gap: 12px;
   margin-bottom: 24px;
 }
-.react-flow__handle {
-  width: 12px;
-  height: 12px;
-  background: var(--primary);
-}
-.react-flow__edge-path {
-  stroke: var(--port-rgb);
-  stroke-width: 2;
-}
-.react-flow__edge.selected .react-flow__edge-path {
-  stroke: white;
-  stroke-width: 3;
-}
-/* Output is also a built-in React Flow type; its wrapper must not style our custom node. */
-.flow-canvas .react-flow__node-output {
-  padding: 0;
-  border: 0;
-  background: none;
-  width: auto;
-  text-align: left;
-  border-radius: 0;
-  box-shadow: none;
-}
-
 .encoding-control {
   border: 0;
   border-top: 1px solid var(--border);
@@ -725,32 +594,6 @@ dd {
 }
 .curve-controls input {
   width: 100px;
-}
-
-.react-flow__handle.rgb-port {
-  background: var(--port-rgb);
-  border-color: var(--port-rgb);
-}
-.react-flow__handle.mask-port {
-  background: var(--port-mask);
-  border-color: var(--port-mask);
-  border-radius: 1px;
-}
-.react-flow__edge.rgb-edge .react-flow__edge-path {
-  stroke: var(--port-rgb);
-}
-.react-flow__edge.mask-edge .react-flow__edge-path {
-  stroke: var(--port-mask);
-  stroke-dasharray: 5 4;
-}
-.port-label {
-  position: absolute;
-  right: calc(100% + 10px);
-  transform: translateY(-50%);
-  color: var(--foreground);
-  background: var(--card);
-  font-size: 10px;
-  pointer-events: none;
 }
 
 .lut-export {
