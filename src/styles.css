@@ -44,21 +44,6 @@ button {
   flex-direction: column;
   position: relative;
 }
-/* A file error is reported over the region rather than in its flow: the image
- * must not resize because a load failed. */
-.viewer-region .file-error {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 5;
-}
-/* Provenance is content, so it takes room — but a bounded amount, and it
- * scrolls rather than pushing the image out of the stage. */
-.viewer-region .sample-provenance {
-  flex-shrink: 0;
-  max-height: 72px;
-  overflow-y: auto;
-}
 .stage-divider {
   background: var(--background);
   flex-shrink: 0;
@@ -337,36 +322,6 @@ dd {
   white-space: nowrap;
   font: 9px var(--font-mono);
 }
-.file-error {
-  padding: 12px 23px;
-  background: #3a2924;
-  color: #f3b99b;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.file-error button {
-  margin-left: auto;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-size: 20px;
-}
-.capability-error {
-  max-width: 410px;
-  text-align: center;
-  padding: 25px;
-  line-height: 1.7;
-  color: #ecc1aa;
-  position: absolute;
-  background: var(--card);
-  border: 1px solid #544136;
-  border-radius: 5px;
-}
-.capability-error h2 {
-  font-size: 20px;
-  font-weight: 500;
-}
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -469,86 +424,6 @@ dd {
   pointer-events: none;
 }
 
-.sample-gallery {
-  flex-shrink: 0;
-  max-height: 22vh;
-  overflow-y: auto;
-  padding: 20px 32px;
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-}
-.sample-gallery h2 {
-  font-size: 16px;
-  margin: 0;
-}
-.sample-gallery p,
-.sample-provenance {
-  color: var(--muted-foreground);
-  line-height: 1.6;
-}
-.sample-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-}
-.sample-grid button {
-  padding: 0 0 12px;
-  text-align: left;
-  background: var(--background);
-  color: var(--foreground);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.sample-grid button[aria-pressed="true"] {
-  border-color: var(--primary);
-}
-.sample-grid img {
-  width: 100%;
-  height: 110px;
-  object-fit: contain;
-  background: var(--surface-void);
-}
-.sample-grid em {
-  display: block;
-  margin: 6px 10px 0;
-  font-style: normal;
-  font-size: 11px;
-  color: var(--ok);
-}
-.sample-offline button {
-  color: inherit;
-  background: var(--secondary);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 4px 8px;
-  margin-right: 8px;
-}
-.sample-offline button:disabled {
-  opacity: 0.4;
-}
-.sample-grid strong,
-.sample-grid span {
-  display: block;
-  margin: 8px 10px 0;
-}
-.sample-grid span {
-  font-size: 11px;
-  color: var(--muted-foreground);
-}
-.sample-provenance {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border);
-}
-.sample-provenance summary {
-  cursor: pointer;
-  color: var(--foreground);
-}
-.sample-gallery a,
-.sample-provenance a {
-  color: var(--primary);
-}
-
 .curve-plot {
   width: 100%;
   aspect-ratio: 1;
@@ -637,38 +512,6 @@ dd {
 .lut-export .primary-button:disabled {
   opacity: 0.4;
 }
-.fidelity-report {
-  display: grid;
-  gap: 12px;
-}
-.fidelity-report table {
-  width: 100%;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-}
-.fidelity-report caption {
-  text-align: left;
-  color: var(--muted-foreground);
-  margin-bottom: 8px;
-}
-.fidelity-report th,
-.fidelity-report td {
-  padding: 5px 0;
-  text-align: right;
-  border-bottom: 1px solid var(--border);
-}
-.fidelity-report th:first-child {
-  text-align: left;
-}
-.lut-export .fidelity-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.lut-export .fidelity-toggle input {
-  width: auto;
-}
-
 .scopes {
   container: scopes / inline-size;
 }

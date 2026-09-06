@@ -485,9 +485,13 @@ export default function App() {
               />
               {image?.sample && <SampleProvenance sample={image.sample} />}
               {error && (
-                <div className="file-error" role="alert">
+                <div
+                  className="file-error absolute inset-x-0 bottom-0 z-5 flex items-center gap-3 border-t border-destructive bg-card px-4 py-2 text-xs text-destructive"
+                  role="alert"
+                >
                   {error}
                   <button
+                    className="ml-auto h-5 w-5 text-lg"
                     aria-label="Dismiss error"
                     onClick={() => setError("")}
                   >

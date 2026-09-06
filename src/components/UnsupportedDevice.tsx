@@ -33,7 +33,10 @@ export function UnsupportedDevice({
     </>
   );
   return inline ? (
-    <div className="capability-error" role="alert">
+    <div
+      className="absolute max-w-[410px] border border-destructive bg-card p-6 text-center text-xs leading-normal text-foreground [&_h2]:m-0 [&_h2]:text-lg [&_h2]:font-medium [&_p]:my-3"
+      role="alert"
+    >
       {body}
     </div>
   ) : (
