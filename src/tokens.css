@@ -1,10 +1,52 @@
+@import "./fonts.css";
+
+/* The single source of truth for colour. Chroma is zero at every step of the
+ * surface ramp: --surface-void is the viewer void, --background the app frame,
+ * --card panels, --secondary raised rows, --input fields. --border is the
+ * hairline and --line-strong the strong rule. Colour only ever carries
+ * meaning: --primary is selection and focus, --warning advisory,
+ * --destructive blocking, --ok doubles as the RGB port colour, and
+ * --ch-r / --ch-g / --ch-b are channel identity wherever channels appear.
+ *
+ * Some values are defined here before anything consumes them; they are part of
+ * the system and are wired up as each region is redressed. The application is
+ * dark-only: there is no light theme and no theme toggle. */
+:root,
+.dark {
+  --background: #131313;
+  --foreground: #ececec;
+  --card: #191919;
+  --card-foreground: #ececec;
+  --popover: #212121;
+  --popover-foreground: #ececec;
+  --primary: #63c3d8;
+  --primary-foreground: #0b0b0b;
+  --secondary: #212121;
+  --secondary-foreground: #ececec;
+  --muted: #212121;
+  --muted-foreground: #9c9c9c;
+  --accent: #2a2a2a;
+  --accent-foreground: #ececec;
+  --destructive: #e2908c;
+  --destructive-foreground: #131313;
+  --border: #2c2c2c;
+  --input: #2a2a2a;
+  --ring: #63c3d8;
+  --radius: 2px;
+  --surface-void: #0b0b0b;
+  --line-strong: #383838;
+  --text-faint: #8f8f8f;
+  --warning: #e0b46e;
+  --ok: #86c19a;
+  --ch-r: #ee7777;
+  --ch-g: #7fd79a;
+  --ch-b: #7eaaff;
+  --port-rgb: #86c19a;
+  --port-mask: #c9a6e3;
+}
+
 :root {
   color-scheme: dark;
-  --bg: #181b1b;
-  --panel: #1f2222;
-  --line: #333837;
-  --text: #e1e7e0;
-  --muted: #9aaba2;
-  --accent: #b0d1b8;
-  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
 }

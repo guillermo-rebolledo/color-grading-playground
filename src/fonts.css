@@ -1,0 +1,10 @@
+/* Self-hosted from the application's own build output. The offline service
+ * worker precaches build output only, so a CDN font would break offline use,
+ * and a third-party font request would contradict "nothing leaves your device".
+ * Latin subsets only: sans 400/500 for prose and mono 400 for numbers, per the
+ * type scale, plus sans 600 for the few surfaces the old stylesheet still bolds
+ * — that face goes when the last of them is redressed. */
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";

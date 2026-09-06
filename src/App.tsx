@@ -8,164 +8,23 @@ import {
 } from "./projects";
 import { SamplePicker, SampleProvenance } from "./SamplePicker";
 import { samples, type Sample } from "./samples";
-import { offlineStatusText, sampleLoadError, useOffline } from "./offline";
-import { AdjustmentControls } from "./AdjustmentControls";
-import { EncodingControl } from "./EncodingControl";
+import { sampleLoadError, useOffline } from "./offline";
 import { useEffect, useRef, useState } from "react";
-import { FidelityOverlay } from "./FidelityOverlay";
 import type { FidelityResult } from "./engine/GradingEngine";
-import { GradingEngine, encodingLabel } from "./engine/GradingEngine";
+import { GradingEngine } from "./engine/GradingEngine";
 import { loadImage } from "./engine/loadImage";
 import { createLogChart, isLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
-import { nodeTitle } from "./nodeTitles";
-import { ViewerNavigation } from "./ViewerNavigation";
-import { LutExport, OutputRangeSelect, type LatticeSupport } from "./LutExport";
+import type { LatticeSupport } from "./LutExport";
 import type { GradingGraph } from "./engine/GradingEngine";
+import type { ImageInfo } from "./imageInfo";
+import { Topbar } from "@/components/Topbar";
+import { ProjectBar } from "@/components/ProjectBar";
+import { ViewerPanel, type Comparison } from "@/components/ViewerPanel";
+import { Inspector } from "@/components/Inspector";
+import { AppFooter } from "@/components/AppFooter";
 import "./styles.css";
-
-type ImageInfo = {
-  name: string;
-  sample?: Sample;
-  originalWidth: number;
-  originalHeight: number;
-  width: number;
-  height: number;
-};
-
-function ExposureControl({
-  value,
-  disabled,
-  onChange,
-  onBegin,
-  onEnd,
-}: {
-  value: number;
-  disabled: boolean;
-  onChange: (value: number) => void;
-  onBegin: () => void;
-  onEnd: () => void;
-}) {
-  const [draft, setDraft] = useState(value.toFixed(2));
-  const editing = useRef(false);
-  useEffect(() => {
-    if (!editing.current) setDraft(value.toFixed(2));
-  }, [value]);
-  function commit() {
-    const parsed = Number(draft);
-    if (draft.trim() && Number.isFinite(parsed))
-      onChange(Math.max(-6, Math.min(6, parsed)));
-    setDraft(
-      (draft.trim() && Number.isFinite(parsed)
-        ? Math.max(-6, Math.min(6, parsed))
-        : value
-      ).toFixed(2),
-    );
-  }
-  return (
-    <div className="exposure-control">
-      <div className="control-heading">
-        <label htmlFor="exposure">Exposure</label>
-        <button
-          className="text-button"
-          disabled={disabled}
-          onClick={() => onChange(0)}
-          aria-label="Reset exposure"
-        >
-          Reset ↺
-        </button>
-      </div>
-      <div
-        className="numeric-control"
-        onDoubleClick={() => {
-          if (!disabled) {
-            onChange(0);
-            setDraft("0.00");
-          }
-        }}
-      >
-        <input
-          id="exposure"
-          aria-label="Exposure in stops"
-          type="number"
-          min="-6"
-          max="6"
-          step="0.01"
-          disabled={disabled}
-          value={draft}
-          onChange={(event) => {
-            setDraft(event.target.value);
-            const parsed = event.target.valueAsNumber;
-            if (Number.isFinite(parsed) && parsed >= -6 && parsed <= 6)
-              onChange(parsed);
-          }}
-          onFocus={() => {
-            editing.current = true;
-            onBegin();
-          }}
-          onBlur={() => {
-            editing.current = false;
-            commit();
-            onEnd();
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              commit();
-              event.currentTarget.blur();
-            }
-          }}
-        />
-        <span>stops</span>
-      </div>
-      <input
-        aria-label="Scrub exposure"
-        type="range"
-        min="-6"
-        max="6"
-        step="0.01"
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(Number(event.target.value))}
-        onPointerDown={(event) => {
-          event.currentTarget.setPointerCapture(event.pointerId);
-          onBegin();
-        }}
-        onPointerUp={onEnd}
-        onPointerCancel={onEnd}
-        onLostPointerCapture={onEnd}
-        onKeyDown={(event) => {
-          if (
-            [
-              "ArrowLeft",
-              "ArrowRight",
-              "ArrowUp",
-              "ArrowDown",
-              "Home",
-              "End",
-              "PageUp",
-              "PageDown",
-            ].includes(event.key)
-          )
-            onBegin();
-        }}
-        onKeyUp={onEnd}
-        onBlur={onEnd}
-        onDoubleClick={() => onChange(0)}
-      />
-      <div className="range-labels">
-        <span>−6</span>
-        <span>0</span>
-        <span>+6</span>
-      </div>
-      <p className="control-help">
-        One stop doubles or halves the light.
-        <br />
-        Double-click a control to reset.
-      </p>
-    </div>
-  );
-}
 
 export default function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -190,9 +49,7 @@ export default function App() {
   const solo = graph.nodes.some((n) => n.id === graphState.solo)
     ? graphState.solo
     : null;
-  const [comparison, setComparison] = useState<"off" | "before" | "A" | "B">(
-    "off",
-  );
+  const [comparison, setComparison] = useState<Comparison>("off");
   const [snapshots, setSnapshots] = useState<{
     A?: GradingGraph;
     B?: GradingGraph;
@@ -202,7 +59,6 @@ export default function App() {
   useEffect(() => {
     if (graphState.solo && !solo) useGraph.setState({ solo: null });
   }, [graphState.solo, solo]);
-  const selected = graph.nodes.find((n) => n.selected);
   const graphError = GradingEngine.validate(graph);
   const [renderError, setRenderError] = useState("");
   const [graphicsRevision, setGraphicsRevision] = useState(0);
@@ -541,97 +397,26 @@ export default function App() {
         void openFile(event.dataTransfer.files[0]);
       }}
     >
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            c<span>g</span>
-          </span>
-          <div>
-            Color Grading<span className="brand-subtitle">PLAYGROUND</span>
-          </div>
-        </div>
-        <div className="local-label">
-          <span className="status-dot" />
-          Local workspace
-        </div>
-        <button
-          className="upload-button"
-          disabled={!!capabilityError}
-          onClick={() => fileInput.current?.click()}
-        >
-          <span aria-hidden="true">＋</span> Open image
-        </button>
-        <button
-          className="upload-button"
-          aria-expanded={showSamples}
-          onClick={() => setShowSamples(!showSamples)}
-        >
-          Browse samples
-        </button>
-        <select
-          aria-label="Load precision chart"
-          className="chart-select"
-          value=""
-          disabled={disabled}
-          onChange={(event) => {
-            const profile = event.target.value;
-            if (isLogChart(profile)) openChart(profile);
-          }}
-        >
-          <option value="" disabled>
-            Load precision chart
-          </option>
-          {Object.entries(logCharts).map(([key, chart]) => (
-            <option key={key} value={key}>
-              {chart.name}
-            </option>
-          ))}
-        </select>
-        <input
-          ref={fileInput}
-          className="visually-hidden"
-          type="file"
-          accept="image/jpeg,image/png,image/tiff,.tif,.tiff"
-          aria-label="Choose image"
-          onChange={(event) => {
-            void openFile(event.target.files?.[0]);
-            event.target.value = "";
-          }}
-          disabled={!!capabilityError}
-        />
-      </header>
+      <Topbar
+        fileInput={fileInput}
+        disabled={disabled}
+        showSamples={showSamples}
+        onToggleSamples={() => setShowSamples(!showSamples)}
+        onOpenFile={(file) => void openFile(file)}
+        onOpenChart={(profile) => openChart(profile)}
+      />
 
-      <section className="project-toolbar" aria-label="Project">
-        <button
-          disabled={!ready || saving || loading}
-          onClick={() => void save()}
-        >
-          Save project
-        </button>
-        <button disabled={!ready || loading} onClick={share}>
-          Share grade
-        </button>
-        {shareLink && (
-          <label className="share-link">
-            Share link{" "}
-            <input
-              aria-label="Share link"
-              readOnly
-              value={shareLink}
-              onFocus={(event) => event.target.select()}
-            />{" "}
-            <span>Copy this link. Image bytes stay on your device.</span>
-          </label>
-        )}
-        <span aria-label="Project status">{projectStatus}</span>
-        {projectError && <span role="alert">{projectError}</span>}
-        <span className="offline-status" aria-label="Offline status">
-          {offlineStatusText(offline)}
-          {offline.updateReady && (
-            <button onClick={offline.applyUpdate}>Reload to update</button>
-          )}
-        </span>
-      </section>
+      <ProjectBar
+        ready={ready}
+        saving={saving}
+        loading={loading}
+        shareLink={shareLink}
+        projectStatus={projectStatus}
+        projectError={projectError}
+        offline={offline}
+        onSave={() => void save()}
+        onShare={share}
+      />
       {showSamples && (
         <SamplePicker
           selected={image?.sample?.id}
@@ -642,186 +427,45 @@ export default function App() {
       )}
       <section className="workspace">
         <div className="viewer-column">
-          <div className="panel-bar">
-            <h1>Viewer</h1>
-            <span>
-              {image
-                ? "Display: sRGB · Rec.709 primaries"
-                : "Start with a still image"}
-            </span>
-          </div>
-          <div className="viewer-toolbar">
-            <label>
-              Compare{" "}
-              <select
-                aria-label="Compare view"
-                value={comparison}
-                disabled={!image}
-                onChange={(event) => {
-                  const mode = event.target.value;
-                  if (
-                    mode === "off" ||
-                    mode === "before" ||
-                    mode === "A" ||
-                    mode === "B"
-                  )
-                    setComparison(mode);
-                }}
-              >
-                <option value="off">Off</option>
-                <option value="before">Before / current</option>
-                <option value="A" disabled={!snapshots.A}>
-                  A / current
-                </option>
-                <option value="B" disabled={!snapshots.B}>
-                  B / current
-                </option>
-              </select>
-            </label>
-            {(["A", "B"] as const).map((slot) => (
-              <button
-                key={slot}
-                disabled={!image || !!graphError || !!capabilityError}
-                onClick={() =>
-                  setSnapshots((previous) => ({
-                    ...previous,
-                    [slot]: structuredClone(graph),
-                  }))
-                }
-              >
-                Capture {slot}
-              </button>
-            ))}
-            <button
-              disabled={!image}
-              aria-pressed={outOfRange}
-              onClick={() => setOutOfRange(!outOfRange)}
-            >
-              Out-of-range
-            </button>
-            <span>
-              {comparison !== "off"
-                ? `${comparison === "before" ? "Before" : `Snapshot ${comparison}`} ← wipe → `
-                : ""}
-              {solo
-                ? `Solo: ${nodeTitle(graph.nodes.find((n) => n.id === solo)) || solo}`
-                : "Current grade"}
-            </span>
-          </div>
-          {outOfRange && (
-            <p className="viewer-legend">
-              Blue: below 0 · Orange: above 1 · Magenta: both. Any RGB channel
-              before output clamping, in output encoding (solo: node encoding).
-              Masks excluded.
-            </p>
-          )}
-          <div
-            className={`viewer ${image ? "has-image" : ""}`}
-            aria-busy={loading}
-          >
-            <ViewerNavigation
-              width={image?.width ?? 1}
-              height={image?.height ?? 1}
-              comparison={!!image && comparison !== "off"}
-              wipe={wipe}
-              onWipe={setWipe}
-            >
-              <canvas
-                ref={canvas}
-                aria-label="Graded image preview"
-                className={image ? "" : "empty-canvas"}
-              />
-              {fidelityOverlay &&
-                image &&
-                !capabilityError &&
-                engine.current?.isFidelityCurrent(fidelityOverlay, graph) && (
-                  <FidelityOverlay report={fidelityOverlay} />
-                )}
-            </ViewerNavigation>
-            {!image && !capabilityError && (
-              <div className="empty-state">
-                <div className="empty-frame" aria-hidden="true">
-                  <span>＋</span>
-                </div>
-                <span className="eyebrow">YOUR IMAGE. YOUR DEVICE.</span>
-                <h2>A little light changes everything.</h2>
-                <p>
-                  Drop a still here and find its exposure.
-                  <br />
-                  JPEG, PNG and uncompressed RGB TIFF. Your image stays in this
-                  browser.
-                </p>
-                <button
-                  className="primary-button"
-                  onClick={() => fileInput.current?.click()}
-                >
-                  Choose an image <span aria-hidden="true">↗</span>
-                </button>
-                <span className="file-hint">JPEG or PNG · up to 50 MB</span>
-              </div>
-            )}
-            {graphicsWarning && (
-              <p role="status" className="encoding-note">
-                {graphicsWarning}
-              </p>
-            )}
-            {capabilityError && (
-              <div className="capability-error" role="alert">
-                <h2>Preview unavailable</h2>
-                <p>{capabilityError}</p>
-                <button
-                  onClick={() => {
-                    try {
-                      if (engine.current) engine.current.recover();
-                      else engine.current = new GradingEngine(canvas.current!);
-                      refreshGraphics();
-                    } catch (cause) {
-                      setCapabilityError(message(cause));
-                    }
-                  }}
-                >
-                  Retry graphics recovery
-                </button>
-              </div>
-            )}
-            {image && (graphError || renderError) && (
-              <div className="preview-paused" role="alert">
-                Preview paused: {graphError || renderError}
-                <br />
-                {graphError ? (
-                  "Connect a valid graph to resume."
-                ) : (
-                  <button
-                    onClick={() =>
-                      setGraphicsRevision((revision) => revision + 1)
-                    }
-                  >
-                    Retry preview
-                  </button>
-                )}
-              </div>
-            )}
-            {loading && (
-              <div className="loading-indicator" role="status">
-                Opening image…
-              </div>
-            )}
-          </div>
-          <div className="image-bar">
-            <span className="image-name">
-              {image?.name ?? "No image loaded"}
-            </span>
-            <span>
-              {image
-                ? `${image.originalWidth} × ${image.originalHeight}`
-                : "All processing stays on your device"}
-            </span>
-            {image && (
-              <span>
-                Preview {image.width} × {image.height}
-              </span>
-            )}
-          </div>
+          <ViewerPanel
+            canvas={canvas}
+            engine={() => engine.current}
+            image={image}
+            graph={graph}
+            solo={solo}
+            comparison={comparison}
+            onComparison={setComparison}
+            snapshots={snapshots}
+            onCapture={(slot) =>
+              setSnapshots((previous) => ({
+                ...previous,
+                [slot]: structuredClone(graph),
+              }))
+            }
+            wipe={wipe}
+            onWipe={setWipe}
+            outOfRange={outOfRange}
+            onOutOfRange={setOutOfRange}
+            loading={loading}
+            capabilityError={capabilityError}
+            graphError={graphError}
+            renderError={renderError}
+            graphicsWarning={graphicsWarning}
+            fidelityOverlay={fidelityOverlay}
+            onRetryGraphics={() => {
+              try {
+                if (engine.current) engine.current.recover();
+                else engine.current = new GradingEngine(canvas.current!);
+                refreshGraphics();
+              } catch (cause) {
+                setCapabilityError(message(cause));
+              }
+            }}
+            onRetryPreview={() =>
+              setGraphicsRevision((revision) => revision + 1)
+            }
+            onChooseImage={() => fileInput.current?.click()}
+          />
           <Scopes
             engine={engine.current}
             graph={graph}
@@ -841,110 +485,17 @@ export default function App() {
           )}
         </div>
 
-        <aside className="inspector">
-          <div className="panel-bar">
-            <h2>Inspector</h2>
-            <span>02</span>
-          </div>
-          <div className="inspector-body">
-            <div className="selected-node">
-              <span className="node-symbol">±</span>
-              <div>
-                <h3>{nodeTitle(selected) || "Select a node"}</h3>
-                <p>
-                  {selected?.type === "exposure"
-                    ? "Linear light adjustment"
-                    : "RGB grading graph"}
-                </p>
-              </div>
-            </div>
-            {selected?.type === "exposure" && (
-              <ExposureControl
-                key={selected.id}
-                value={selected.data.stops!}
-                disabled={false}
-                onChange={(value) =>
-                  graphState.updateParameters(selected.id, { stops: value })
-                }
-                onBegin={graphState.begin}
-                onEnd={graphState.end}
-              />
-            )}
-            {selected && (
-              <AdjustmentControls
-                key={`adjustment-${selected.id}`}
-                node={selected}
-              />
-            )}
-            {selected?.type === "cst" &&
-              (["from", "to"] as const).map((direction) => (
-                <EncodingControl
-                  key={`${selected.id}-${direction}`}
-                  label={`CST ${direction}`}
-                  value={selected.data[direction]!}
-                  onChange={(value) =>
-                    graphState.updateParameters(selected.id, {
-                      [direction]: value,
-                    })
-                  }
-                />
-              ))}
-            {selected?.type === "output" && (
-              <label className="output-policy">
-                Output range
-                <OutputRangeSelect output={selected} label="Output range" />
-              </label>
-            )}
-            <div className="space-info">
-              <span className="eyebrow">COLOUR PIPELINE</span>
-              {(["input", "working", "output"] as const).map((boundary) => (
-                <EncodingControl
-                  key={boundary}
-                  label={boundary[0].toUpperCase() + boundary.slice(1)}
-                  value={graph.colour[boundary]}
-                  onChange={(value) =>
-                    graphState.updateColour({
-                      ...graph.colour,
-                      [boundary]: value,
-                    })
-                  }
-                />
-              ))}
-            </div>
-            <p className="encoding-note">
-              Source tag: {encodingLabel(graph.colour.input)}. Full-range code
-              values; embedded profiles are not applied. Correct the input tag
-              to match your source. Retagging does not restore highlight range.
-              <br />
-              Viewer conversion is sRGB only; output pixels keep the chosen
-              output encoding.
-            </p>
-            <LutExport
-              hasImage={!!image}
-              onOverlay={setFidelityOverlay}
-              engine={() => engine.current}
-              support={
-                capabilityError ? { reason: capabilityError } : latticeSupport
-              }
-            />
-          </div>
-          <div className="inspector-footer">
-            Build a grade, one connection at a time.
-            <br />
-            <span>Your edits are reversible.</span>
-          </div>
-        </aside>
+        <Inspector
+          hasImage={!!image}
+          engine={() => engine.current}
+          capabilityError={capabilityError}
+          latticeSupport={latticeSupport}
+          onOverlay={setFidelityOverlay}
+        />
       </section>
 
       <GraphEditor />
-      <footer className="footer">
-        <span>Colour, one pixel at a time.</span>
-        <p>
-          Every adjustment depends only on a pixel’s colour—the kind of change a
-          3D LUT can represent.
-        </p>
-        <span>JPEG / PNG</span>
-      </footer>
+      <AppFooter />
       {dragging && !capabilityError && (
         <div className="drop-overlay">
           <span>Drop your image to open</span>
