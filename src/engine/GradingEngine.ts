@@ -1,3 +1,5 @@
+import { ScopeQueue } from "./scopes";
+export type { ScopeResult } from "./scopes";
 import {
   transferShader,
   transformShader,
@@ -97,6 +99,7 @@ export class GradingEngine {
   private framebuffer: WebGLFramebuffer | null = null;
   private disposed = false;
   private imageRevision = 0;
+  private readonly scopes = new ScopeQueue();
   private curveTextures: WebGLTexture[] = [];
   private latticeTarget: {
     format: LatticeFormat;
@@ -179,6 +182,7 @@ export class GradingEngine {
   setImage(image: ImageData | ImageBitmap | FloatImage) {
     this.assertAvailable();
     const gl = this.gl;
+    this.invalidateScopes();
     const floating = "data" in image && image.data instanceof Float32Array;
     if (
       floating &&
@@ -829,9 +833,86 @@ export class GradingEngine {
     return topDown;
   }
 
+  /** Asynchronous diagnostics of final output, independent of viewer state and export. */
+  measureScopes(graph: GradingGraph) {
+    this.assertAvailable();
+    const snapshot = structuredClone(graph);
+    return this.scopes.request(
+      () => this.readScopePixels(snapshot),
+      graph.colour.output,
+    );
+  }
+
+  invalidateScopes() {
+    this.scopes.invalidate();
+  }
+
+  private readScopePixels(graph: GradingGraph) {
+    this.assertAvailable();
+    const gl = this.gl;
+    const scale = Math.min(
+      1,
+      512 / Math.max(this.canvas.width, this.canvas.height),
+    );
+    const width = Math.max(1, Math.round(this.canvas.width * scale));
+    const height = Math.max(1, Math.round(this.canvas.height * scale));
+    const target = gl.createTexture();
+    const framebuffer = gl.createFramebuffer();
+    try {
+      if (!this.source)
+        throw new Error("Load an image before measuring scopes.");
+      this.prepare(graph);
+      gl.activeTexture(gl.TEXTURE0);
+      if (!target || !framebuffer)
+        throw new Error("Could not allocate scope resources.");
+      gl.bindTexture(gl.TEXTURE_2D, target);
+      this.configureTexture();
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA32F,
+        width,
+        height,
+        0,
+        gl.RGBA,
+        gl.FLOAT,
+        null,
+      );
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        target,
+        0,
+      );
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
+        throw new Error(
+          "Floating-point scopes are unavailable on this device.",
+        );
+      // Per-pixel grading commutes with nearest source sampling. Evaluate only
+      // the diagnostic-sized image, without redrawing or mutating the preview.
+      gl.bindTexture(gl.TEXTURE_2D, this.source);
+      gl.viewport(0, 0, width, height);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      const pixels = new Float32Array(width * height * 4);
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.FLOAT, pixels);
+      if (gl.getError() !== gl.NO_ERROR)
+        throw new Error("Floating-point scope readback failed.");
+      // Accumulation ignores vertical order; x is preserved by framebuffer readback.
+      return { width, height, pixels };
+    } finally {
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.deleteFramebuffer(framebuffer);
+      gl.deleteTexture(target);
+    }
+  }
+
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
+    this.scopes.dispose();
     const gl = this.gl;
     gl.deleteTexture(this.source);
     gl.deleteTexture(this.target);
