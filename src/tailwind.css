@@ -1,0 +1,47 @@
+/* Tailwind without preflight. The hand-written stylesheet is still load-bearing
+ * and is retired region by region; a global reset now would restyle every panel
+ * before its redesign lands. Preflight is switched on with the last region that
+ * leaves src/styles.css behind. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "./tokens.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Named design variables, exposed to Tailwind and shadcn/ui as utilities. */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface-void: var(--surface-void);
+  --color-line-strong: var(--line-strong);
+  --color-text-faint: var(--text-faint);
+  --color-warning: var(--warning);
+  --color-ok: var(--ok);
+  --color-ch-r: var(--ch-r);
+  --color-ch-g: var(--ch-g);
+  --color-ch-b: var(--ch-b);
+  --color-port-rgb: var(--port-rgb);
+  --color-port-mask: var(--port-mask);
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+}
