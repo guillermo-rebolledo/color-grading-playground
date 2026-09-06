@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/icons";
+import { cn } from "@/lib/utils";
 import {
   ReactFlow,
   Background,
   Controls,
+  useViewport,
   Handle,
   Position,
   applyNodeChanges,
@@ -11,25 +16,32 @@ import {
   type NodeProps,
   type Node,
 } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import { useGraph, connectionError } from "./graphStore";
+import { useGraph, connectionError } from "@/graphStore";
 import {
   GradingEngine,
   encodingLabel,
   type GradingNode,
   type NodeType,
-} from "./engine/GradingEngine";
-import { nodeTypeTitle } from "./nodeTitles";
+} from "@/engine/GradingEngine";
+import { nodeTypeTitle } from "@/nodeTitles";
 
 function GradeNode({
+  id,
   type,
   data,
   selected,
 }: NodeProps<Node<GradingNode["data"]>>) {
   const colour = useGraph((s) => s.graph.colour);
+  const solo = useGraph((s) => s.solo === id);
   const title = nodeTypeTitle(type as NodeType, true);
   return (
-    <div className={`graph-node ${selected ? "active" : ""}`}>
+    <div
+      className={cn(
+        "graph-node relative w-[185px] shrink-0 border border-solid bg-secondary",
+        selected ? "border-primary bg-input" : "border-line-strong",
+        solo && "outline-2 outline-offset-2 outline-primary",
+      )}
+    >
       {type !== "source" &&
         (type === "blend" ? ["a", "b", "mask"] : ["rgb"]).map((port, i) => (
           <Handle
@@ -46,17 +58,19 @@ function GradeNode({
         ["A", "B", "Mask"].map((port, i) => (
           <span
             key={port}
-            className="port-label"
+            className="pointer-events-none absolute right-[calc(100%+10px)] -translate-y-1/2 bg-card text-[10px] text-foreground"
             style={{ top: `${25 + i * 25}%` }}
           >
             {port}
           </span>
         ))}
-      <div className="node-top">
-        <h3>{data.label ?? title}</h3>
-        <span>{type === "qualifier" ? "MASK" : "RGB"}</span>
+      <div className="flex items-center gap-2 border-x-0 border-t-0 border-b border-solid border-border p-3">
+        <h3 className="m-0 text-xs font-medium">{data.label ?? title}</h3>
+        <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+          {type === "qualifier" ? "MASK" : "RGB"}
+        </span>
       </div>
-      <p>
+      <p className="m-0 p-3 font-mono text-[11px] tabular-nums text-foreground">
         {type === "blend"
           ? `A → B · Amount ${data.amount} · Mask optional`
           : type === "qualifier"
@@ -115,7 +129,30 @@ const isTyping = (target: EventTarget | null) =>
     'input:not([type="range"]), textarea, [contenteditable="true"]',
   );
 
+/* Keep React Flow's navigation controls and their accessibility contract;
+ * only their DOM placement changes, from the canvas into the toolbar. */
+function GraphNavigation({ container }: { container: HTMLDivElement }) {
+  const { zoom } = useViewport();
+  return createPortal(
+    <Controls
+      className="graph-navigation"
+      orientation="horizontal"
+      fitViewOptions={fit}
+    >
+      <span
+        role="group"
+        aria-label="Graph zoom"
+        className="inline-flex w-[5ch] shrink-0 items-center justify-end font-mono text-[11px] tabular-nums text-foreground"
+      >
+        {Math.round(zoom * 100)}%
+      </span>
+    </Controls>,
+    container,
+  );
+}
+
 export function GraphEditor() {
+  const [navigation, setNavigation] = useState<HTMLDivElement | null>(null);
   const state = useGraph();
   const { graph } = state;
   const [flow, setFlow] = useState<ReactFlowInstance<GradingNode> | null>(null);
@@ -145,8 +182,8 @@ export function GraphEditor() {
   }, []);
   return (
     <>
-      <div className="panel-bar graph-toolbar">
-        <div className="graph-actions">
+      <div className="graph-toolbar flex min-h-7 shrink-0 items-center gap-2 overflow-x-auto border-x-0 border-t-0 border-b border-solid border-border px-2">
+        <div className="flex min-w-[100px] flex-1 items-center gap-1.5 overflow-x-auto py-1">
           {(
             [
               "source",
@@ -162,56 +199,104 @@ export function GraphEditor() {
               "output",
             ] as const
           ).map((type) => (
-            <button key={type} onClick={() => state.add(type)}>
-              Add {nodeTypeTitle(type, true)}
-            </button>
+            <Button size="toolbar" key={type} onClick={() => state.add(type)}>
+              <Icon.Plus /> Add {nodeTypeTitle(type, true)}
+            </Button>
           ))}
+        </div>
+        <div className="flex shrink-0 items-center gap-1 py-1 [&_button]:px-1">
           {state.solo && (
-            <button onClick={() => useGraph.setState({ solo: null })}>
+            <Button
+              size="toolbar"
+              onClick={() => useGraph.setState({ solo: null })}
+            >
+              <Icon.X />
               {graph.nodes.find((n) => n.id === state.solo)?.type ===
               "qualifier"
                 ? "Exit mask solo"
                 : "Exit solo"}
-            </button>
+            </Button>
           )}
-          <button onClick={state.undo} disabled={!state.past.length}>
-            Undo
-          </button>
-          <button onClick={state.redo} disabled={!state.future.length}>
-            Redo
-          </button>
-          <button
+          <Button
+            size="toolbar"
+            onClick={state.undo}
+            disabled={!state.past.length}
+          >
+            <Icon.Undo2 /> Undo
+          </Button>
+          <Button
+            size="toolbar"
+            onClick={state.redo}
+            disabled={!state.future.length}
+          >
+            <Icon.Redo2 /> Redo
+          </Button>
+          <Button
+            size="toolbar"
             onClick={state.copy}
             disabled={!graph.nodes.some((n) => n.selected)}
           >
-            Copy
-          </button>
-          <button onClick={state.paste} disabled={!state.clipboard}>
-            Paste
-          </button>
-          <button
+            <Icon.Copy /> Copy
+          </Button>
+          <Button
+            size="toolbar"
+            onClick={state.paste}
+            disabled={!state.clipboard}
+          >
+            <Icon.ClipboardPaste /> Paste
+          </Button>
+          <Button
+            size="toolbar"
             onClick={removeSelection}
             disabled={
               !graph.nodes.some((n) => n.selected) &&
               !graph.edges.some((e) => e.selected)
             }
           >
-            Delete selection
-          </button>
+            <Icon.Trash2 /> Delete selection
+          </Button>
         </div>
+        <div ref={setNavigation} className="shrink-0" />
       </div>
-      <div className="graph-feedback" role="status">
-        {state.feedback ||
-          (error
-            ? `Preview paused: ${error}`
-            : "Live graph · RGB: solid · Mask: dashed · Double-click a node to solo · Drag ports to connect · Shift-drag to box select · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
+      <div className="flex min-h-[22px] shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px] text-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="w-4 border-x-0 border-b-0 border-t-2 border-solid border-port-rgb"
+          />
+          RGB: solid
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="w-4 border-x-0 border-b-0 border-t-2 border-dashed border-port-mask"
+          />
+          Mask: dashed
+        </span>
+        <span>Double-click a node to solo</span>
+        <span>Drag ports to connect</span>
+        <span>Shift-drag to box select</span>
       </div>
-      {warnings.length > 0 && (
-        <div className="graph-feedback" role="status">
-          {warnings.join(" ")}
+      <div className="flow-canvas relative min-h-[140px] flex-1">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-card">
+          <div
+            className="h-[22px] shrink-0 overflow-x-auto whitespace-nowrap border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px] text-foreground"
+            role="status"
+          >
+            {state.feedback ||
+              (error
+                ? `Preview paused: ${error}`
+                : "Live graph · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
+          </div>
+          {warnings.length > 0 && (
+            <div
+              className="h-[22px] shrink-0 overflow-x-auto whitespace-nowrap border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px] text-foreground"
+              role="status"
+            >
+              {warnings.join(" ")}
+            </div>
+          )}
         </div>
-      )}
-      <div className="flow-canvas">
         <ReactFlow<GradingNode>
           onInit={setFlow}
           nodes={graph.nodes}
@@ -308,7 +393,7 @@ export function GraphEditor() {
           }}
         >
           <Background gap={16} />
-          <Controls fitViewOptions={fit} />
+          {navigation && <GraphNavigation container={navigation} />}
         </ReactFlow>
       </div>
     </>
