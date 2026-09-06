@@ -233,8 +233,10 @@
 /* Nothing inside the viewer animates, ever — including the cases that feel
  * like exceptions. It is stated here because the motion budget is stated here,
  * and the viewer is the reason the budget is as small as it is. */
-.viewer,
-.viewer * {
+.viewer-region,
+.viewer-region *,
+.viewer-region *::before,
+.viewer-region *::after {
   transition: none;
   animation: none;
 }

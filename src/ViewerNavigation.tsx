@@ -1,7 +1,11 @@
+import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 /** One image surface keeps both wipe sides aligned through every navigation gesture. */
 export function ViewerNavigation({
+  navigationHost,
   width,
   height,
   comparison,
@@ -9,6 +13,7 @@ export function ViewerNavigation({
   onWipe,
   children,
 }: {
+  navigationHost: HTMLDivElement | null;
   width: number;
   height: number;
   comparison: boolean;
@@ -43,30 +48,54 @@ export function ViewerNavigation({
   }
   return (
     <>
-      <div className="viewer-navigation" aria-label="Viewer navigation">
-        <button aria-pressed={zoom === "fit"} onClick={() => navigate("fit")}>
-          Fit
-        </button>
-        <button aria-pressed={zoom === 1} onClick={() => navigate(1)}>
-          100%
-        </button>
-        <button
-          aria-label="Zoom out"
-          onClick={() => navigate(Math.max(0.1, scale / 1.25))}
-        >
-          −
-        </button>
-        <span aria-label="Viewer zoom">{Math.round(scale * 100)}%</span>
-        <button
-          aria-label="Zoom in"
-          onClick={() => navigate(Math.min(8, scale * 1.25))}
-        >
-          ＋
-        </button>
-        <span>Drag image to pan</span>
-      </div>
+      {navigationHost &&
+        createPortal(
+          <div
+            className="flex items-center gap-1"
+            aria-label="Viewer navigation"
+          >
+            <Button
+              size="toolbar"
+              aria-pressed={zoom === "fit"}
+              onClick={() => navigate("fit")}
+            >
+              Fit
+            </Button>
+            <Button
+              size="toolbar"
+              aria-pressed={zoom === 1}
+              onClick={() => navigate(1)}
+            >
+              100%
+            </Button>
+            <Button
+              size="toolbar"
+              aria-label="Zoom out"
+              onClick={() => navigate(Math.max(0.1, scale / 1.25))}
+            >
+              <ZoomOut size={14} strokeWidth={1.5} aria-hidden="true" />
+            </Button>
+            <span
+              className="w-[5ch] shrink-0 text-center font-mono text-[11px] tabular-nums"
+              aria-label="Viewer zoom"
+            >
+              {Math.round(scale * 100)}%
+            </span>
+            <Button
+              size="toolbar"
+              aria-label="Zoom in"
+              onClick={() => navigate(Math.min(8, scale * 1.25))}
+            >
+              <ZoomIn size={14} strokeWidth={1.5} aria-hidden="true" />
+            </Button>
+            <span className="ml-1.5 text-[10px] text-text-faint">
+              Drag image to pan
+            </span>
+          </div>,
+          navigationHost,
+        )}
       <div
-        className="image-frame navigable-frame"
+        className="absolute inset-4 flex touch-none items-center justify-center overflow-hidden"
         ref={frame}
         tabIndex={0}
         aria-label="Pan image with arrow keys"
@@ -111,7 +140,7 @@ export function ViewerNavigation({
         }}
       >
         <div
-          className="viewer-surface"
+          className="viewer-surface relative shrink-0 bg-surface-void"
           style={{
             width: width * scale,
             height: height * scale,
