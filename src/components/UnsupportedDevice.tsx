@@ -24,9 +24,10 @@ export function UnsupportedDevice({
       {inline ? <h2>{heading}</h2> : <h1>{heading}</h1>}
       <p>{detail}</p>
       <p className="unsupported-requirements">
-        Grading needs WebGL2 with 32-bit float rendering, and a window at least{" "}
-        {MINIMUM_WIDTH} pixels wide. Everything happens on your device; nothing
-        is uploaded.
+        {inline
+          ? "Grading needs WebGL2 with 32-bit float rendering."
+          : `Grading needs a window at least ${MINIMUM_WIDTH} pixels wide, and WebGL2 with 32-bit float rendering.`}{" "}
+        Everything happens on your device; nothing is uploaded.
       </p>
       {action}
     </>

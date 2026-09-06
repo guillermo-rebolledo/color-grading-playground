@@ -33,6 +33,15 @@ dock shrink to its two strips and the viewer take almost the whole stage.
 Both panels stay mounted while collapsed, so the graph keeps its viewport and
 selection and the scopes keep their measurement.
 
+The dock opens at 320px rather than the 268px the design records. The panel
+bars, graph toolbar and legend are still at their pre-MEM-223 heights, and at
+268px what is left for the graph canvas is short enough that a fitted node sits
+inside the band where a connection drag auto-pans the canvas out from under the
+pointer. When the control primitives land and the chrome shrinks, the default
+can come back down. For the same reason the graph fits with a wide margin, and
+the legend strip is a fixed height: a strip that grew or shrank with its
+message would resize the canvas mid-drag.
+
 ## Workspace state
 
 Dock height, the graph/scopes split and both collapse states are workspace

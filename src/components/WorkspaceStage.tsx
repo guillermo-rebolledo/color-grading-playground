@@ -41,6 +41,9 @@ export function WorkspaceStage({
   const bothCollapsed = collapsed.graph && collapsed.scopes;
 
   useLayoutEffect(() => {
+    // Measured before the first paint, so the dock is never laid out against an
+    // unknown column and then corrected: the image would jump.
+    setAvailable(main.current!.getBoundingClientRect().height);
     const observer = new ResizeObserver(([entry]) =>
       setAvailable(entry.contentRect.height),
     );
@@ -48,10 +51,9 @@ export function WorkspaceStage({
     return () => observer.disconnect();
   }, []);
 
-  const maximumDock = Math.max(
-    MINIMUM_DOCK_HEIGHT,
-    available - MINIMUM_VIEWER_HEIGHT,
-  );
+  const maximumDock = available
+    ? Math.max(MINIMUM_DOCK_HEIGHT, available - MINIMUM_VIEWER_HEIGHT)
+    : layout.dockHeight;
   const height = bothCollapsed
     ? STRIP_HEIGHT * 2
     : clamp(layout.dockHeight, MINIMUM_DOCK_HEIGHT, maximumDock);
@@ -85,6 +87,7 @@ export function WorkspaceStage({
           ref={dock}
           style={{
             height,
+            ["--strip-height" as string]: `${STRIP_HEIGHT}px`,
             gridTemplateRows: rows,
             gridTemplateColumns: stacked
               ? "minmax(0, 1fr)"

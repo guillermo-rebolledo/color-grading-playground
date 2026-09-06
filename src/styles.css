@@ -186,8 +186,14 @@ button {
 .dock-panel-body[hidden] {
   display: none;
 }
+/* Dock chrome is held to the density the redesign specifies for panel title
+ * bars and the graph legend, so the dock's height reaches the canvases rather
+ * than the bars around them. */
+.dock-strip {
+  height: 26px;
+}
 .dock-panel[data-collapsed] .dock-strip {
-  height: 24px;
+  height: var(--strip-height);
 }
 .dock-toggle {
   margin-left: auto;
@@ -245,6 +251,9 @@ button {
     var(--background) 0% 50%
   );
   background-size: 20px 20px;
+  /* Anchor the checker to the middle of a cell at the centre of the viewer, so
+   * what lies behind a transparent pixel does not depend on the stage's size. */
+  background-position: calc(50% - 15px) calc(50% - 5px);
 }
 .image-frame {
   position: absolute;
@@ -650,9 +659,9 @@ dd {
 /* The dock is short: the toolbar scrolls sideways rather than wrapping into
  * rows that would eat the graph canvas. */
 .graph-toolbar {
-  min-height: 44px;
+  min-height: 36px;
   height: auto;
-  padding-block: 8px;
+  padding-block: 6px;
   flex-wrap: nowrap;
   overflow-x: auto;
 }
@@ -672,9 +681,14 @@ dd {
   color: var(--foreground);
   padding: 6px 10px;
 }
+/* A fixed-height strip: the legend and graph messages vary in length, and a
+ * strip that grew or shrank would resize the canvas under a connection drag. */
 .graph-feedback {
-  min-height: 34px;
-  padding: 8px 23px;
+  height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 4px 23px;
   color: var(--muted-foreground);
   font-size: 11px;
   border-bottom: 1px solid var(--border);

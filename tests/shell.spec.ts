@@ -37,6 +37,8 @@ async function box(page: Page, locator: ReturnType<Page["locator"]>) {
 test("the image and the graph are both fully visible without scrolling", async ({
   page,
 }) => {
+  // The size the redesign is specified against, not the suite's default.
+  await page.setViewportSize({ width: 1440, height: 900 });
   await openNeutralGraph(page);
   await openImage(page);
   const viewport = page.viewportSize()!;
@@ -314,7 +316,7 @@ test("a browser without WebGL2 is told what grading requires, in the viewer", as
   const explanation = page.getByRole("alert");
   await expect(explanation).toContainText("WebGL2 is unavailable");
   await expect(explanation).toContainText("32-bit float rendering");
-  await expect(explanation).toContainText("1280 pixels wide");
+  await expect(explanation).not.toContainText("1280");
   await expect(
     page.getByRole("button", { name: "Retry graphics recovery" }),
   ).toBeVisible();

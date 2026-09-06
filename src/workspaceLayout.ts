@@ -23,7 +23,7 @@ export const MAXIMUM_SPLIT = 0.8;
 export const MINIMUM_VIEWER_HEIGHT = 240;
 
 const defaults: WorkspaceLayout = {
-  dockHeight: 268,
+  dockHeight: 320,
   dockSplit: 0.58,
   graphCollapsed: false,
   scopesCollapsed: false,
