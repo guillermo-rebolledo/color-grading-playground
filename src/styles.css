@@ -15,19 +15,6 @@ input {
 button {
   cursor: pointer;
 }
-button:disabled,
-input:disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
-}
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 4px;
-}
-button {
-  transition: background 0.15s;
-}
 .app-shell {
   height: 100dvh;
   display: flex;
@@ -37,73 +24,7 @@ button {
 .app-shell[hidden] {
   display: none;
 }
-.topbar {
-  height: 80px;
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  padding: 0 32px;
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
-}
-.brand-mark {
-  color: var(--primary);
-  font-size: 32px;
-  font-weight: 400;
-  letter-spacing: -7px;
-  padding-right: 7px;
-  line-height: 1;
-}
-.brand-mark span {
-  position: relative;
-  top: 5px;
-}
-.brand-subtitle {
-  display: block;
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: var(--muted-foreground);
-  margin-top: 4px;
-}
-.local-label {
-  margin-left: auto;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--primary);
-}
-.upload-button {
-  border: 1px solid var(--line-strong);
-  background: var(--secondary);
-  color: var(--foreground);
-  padding: 10px 17px;
-  border-radius: 5px;
-  font-size: 12px;
-}
-.upload-button:hover {
-  background: var(--input);
-}
-.upload-button span {
-  padding-right: 5px;
-  font-size: 16px;
-}
-/* The stage: the main column carries the viewer above the dock, and the
- * inspector rail is fixed at 328px and never resizes. */
+/* The stage keeps the viewer above the dock beside a fixed inspector rail. */
 .stage {
   flex: 1;
   min-height: 0;
@@ -643,11 +564,6 @@ dd {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-@media (prefers-reduced-motion: reduce) {
-  button {
-    transition: none;
-  }
-}
 
 .flow-canvas {
   flex: 1;
@@ -811,16 +727,6 @@ dd {
   border-radius: 50%;
   background: #222;
   pointer-events: none;
-}
-
-.chart-select {
-  max-width: 220px;
-  padding: 10px;
-  font: inherit;
-  color: inherit;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 4px;
 }
 
 .sample-gallery {
@@ -990,9 +896,7 @@ dd {
 }
 .viewer-toolbar button,
 .viewer-navigation button,
-.viewer-toolbar select,
-.project-toolbar button,
-.project-toolbar input {
+.viewer-toolbar select {
   color: inherit;
   background: var(--secondary);
   border: 1px solid var(--border);
@@ -1002,10 +906,6 @@ dd {
 .viewer-toolbar button[aria-pressed="true"],
 .viewer-navigation button[aria-pressed="true"] {
   border-color: var(--primary);
-}
-.viewer-toolbar button:disabled,
-.project-toolbar button:disabled {
-  opacity: 0.4;
 }
 .viewer-toolbar span {
   color: var(--muted-foreground);
@@ -1118,36 +1018,6 @@ dd {
 .lut-export .primary-button:disabled {
   opacity: 0.4;
 }
-.project-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 32px;
-  border-bottom: 1px solid var(--border);
-  font-size: 12px;
-}
-.project-toolbar [role="alert"] {
-  color: var(--warning);
-}
-.offline-status {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  color: var(--muted-foreground);
-}
-.share-link {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-.share-link input {
-  width: min(400px, 55vw);
-}
-
 .fidelity-report {
   display: grid;
   gap: 12px;

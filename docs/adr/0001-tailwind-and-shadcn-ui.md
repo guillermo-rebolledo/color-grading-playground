@@ -34,6 +34,9 @@ Adopt Tailwind, shadcn/ui with Radix primitives, and `lucide-react` for icons.
   `lucide-react` — are installed ahead of the first one, so `shadcn add` works
   without touching `package.json`. No component is generated until a ticket
   consumes it, because stock density has to be overridden as it lands.
+  ([ADR 2](0002-control-states-in-a-cascade-layer.md) records the one
+  exception: MEM-223's acceptance criteria name eight components, so all eight
+  were generated and overridden together.)
 - New code imports through the alias (`@/components/ProjectBar`); existing
   relative imports are left alone and convert with the region that touches
   them, so a file is not churned twice.
@@ -58,6 +61,11 @@ rule beats a utility on the same property regardless of source order. That is
 the correct pressure — it makes converting a region mean deleting its old
 rules — but it means a half-converted panel will look wrong rather than merely
 unstyled.
+
+> Reversed by [ADR 2](0002-control-states-in-a-cascade-layer.md). The legacy
+> stylesheet is now a cascade layer beneath `utilities`, because the legacy
+> element rules belong to no region and so could never be converted away from.
+> The pressure is kept by deleting a region's rules as it is redressed.
 
 **Stock shadcn density is wrong for this application** and is overridden per
 component (button heights, a toolbar variant, hairline cards, mono inputs,

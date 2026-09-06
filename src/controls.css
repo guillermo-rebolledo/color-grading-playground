@@ -1,0 +1,240 @@
+/* Control states and the motion budget, defined once for the whole product.
+ *
+ * Density belongs to the component that owns a control — the shadcn primitives
+ * in src/components/ui carry it, and the regions that have not been redressed
+ * yet still carry theirs in src/styles.css. What lives here is the part that
+ * may not vary: the four states every control shows, and the durations
+ * anything is allowed to animate for.
+ *
+ * This is the last cascade layer (see the @layer statement in tailwind.css), so
+ * a state defined here wins over both the legacy stylesheet and any Tailwind
+ * utility. That is deliberate: a component may not opt out of focus-visible.
+ *
+ * A control paints itself from five custom properties, and changes state by
+ * redeclaring them. That inverts the usual arrangement: what a control *is* —
+ * a chip, a field, a bare section header, an accent call to action — is said
+ * once where that kind of control is described, and each of the four states is
+ * one short block that knows nothing about which kind it is acting on. A new
+ * kind of control joins by declaring its own five values, not by being added
+ * to an exclusion list in every rule.
+ *
+ *   Default          --secondary fill on a --line-strong border
+ *   Hover            lifts to the --input fill on a --line-hover border
+ *   Focus-visible    1px --ring border plus the --focus-ring soft ring
+ *   Pressed          --control-pressed fill on a --ring border
+ *   Disabled         --control-disabled fill, dimmer border, dimmed ink
+ *
+ * Focus-visible is stated for every focusable element, not only for the
+ * controls listed here, so an element this file has never heard of still shows
+ * where the keyboard is.
+ *
+ * Motion is colour only on hover and press, height only on panel collapse.
+ * Both durations come from the budget in src/tokens.css, where a reduced-motion
+ * preference sets them to zero. */
+
+:root {
+  --control-fill: var(--secondary);
+  --control-line: var(--line-strong);
+  --control-ink: var(--foreground);
+  --control-border-width: 1px;
+
+  --control-fill-hover: var(--input);
+  --control-line-hover: var(--line-hover);
+  --control-ink-hover: var(--foreground);
+
+  --control-fill-pressed: var(--control-pressed);
+  --control-line-pressed: var(--ring);
+  --control-ink-pressed: var(--foreground);
+
+  --control-fill-disabled: var(--control-disabled);
+  --control-line-disabled: var(--input);
+  --control-ink-disabled: var(--control-disabled-foreground);
+
+  --control-focus-line: var(--ring);
+  --control-focus-ring: var(--focus-ring);
+}
+
+:where(button, select, [data-slot="input"], [data-slot="slider-thumb"]) {
+  background: var(--control-fill);
+  color: var(--control-ink);
+  border: var(--control-border-width) solid var(--control-line);
+  border-radius: var(--radius);
+  transition:
+    background-color var(--motion-control) linear,
+    border-color var(--motion-control) linear,
+    color var(--motion-control) linear;
+}
+
+/* A field sits one step further up the ramp than a chip: it is a place to put
+ * something, so it reads as recessed rather than raised. */
+:where([data-slot="input"]) {
+  --control-fill: var(--input);
+  --control-fill-hover: var(--input);
+}
+
+/* A section header, a tab and a legacy text button are not chips: they carry
+ * their states in ink, and never grow a fill in any of them. */
+:where(
+  [data-slot="accordion-trigger"],
+  [data-slot="tabs-trigger"],
+  .text-button,
+  .file-error button
+) {
+  --control-fill: transparent;
+  --control-fill-hover: transparent;
+  --control-fill-pressed: transparent;
+  --control-fill-disabled: transparent;
+  --control-line: transparent;
+  --control-line-hover: transparent;
+  --control-border-width: 0;
+  --control-ink: var(--muted-foreground);
+  border-radius: 0;
+}
+
+/* A tab's selection is its underline and nothing else: the one border it keeps
+ * is the bottom one, drawn in the accent when the tab is the selected one. */
+:where([data-slot="tabs-trigger"]) {
+  border-bottom-width: 1px;
+}
+
+:where([data-slot="tabs-trigger"])[data-state="active"] {
+  --control-line: var(--primary);
+  --control-line-hover: var(--primary);
+  --control-ink: var(--foreground);
+  --control-ink-hover: var(--foreground);
+}
+
+/* The dismiss control inside a file error is surfaceless too, but it sits on
+ * the error's own ink and would be wrong in the neutral grey the others use. */
+:where(.file-error button) {
+  --control-ink: inherit;
+}
+
+/* Slider handles use square corners, like other non-field primitives. */
+:where([data-slot="slider-thumb"]) {
+  --control-fill: var(--foreground);
+  --control-fill-hover: var(--ring);
+  /* A disabled handle still has to be findable on the track it sits on, so it
+   * dims to the disabled ink rather than to the disabled fill. */
+  --control-fill-disabled: var(--control-disabled-foreground);
+  --control-line: transparent;
+  --control-line-hover: transparent;
+  --control-border-width: 0;
+  border-radius: 0;
+}
+
+/* An accent fill is a call to action, and the one surface the accent ring
+ * would disappear against, so there the ring is recoloured to the ink that
+ * surface already uses. It is recoloured, never removed. */
+:where(.primary-button, [data-accent-surface]) {
+  --control-fill: var(--primary);
+  --control-fill-hover: var(--control-accent-hover);
+  --control-line: var(--primary);
+  --control-line-hover: var(--primary);
+  --control-ink: var(--primary-foreground);
+  --control-ink-hover: var(--primary-foreground);
+  --control-focus-line: var(--primary-foreground);
+  --control-focus-ring: 0 0 0 2px
+    color-mix(in srgb, var(--primary-foreground) 55%, transparent);
+}
+
+/* Hover lifts the fill one step up the surface ramp and lightens the border. */
+:where(
+    button,
+    select,
+    [data-slot="input"],
+    [data-slot="slider-thumb"]
+  ):hover:not(:disabled, [data-disabled]) {
+  --control-fill: var(--control-fill-hover);
+  --control-line: var(--control-line-hover);
+  --control-ink: var(--control-ink-hover);
+}
+
+/* Pressed reads as pressed rather than tinted: a desaturated accent fill a
+ * colourist can tell from a hovered control at a glance, so whether
+ * out-of-range or a comparison mode is on is never in doubt. A slider thumb
+ * has no pressed state to show, only the moment it is being dragged. */
+:where(button)[aria-pressed="true"] {
+  --control-fill: var(--control-fill-pressed);
+  --control-line: var(--control-line-pressed);
+  --control-ink: var(--control-ink-pressed);
+  --control-fill-hover: var(--control-pressed-hover);
+  --control-line-hover: var(--control-line-pressed);
+}
+
+/* Momentary buttons show the same pressed feedback while held down. */
+:where(button):active:not(:disabled, [data-disabled]) {
+  --control-fill: var(--control-fill-pressed);
+  --control-line: var(--control-line-pressed);
+  --control-ink: var(--control-ink-pressed);
+}
+
+:where([data-slot="slider-thumb"]):active {
+  --control-fill: var(--ring);
+}
+
+/* Disabled is unmistakably unavailable and still legible: the dimmed ink holds
+ * above 4.5:1 against the recessed fill, so a disabled control can be read rather
+ * than guessed at. It is stated after every kind of control, so an accent call
+ * to action goes recessed like everything else rather than staying lit. */
+:where(button, select, [data-slot="input"]):disabled,
+:where([data-slot="slider-thumb"])[data-disabled] {
+  cursor: not-allowed;
+  opacity: 1;
+  --control-fill: var(--control-fill-disabled);
+  --control-line: var(--control-line-disabled);
+  --control-ink: var(--control-ink-disabled);
+}
+
+/* The native inputs this file does not paint — a range track, a checkbox, the
+ * borderless digits inside a numeric control — keep the legacy dimming until
+ * the region that owns them is redressed. */
+:where(input:not([data-slot]), textarea:not([data-slot])):disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Focus-visible, on every focusable element in the product. The browser
+ * outline is replaced by a border and a ring rather than dropped, so the
+ * indicator survives on any surface and is never suppressed. */
+:where(*):focus-visible {
+  outline: none;
+  border-color: var(--control-focus-line);
+  box-shadow: var(--control-focus-ring);
+}
+
+/* Animating a panel collapse is the one height transition in the budget. */
+@keyframes control-accordion-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes control-accordion-close {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+[data-slot="accordion-content"][data-state="open"] {
+  animation: control-accordion-open var(--motion-collapse) ease-out;
+}
+
+[data-slot="accordion-content"][data-state="closed"] {
+  animation: control-accordion-close var(--motion-collapse) ease-out;
+}
+
+/* Nothing inside the viewer animates, ever — including the cases that feel
+ * like exceptions. It is stated here because the motion budget is stated here,
+ * and the viewer is the reason the budget is as small as it is. */
+.viewer,
+.viewer * {
+  transition: none;
+  animation: none;
+}

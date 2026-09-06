@@ -27,7 +27,6 @@ import { AppFooter } from "@/components/AppFooter";
 import { WorkspaceStage } from "@/components/WorkspaceStage";
 import { UnsupportedDevice } from "@/components/UnsupportedDevice";
 import { useSupportedWidth } from "@/viewportSupport";
-import "./styles.css";
 
 export default function App() {
   const canvas = useRef<HTMLCanvasElement>(null);

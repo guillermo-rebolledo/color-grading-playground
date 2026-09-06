@@ -43,6 +43,45 @@
   --ch-b: #7eaaff;
   --port-rgb: #86c19a;
   --port-mask: #c9a6e3;
+
+  /* The four control states, defined once here and applied to every control by
+   * src/controls.css. Default sits on --secondary over --line-strong; hover
+   * lifts to --input over --line-hover; focus-visible is a 1px --ring border
+   * plus --focus-ring, 8.7:1 against --card, and is never removed, only
+   * recoloured where it sits on an accent surface; --control-pressed is a
+   * desaturated accent fill that reads as genuinely pressed rather than
+   * tinted; disabled is a recessed fill that stays legible above 4.5:1. */
+  --line-hover: #4a4a4a;
+  --focus-ring: 0 0 0 2px color-mix(in srgb, var(--ring) 32%, transparent);
+  --control-pressed: #2f4046;
+  --control-pressed-hover: color-mix(
+    in srgb,
+    var(--control-pressed) 82%,
+    #ffffff
+  );
+  --control-accent-hover: color-mix(in srgb, var(--primary) 85%, #ffffff);
+  --control-disabled: #1a1a1a;
+  --control-disabled-foreground: var(--text-faint);
+
+  /* The whole motion budget. Colour-only feedback on hover and press, a brief
+   * height transition on panel collapse, and nothing else. */
+  --motion-control: 80ms;
+  --motion-collapse: 120ms;
+
+  /* The scrim behind a modal, and the one shadow in the application: popovers
+   * get a hairline border plus this, and nothing else ever gets a shadow. */
+  --scrim: rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* A reduced-motion preference drops every duration in the budget to zero. It is
+ * expressed here, once, so no component has to restate the media query. */
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  .dark {
+    --motion-control: 0ms;
+    --motion-collapse: 0ms;
+  }
 }
 
 :root {
