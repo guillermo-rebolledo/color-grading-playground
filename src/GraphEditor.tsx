@@ -7,6 +7,10 @@ import {
   ReactFlow,
   Background,
   Controls,
+  ControlButton,
+  useReactFlow,
+  useStore,
+  useStoreApi,
   useViewport,
   Handle,
   Position,
@@ -129,16 +133,69 @@ const isTyping = (target: EventTarget | null) =>
     'input:not([type="range"]), textarea, [contenteditable="true"]',
   );
 
-/* Keep React Flow's navigation controls and their accessibility contract;
- * only their DOM placement changes, from the canvas into the toolbar. */
+/* Use React Flow's navigation actions, limits and accessible names, with
+ * the shared glyphs. The portal keeps its store context in the toolbar. */
 function GraphNavigation({ container }: { container: HTMLDivElement }) {
   const { zoom } = useViewport();
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const store = useStoreApi();
+  const minZoom = useStore((s) => s.minZoom);
+  const maxZoom = useStore((s) => s.maxZoom);
+  const labels = useStore((s) => s.ariaLabelConfig);
+  const interactive = useStore(
+    (s) => s.nodesDraggable || s.nodesConnectable || s.elementsSelectable,
+  );
+  const buttons = [
+    {
+      key: "zoomIn",
+      Glyph: Icon.ZoomIn,
+      run: () => void zoomIn(),
+      disabled: zoom >= maxZoom,
+    },
+    {
+      key: "zoomOut",
+      Glyph: Icon.ZoomOut,
+      run: () => void zoomOut(),
+      disabled: zoom <= minZoom,
+    },
+    {
+      key: "fitView",
+      Glyph: Icon.Maximize,
+      run: () => void fitView(fit),
+      disabled: false,
+    },
+    {
+      key: "interactive",
+      Glyph: interactive ? Icon.Move : Icon.SquareDashed,
+      run: () =>
+        store.setState({
+          nodesDraggable: !interactive,
+          nodesConnectable: !interactive,
+          elementsSelectable: !interactive,
+        }),
+      disabled: false,
+    },
+  ] as const;
   return createPortal(
     <Controls
       className="graph-navigation"
       orientation="horizontal"
-      fitViewOptions={fit}
+      showZoom={false}
+      showFitView={false}
+      showInteractive={false}
     >
+      {buttons.map(({ key, Glyph, run, disabled }) => (
+        <ControlButton
+          key={key}
+          className={`react-flow__controls-${key.toLowerCase()}`}
+          title={labels[`controls.${key}.ariaLabel`]}
+          aria-label={labels[`controls.${key}.ariaLabel`]}
+          onClick={run}
+          disabled={disabled}
+        >
+          <Glyph />
+        </ControlButton>
+      ))}
       <span
         role="group"
         aria-label="Graph zoom"
@@ -150,6 +207,9 @@ function GraphNavigation({ container }: { container: HTMLDivElement }) {
     container,
   );
 }
+
+const feedbackClassName =
+  "h-[22px] shrink-0 overflow-x-auto whitespace-nowrap border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px]";
 
 export function GraphEditor() {
   const [navigation, setNavigation] = useState<HTMLDivElement | null>(null);
@@ -278,9 +338,13 @@ export function GraphEditor() {
         <span>Shift-drag to box select</span>
       </div>
       <div className="flow-canvas relative min-h-[140px] flex-1">
+        {/* Feedback must not resize the canvas during a connection drag. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-card">
           <div
-            className="h-[22px] shrink-0 overflow-x-auto whitespace-nowrap border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px] text-foreground"
+            className={cn(
+              feedbackClassName,
+              error ? "text-destructive" : "text-foreground",
+            )}
             role="status"
           >
             {state.feedback ||
@@ -290,7 +354,7 @@ export function GraphEditor() {
           </div>
           {warnings.length > 0 && (
             <div
-              className="h-[22px] shrink-0 overflow-x-auto whitespace-nowrap border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px] text-foreground"
+              className={cn(feedbackClassName, "text-warning")}
               role="status"
             >
               {warnings.join(" ")}

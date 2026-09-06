@@ -44,10 +44,6 @@
   border-radius: 0;
   box-shadow: none;
 }
-.flow-canvas .react-flow__node:focus-visible {
-  outline: 1px solid var(--ring);
-  outline-offset: 4px;
-}
 .flow-canvas .react-flow__attribution a {
   color: var(--text-faint);
 }
@@ -70,4 +66,5 @@
   height: 14px;
   max-width: 14px;
   max-height: 14px;
+  fill: none;
 }
