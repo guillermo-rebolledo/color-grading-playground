@@ -76,7 +76,7 @@ export function Topbar({
       </p>
       <input
         ref={fileInput}
-        className="visually-hidden"
+        className="sr-only"
         type="file"
         accept="image/jpeg,image/png,image/tiff,.tif,.tiff"
         aria-label="Choose image"

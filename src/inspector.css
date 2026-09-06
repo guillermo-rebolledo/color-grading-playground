@@ -10,15 +10,6 @@
   min-height: 0;
   font-size: 12px;
 }
-.inspector .panel-bar {
-  height: 26px;
-  min-height: 26px;
-  padding: 0 12px;
-  justify-content: space-between;
-}
-.inspector .panel-bar h2 {
-  font-size: 13px;
-}
 .inspector-count,
 .lut-settings {
   font: 10px var(--font-mono);
@@ -70,15 +61,7 @@
   margin: 8px 0;
 }
 .inspector
-  :is(
-    input,
-    select,
-    .range-labels,
-    .fidelity-report,
-    .lut-summary,
-    .lut-warning,
-    .lut-reason
-  ) {
+  :is(input, select, .range-labels, .lut-summary, .lut-warning, .lut-reason) {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 11px;
@@ -318,42 +301,6 @@
 }
 .inspector .lut-reason {
   color: var(--destructive);
-}
-.lut-content > .primary-button {
-  margin: 8px 0;
-}
-.fidelity-report table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.fidelity-report caption {
-  text-align: left;
-}
-.fidelity-report th,
-.fidelity-report td {
-  padding: 4px 0;
-  text-align: right;
-  border-bottom: 1px solid var(--border);
-}
-.fidelity-report th:first-child {
-  text-align: left;
-}
-.fidelity-report tbody tr:nth-child(1) th {
-  color: var(--ch-r);
-}
-.fidelity-report tbody tr:nth-child(2) th {
-  color: var(--ch-g);
-}
-.fidelity-report tbody tr:nth-child(3) th {
-  color: var(--ch-b);
-}
-.fidelity-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.fidelity-toggle input {
-  width: auto;
 }
 .inspector-footer {
   padding: 8px 12px;

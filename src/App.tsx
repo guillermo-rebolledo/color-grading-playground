@@ -398,7 +398,7 @@ export default function App() {
   return (
     <>
       <main
-        className="app-shell"
+        className="app-shell flex h-dvh flex-col overflow-hidden"
         hidden={!!unsupported}
         inert={!ready}
         onDragEnter={(event) => {

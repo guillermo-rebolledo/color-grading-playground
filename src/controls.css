@@ -1,14 +1,12 @@
 /* Control states and the motion budget, defined once for the whole product.
  *
- * Density belongs to the component that owns a control — the shadcn primitives
- * in src/components/ui carry it, and the regions that have not been redressed
- * yet still carry theirs in src/styles.css. What lives here is the part that
- * may not vary: the four states every control shows, and the durations
+ * Density belongs to the component that owns a control and its region.
+ * What lives here is the part that may not vary: the four states every control shows, and the durations
  * anything is allowed to animate for.
  *
  * This is the last cascade layer (see the @layer statement in tailwind.css), so
- * a state defined here wins over both the legacy stylesheet and any Tailwind
- * utility. That is deliberate: a component may not opt out of focus-visible.
+ * a state defined here wins over every Tailwind utility. That is deliberate:
+ * a component may not opt out of focus-visible.
  *
  * A control paints itself from five custom properties, and changes state by
  * redeclaring them. That inverts the usual arrangement: what a control *is* —
@@ -72,12 +70,11 @@
   --control-fill-hover: var(--input);
 }
 
-/* A section header, a tab and a legacy text button are not chips: they carry
+/* A section header and a tab are not chips: they carry
  * their states in ink, and never grow a fill in any of them. */
 :where(
   [data-slot="accordion-trigger"],
   [data-slot="tabs-trigger"],
-  .text-button,
   .file-error button
 ) {
   --control-fill: transparent;
@@ -146,7 +143,7 @@
 /* An accent fill is a call to action, and the one surface the accent ring
  * would disappear against, so there the ring is recoloured to the ink that
  * surface already uses. It is recoloured, never removed. */
-:where(.primary-button, [data-accent-surface]) {
+:where([data-accent-surface]) {
   --control-fill: var(--primary);
   --control-fill-hover: var(--control-accent-hover);
   --control-line: var(--primary);
@@ -217,12 +214,11 @@
   --control-ink: var(--control-ink-disabled);
 }
 
-/* The native inputs this file does not paint — a range track, a checkbox, the
- * borderless digits inside a numeric control — keep the legacy dimming until
- * the region that owns them is redressed. */
+/* Native checkboxes and other fields retain legible disabled ink. */
 :where(input:not([data-slot]), textarea:not([data-slot])):disabled {
   cursor: not-allowed;
-  opacity: 0.4;
+  opacity: 1;
+  color: var(--control-disabled-foreground);
 }
 
 /* Focus-visible, on every focusable element in the product. The browser
@@ -291,4 +287,9 @@
 .curve-plot circle:focus-visible {
   stroke: var(--ring);
   stroke-width: 3;
+}
+
+/* Workspace dividers share neutral hover feedback and the universal focus ring. */
+.stage-divider:hover {
+  background: var(--input);
 }

@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useGraph } from "@/graphStore";
 import {
   GradingEngine,
@@ -216,13 +217,14 @@ export function LutExport({
                 most grades.
               </p>
             )}
-            <button
-              className="primary-button"
+            <Button
+              accent
+              className="my-2"
               disabled={!support || !!reason}
               onClick={exportLut}
             >
               Export .cube
-            </button>
+            </Button>
             <label>
               Interpolation
               <select
@@ -240,13 +242,14 @@ export function LutExport({
                 <option value="tetrahedral">Tetrahedral</option>
               </select>
             </label>
-            <button
-              className="primary-button"
+            <Button
+              accent
+              className="my-2"
               disabled={!hasImage || !support || !!reason}
               onClick={measure}
             >
               Measure LUT fidelity
-            </button>
+            </Button>
             {!hasImage && (
               <p className="lut-summary">
                 Load an image to measure LUT fidelity.

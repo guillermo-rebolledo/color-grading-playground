@@ -1,54 +1,58 @@
-# Remaining surfaces (MEM-229)
+# Remaining surfaces and stylesheet removal (MEM-229)
 
 The sample gallery and provenance, LUT fidelity report, share link and privacy
 note use the neutral theme and component density. The gallery uses 12px prose,
 13px headings, 11px monospaced encoding labels and a 24px offline-storage
 button. Provenance stays bounded to 72px and scrolls without pushing the image
-out of the stage. Fidelity metrics use 11px tabular mono and 24px table rows;
+out of the stage. Fidelity metrics use tabular mono and 24px table rows;
 measurement caveats and the share privacy note use foreground ink. File-load
-and inline capability errors also use the neutral surfaces and destructive
-token. Accessible names, roles, ARIA attributes and engine behaviour are
-unchanged.
+and inline capability errors use neutral surfaces and the destructive token.
+Accessible names, roles, ARIA attributes and engine behaviour are unchanged.
 
-## Contract audit against main at e6225b8
+## Completed stylesheet contract
 
-The final stylesheet removal is **blocked**. Keep this PR in draft until the
-prerequisites land and the remaining rules can be converted safely.
+The inspector migration from main (MEM-228, PR #27) and the scopes migration
+from PR #26 (MEM-227) are integrated. The scopes use the same channel tokens as
+the inspector and curve editor; their computation and sampling are unchanged.
 
-- **MEM-227 (scopes), PR #26:** `src/Scopes.tsx` still owns literal canvas
-  colours. `.scopes`, `.scope-*` and the scopes container queries in
-  `src/styles.css` still supply its layout. The pending scopes PR replaces
-  these; do not delete them ahead of it.
-- **MEM-228 (inspector):** `.inspector*`, `.selected-node`, `.node-symbol`,
-  parameter, encoding, colour-wheel, curve and LUT-export rules still supply
-  the inspector. The colour wheel retains its old literal colours, and the
-  curve focus marker still uses a literal white stroke. The ticket must
-  migrate these controls and their density before these rules can disappear.
-- **MEM-224 (shell), final cleanup in MEM-229:** `.app-shell`, `.stage*`,
-  `.viewer-region`, `.dock*`, `.panel-bar`, `.footer` and `.unsupported-*`
-  remain in the legacy layer. Their palette is already token-based; their
-  geometry must move to the owning components. Global body and native-control
-  defaults and `.visually-hidden` must also be replaced as part of the reset.
-- **MEM-223 (controls), final cleanup in MEM-229:** remove obsolete legacy
-  selectors and comments from `src/controls.css` once their last callers are
-  converted. The duplicate `.primary-button:hover` rule in `src/styles.css`
-  is superseded by the controls layer and should go with the inspector's
-  remaining primary buttons.
+`src/styles.css` is deleted. Its remaining shell, dock, footer and unsupported
+screen layouts now live in the owning components. Dock collapse controls and
+LUT actions use the shared Button primitive. The file picker uses Tailwind's
+screen-reader-only utility. Unused global element rules, superseded control
+selectors and duplicate fidelity-report rules are removed.
 
-The gallery, provenance, fidelity report, file-error and inline capability
-rules have been deleted from `src/styles.css`. No runtime declarations or
-references to `--bg`, `--panel`, `--line` or `--text` remain. `--muted` and
-`--accent` in `src/tokens.css` are the current neutral shadcn tokens, not the
-retired palette. Historical ADR descriptions of the migration are retained.
+As required by ADR 1, Tailwind preflight is enabled. The temporary `[data-slot]`
+border reset and the `legacy` cascade layer are gone. The active layer order is:
 
-After the dependencies land, finish the shell cleanup, delete `src/styles.css`
-and its import/layer, enable Tailwind preflight as required by ADR 1, and
-remove the temporary `[data-slot]` border reset. Check native controls, hidden
-regions, default text margins and React Flow geometry after enabling preflight.
-Search application source for retired palette values and variables again;
-engine-owned overlays and fidelity false colours remain untouched.
+1. `theme`: Tailwind variables.
+2. `base`: preflight, React Flow's substrate, theme border and body defaults.
+3. `utilities`: component layout and density, plus the focused viewer, graph,
+   inspector and scopes stylesheets.
+4. `controls`: shared control states, focus indicators and motion budget.
 
-Run the existing specs without edits, including production offline coverage,
-then `npm run release:verify`. The manual LUT-host release blockers documented
-in `docs/release-verification.md` are separate from this stylesheet dependency
-and must remain reported as blockers.
+Hidden regions retain the native `hidden` contract through preflight. The
+stage still keeps the viewer above the dock, beside the fixed 328px inspector.
+Open dock title strips are 26px; collapsed strips are 24px. Resizing and local
+layout persistence are unchanged.
+
+The theme remains in `src/tokens.css`. No runtime declarations or references to
+`--bg`, `--panel`, `--line` or `--text` remain, and no retired palette values
+remain in the application. `--muted` and `--accent` are the current neutral
+shadcn tokens, not the retired palette. Historical ADR descriptions of the
+migration are retained. The standalone redesign document also keeps its quoted
+comparison with the old palette; those values are explanatory text, not live
+styles. Engine-owned overlays and fidelity false colours are unchanged.
+
+## Verification
+
+Use the existing specs without edits, including the inspector and scopes
+coverage supplied by their migrations. Check dock resizing/collapse, narrow
+and incapable devices, native inputs, gallery provenance, fidelity and share
+workflows after enabling preflight. Production offline tests cover saved
+projects, stored samples and locally served fonts.
+
+`npm run release:verify` runs formatting, typechecking/build, sample release
+verification, the full browser suite and FFmpeg LUT comparisons. Manual LUT-host
+certification blockers in `docs/release-verification.md` remain independent of
+this completed presentation migration and must not be reported as a passing
+release gate.
