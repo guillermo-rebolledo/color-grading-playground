@@ -19,6 +19,7 @@ import { loadImage } from "./engine/loadImage";
 import { createLogChart, isLogChart, logCharts } from "./logCharts";
 import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
+import { nodeTitle } from "./nodeTitles";
 import { ViewerNavigation } from "./ViewerNavigation";
 import { LutExport, OutputRangeSelect, type LatticeSupport } from "./LutExport";
 import type { GradingGraph } from "./engine/GradingEngine";
@@ -703,7 +704,7 @@ export default function App() {
                 ? `${comparison === "before" ? "Before" : `Snapshot ${comparison}`} ← wipe → `
                 : ""}
               {solo
-                ? `Solo: ${graph.nodes.find((n) => n.id === solo)?.data.label ?? solo}`
+                ? `Solo: ${nodeTitle(graph.nodes.find((n) => n.id === solo)) || solo}`
                 : "Current grade"}
             </span>
           </div>
@@ -849,19 +850,7 @@ export default function App() {
             <div className="selected-node">
               <span className="node-symbol">±</span>
               <div>
-                <h3>
-                  {selected
-                    ? (selected.data.label ??
-                      (selected.type === "qualifier"
-                        ? "HSL Qualifier"
-                        : selected.type === "cdl"
-                          ? "CDL"
-                          : selected.type === "cst"
-                            ? "Colour Space Transform"
-                            : selected.type[0].toUpperCase() +
-                              selected.type.slice(1)))
-                    : "Select a node"}
-                </h3>
+                <h3>{nodeTitle(selected) || "Select a node"}</h3>
                 <p>
                   {selected?.type === "exposure"
                     ? "Linear light adjustment"

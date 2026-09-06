@@ -2,6 +2,7 @@ import { CurveControls } from "./CurveControls";
 import { useEffect, useRef, useState } from "react";
 import type { GradingNode } from "./engine/GradingEngine";
 import { useGraph } from "./graphStore";
+import { nodeTypeTitle } from "./nodeTitles";
 
 import { adjustmentDefaults } from "./adjustmentDefaults";
 
@@ -217,7 +218,7 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
             );
           }}
         >
-          Reset {node.type === "blend" ? "Blend" : "HSL Qualifier"}
+          Reset {nodeTypeTitle(node.type)}
         </button>
         {node.type === "blend" ? (
           <>
@@ -297,12 +298,7 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
   )
     return null;
   const defaults = adjustmentDefaults[node.type];
-  const title =
-    node.type === "whiteBalance"
-      ? "White Balance"
-      : node.type === "cdl"
-        ? "CDL"
-        : node.type[0].toUpperCase() + node.type.slice(1);
+  const title = nodeTypeTitle(node.type);
   const scalar = (
     key:
       "contrast" | "pivot" | "saturation" | "vibrance" | "temperature" | "tint",

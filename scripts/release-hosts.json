@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "hosts": [
+    {
+      "id": "ffmpeg-lut3d",
+      "name": "FFmpeg lut3d",
+      "automated": true,
+      "importRoute": "-vf format=rgb48le,lut3d=file=<cube>:interp=<interpolation>",
+      "range": "Full-range RGB48 throughout; no YUV or limited-range conversion.",
+      "interpolations": ["trilinear", "tetrahedral"],
+      "notes": "Verified by scripts/verify-lut-hosts.mjs against the exact downloaded .cube artifacts."
+    },
+    {
+      "id": "davinci-resolve",
+      "name": "DaVinci Resolve",
+      "automated": false,
+      "importRoute": "Copy the .cube into the LUT folder, then apply it on a node or in the timeline colour management settings.",
+      "blocker": "No DaVinci Resolve installation is available to this project. Applying and reading back a graded frame requires a licensed desktop host on macOS or Windows."
+    },
+    {
+      "id": "adobe-photoshop",
+      "name": "Adobe Photoshop",
+      "automated": false,
+      "importRoute": "Colour Lookup adjustment layer, 3DLUT File → Load 3D LUT.",
+      "blocker": "No Adobe Photoshop installation is available to this project. Photoshop applies LUTs in its own document working space, so the profile and range settings must be recorded from a real session."
+    },
+    {
+      "id": "adobe-lightroom",
+      "name": "Adobe Lightroom",
+      "automated": false,
+      "importRoute": "Lightroom Classic imports .cube files only as camera or creative profiles built with the Adobe Profile Editor; there is no direct .cube import in the Develop module.",
+      "blocker": "No Adobe Lightroom installation or Profile Editor build is available to this project. The profile-wrapping workflow must be performed and recorded by a human on a licensed host."
+    }
+  ]
+}
