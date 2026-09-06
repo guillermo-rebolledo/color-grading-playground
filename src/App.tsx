@@ -207,6 +207,15 @@ export default function App() {
   const selected = graph.nodes.find((n) => n.selected);
   const graphError = GradingEngine.validate(graph);
   const [renderError, setRenderError] = useState("");
+  const [graphicsRevision, setGraphicsRevision] = useState(0);
+  const [graphicsWarning, setGraphicsWarning] = useState("");
+  const [interactive, setInteractive] = useState(false);
+  useEffect(() => {
+    setInteractive(!!graphState.transaction);
+    if (!graphState.transaction) return;
+    const idle = window.setTimeout(() => setInteractive(false), 80);
+    return () => window.clearTimeout(idle);
+  }, [graph, graphState.transaction]);
   const [error, setError] = useState("");
   const [capabilityError, setCapabilityError] = useState("");
   const [latticeSupport, setLatticeSupport] = useState<LatticeSupport | null>(
@@ -217,30 +226,47 @@ export default function App() {
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
 
-  useEffect(() => {
-    const element = canvas.current!;
+  function refreshGraphics() {
     try {
-      engine.current = new GradingEngine(element);
+      setGraphicsWarning(engine.current!.compatibilityWarnings().join(" "));
+      setCapabilityError("");
+      setRenderError("");
+      setFidelityOverlay(null);
+      setGraphicsRevision((revision) => revision + 1);
       try {
-        setLatticeSupport(engine.current.latticeSupport());
+        setLatticeSupport(engine.current!.latticeSupport());
       } catch (cause) {
         setLatticeSupport({ reason: message(cause) });
       }
     } catch (cause) {
       setCapabilityError(message(cause));
     }
+  }
+
+  useEffect(() => {
+    const element = canvas.current!;
+    try {
+      engine.current = new GradingEngine(element);
+      refreshGraphics();
+    } catch (cause) {
+      setCapabilityError(message(cause));
+    }
     const lost = (event: Event) => {
       event.preventDefault();
+      setFidelityOverlay(null);
+      setLatticeSupport(null);
       setCapabilityError(
-        "The graphics connection was lost. Reload this page to continue.",
+        "The graphics connection was lost. Waiting for automatic restoration; your editable graph is safe.",
       );
     };
     element.addEventListener("webglcontextlost", lost);
+    element.addEventListener("webglcontextrestored", refreshGraphics);
     return () => {
       request.current++;
       engine.current?.dispose();
       engine.current = null;
       element.removeEventListener("webglcontextlost", lost);
+      element.removeEventListener("webglcontextrestored", refreshGraphics);
     };
   }, []);
 
@@ -355,6 +381,7 @@ export default function App() {
       const frame = requestAnimationFrame(() => {
         try {
           engine.current?.renderViewer(graph, {
+            interactive,
             solo: solo ?? undefined,
             before: comparison === "before",
             snapshot:
@@ -374,6 +401,8 @@ export default function App() {
       return () => cancelAnimationFrame(frame);
     }
   }, [
+    interactive,
+    graphicsRevision,
     graph,
     graphError,
     image,
@@ -712,17 +741,46 @@ export default function App() {
                 <span className="file-hint">JPEG or PNG · up to 50 MB</span>
               </div>
             )}
+            {graphicsWarning && (
+              <p role="status" className="encoding-note">
+                {graphicsWarning}
+              </p>
+            )}
             {capabilityError && (
               <div className="capability-error" role="alert">
                 <h2>Preview unavailable</h2>
                 <p>{capabilityError}</p>
+                {engine.current && (
+                  <button
+                    onClick={() => {
+                      try {
+                        engine.current!.recover();
+                        refreshGraphics();
+                      } catch (cause) {
+                        setCapabilityError(message(cause));
+                      }
+                    }}
+                  >
+                    Retry graphics recovery
+                  </button>
+                )}
               </div>
             )}
             {image && (graphError || renderError) && (
               <div className="preview-paused" role="alert">
                 Preview paused: {graphError || renderError}
                 <br />
-                Connect a valid graph to resume.
+                {graphError ? (
+                  "Connect a valid graph to resume."
+                ) : (
+                  <button
+                    onClick={() =>
+                      setGraphicsRevision((revision) => revision + 1)
+                    }
+                  >
+                    Retry preview
+                  </button>
+                )}
               </div>
             )}
             {loading && (
@@ -798,7 +856,7 @@ export default function App() {
               <ExposureControl
                 key={selected.id}
                 value={selected.data.stops!}
-                disabled={disabled}
+                disabled={false}
                 onChange={(value) =>
                   graphState.updateParameters(selected.id, { stops: value })
                 }
