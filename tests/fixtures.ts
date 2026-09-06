@@ -19,3 +19,10 @@ export async function openNeutralGraph(page: Page) {
     });
   });
 }
+
+// Export is collapsed by default; workflows open it as a colourist would.
+export async function openLutExport(page: Page) {
+  const toggle = page.getByRole("button", { name: /^LUT EXPORT/ });
+  if ((await toggle.getAttribute("aria-expanded")) === "false")
+    await toggle.click();
+}
