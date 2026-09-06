@@ -6,13 +6,22 @@ import { openNeutralGraph } from "./fixtures";
  * around the control I just moved to that was not drawn before? It reads the
  * indicator's presence, never its colour — the colour is a decision recorded in
  * the token block, and a test that repeated it would only have to be rewritten
- * by the next palette change. */
-async function indicator(control: Locator) {
+ * by the next palette change.
+ *
+ * Every read of it is polled. The border colour crosses the motion budget's
+ * 80ms on its way to the indicator, so a single read can catch it mid-way and
+ * see the resting colour it started from. */
+function indicator(control: Locator) {
   return control.evaluate((element) => {
     const style = getComputedStyle(element);
     return { shadow: style.boxShadow, border: style.borderColor };
   });
 }
+
+const shadowOf = (control: Locator) => () =>
+  indicator(control).then((state) => state.shadow);
+const borderOf = (control: Locator) => () =>
+  indicator(control).then((state) => state.border);
 
 test("focus-visible draws a visible indicator on a control in every region", async ({
   page,
@@ -28,9 +37,8 @@ test("focus-visible draws a visible indicator on a control in every region", asy
     expect(resting.shadow).toBe("none");
     await control.focus();
     await expect(control).toBeFocused();
-    const focused = await indicator(control);
-    expect(focused.shadow).not.toBe("none");
-    expect(focused.border).not.toBe(resting.border);
+    await expect.poll(shadowOf(control)).not.toBe("none");
+    await expect.poll(borderOf(control)).not.toBe(resting.border);
   }
 });
 
@@ -43,15 +51,15 @@ test("focus-visible survives on an accent surface and on a field", async ({
   const accent = page.getByRole("button", { name: "Choose an image" });
   const restingAccent = await indicator(accent);
   await accent.focus();
-  expect((await indicator(accent)).shadow).not.toBe("none");
-  expect((await indicator(accent)).border).not.toBe(restingAccent.border);
+  await expect.poll(shadowOf(accent)).not.toBe("none");
+  await expect.poll(borderOf(accent)).not.toBe(restingAccent.border);
 
   await page.getByRole("button", { name: "Share grade", exact: true }).click();
   const field = page.getByLabel("Share link", { exact: true });
   const restingField = await indicator(field);
   expect(restingField.shadow).toBe("none");
   await field.focus();
-  expect((await indicator(field)).shadow).not.toBe("none");
+  await expect.poll(shadowOf(field)).not.toBe("none");
 });
 
 test("a pressed toggle is distinguishable from a hovered one and a focused one", async ({
@@ -74,8 +82,7 @@ test("a pressed toggle is distinguishable from a hovered one and a focused one",
   await page.mouse.move(0, 0);
   await toggle.focus();
   await expect.poll(fill).toBe(resting);
-  const focused = await indicator(toggle);
-  expect(focused.shadow).not.toBe("none");
+  await expect.poll(shadowOf(toggle)).not.toBe("none");
 
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");

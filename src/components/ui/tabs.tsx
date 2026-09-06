@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 /* Generated from shadcn/ui and then overridden. Tabs are underline-only: no
  * pill, no filled list, no radius. A filled tab strip would be a second raised
  * surface competing with the panels around it, and the accent is reserved for
- * selection and focus — which is exactly what the underline is. */
+ * selection and focus — which is exactly what the underline is. Selection is a
+ * control state, so the underline itself is drawn in src/controls.css. */
 function Tabs({
   className,
   ...props
@@ -43,7 +44,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "-mb-px inline-flex h-6 items-center border-b border-transparent bg-transparent px-0 text-[11px] whitespace-nowrap text-muted-foreground outline-none data-[state=active]:border-primary data-[state=active]:text-foreground",
+        "-mb-px inline-flex h-6 items-center px-0 text-[11px] whitespace-nowrap outline-none",
         className,
       )}
       {...props}

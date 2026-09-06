@@ -30,7 +30,7 @@ function SheetOverlay({
   return (
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
-      className={cn("fixed inset-0 z-50 bg-black/50", className)}
+      className={cn("fixed inset-0 z-50 bg-scrim", className)}
       {...props}
     />
   );
@@ -47,11 +47,9 @@ function SheetContent({
   className,
   children,
   side = "right",
-  showCloseButton = true,
   ...props
 }: ComponentProps<typeof SheetPrimitive.Content> & {
   side?: keyof typeof sides;
-  showCloseButton?: boolean;
 }) {
   return (
     <SheetPortal>
@@ -66,15 +64,13 @@ function SheetContent({
         {...props}
       >
         {children}
-        {showCloseButton && (
-          <SheetPrimitive.Close
-            data-slot="sheet-close"
-            aria-label="Close"
-            className="absolute top-2 right-2 flex size-5 items-center justify-center"
-          >
-            <Icon.X />
-          </SheetPrimitive.Close>
-        )}
+        <SheetPrimitive.Close
+          data-slot="sheet-close"
+          aria-label="Close"
+          className="absolute top-2 right-2 flex size-5 items-center justify-center"
+        >
+          <Icon.X />
+        </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>
   );

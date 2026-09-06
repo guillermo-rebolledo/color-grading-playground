@@ -61,6 +61,11 @@
    * height transition on panel collapse, and nothing else. */
   --motion-control: 80ms;
   --motion-collapse: 120ms;
+
+  /* The scrim behind a modal, and the one shadow in the application: popovers
+   * get a hairline border plus this, and nothing else ever gets a shadow. */
+  --scrim: rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 /* A reduced-motion preference drops every duration in the budget to zero. It is

@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { StatusDot } from "@/components/StatusDot";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/icons";
 import { isLogChart, logCharts } from "@/logCharts";
@@ -70,10 +71,7 @@ export function Topbar({
         </select>
       </span>
       <p className="m-0 ml-auto flex items-center gap-[7px] text-[11.5px] text-muted-foreground">
-        <span
-          aria-hidden="true"
-          className="size-[5px] flex-none rounded-full bg-ok"
-        />
+        <StatusDot tone="ok" />
         Local workspace · nothing is uploaded
       </p>
       <input

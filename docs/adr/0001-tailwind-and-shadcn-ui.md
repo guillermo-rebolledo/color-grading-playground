@@ -34,6 +34,9 @@ Adopt Tailwind, shadcn/ui with Radix primitives, and `lucide-react` for icons.
   `lucide-react` — are installed ahead of the first one, so `shadcn add` works
   without touching `package.json`. No component is generated until a ticket
   consumes it, because stock density has to be overridden as it lands.
+  ([ADR 2](0002-control-states-in-a-cascade-layer.md) records the one
+  exception: MEM-223's acceptance criteria name eight components, so all eight
+  were generated and overridden together.)
 - New code imports through the alias (`@/components/ProjectBar`); existing
   relative imports are left alone and convert with the region that touches
   them, so a file is not churned twice.

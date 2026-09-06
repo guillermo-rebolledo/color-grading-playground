@@ -1,7 +1,7 @@
+import { StatusDot } from "@/components/StatusDot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/icons";
-import { cn } from "@/lib/utils";
 import { offlineStatusText, type OfflineState } from "@/offline";
 
 /** Save, share and their status messages, plus the offline storage status.
@@ -81,13 +81,7 @@ export function ProjectBar({
         className="ml-auto flex items-center gap-[7px] text-muted-foreground"
       >
         {offline.online ? (
-          <span
-            aria-hidden="true"
-            className={cn(
-              "size-[5px] flex-none rounded-full",
-              stored ? "bg-ok" : "bg-warning",
-            )}
-          />
+          <StatusDot tone={stored ? "ok" : "warning"} />
         ) : (
           <Icon.WifiOff className={stored ? "text-ok" : "text-warning"} />
         )}

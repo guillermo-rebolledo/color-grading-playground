@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils";
  * inspector row between a 72px label and a 56px field, so it is drawn as thin
  * as it can be and still be grabbed: a 2px track with a 9px thumb. The thumb
  * is the one round thing in the interface — a handle, not a surface, and the
- * only shape the radius rule does not reach. */
+ * only shape the radius rule does not reach. Its shape and its states are
+ * stated with the other controls, in src/controls.css. */
 function Slider({
   className,
   defaultValue,
@@ -51,7 +52,7 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
-          className="block size-[9px] shrink-0 rounded-full bg-foreground outline-none"
+          className="block size-[9px] shrink-0 outline-none"
         />
       ))}
     </SliderPrimitive.Root>

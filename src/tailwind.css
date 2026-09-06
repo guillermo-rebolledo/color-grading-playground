@@ -63,8 +63,5 @@
   --radius-sm: calc(var(--radius) - 1px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
-  --color-line-hover: var(--line-hover);
-  --color-control-pressed: var(--control-pressed);
-  --color-control-disabled: var(--control-disabled);
-  --color-control-disabled-foreground: var(--control-disabled-foreground);
+  --color-scrim: var(--scrim);
 }

@@ -31,7 +31,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("fixed inset-0 z-50 bg-black/50", className)}
+      className={cn("fixed inset-0 z-50 bg-scrim", className)}
       {...props}
     />
   );
@@ -40,11 +40,8 @@ function DialogOverlay({
 function DialogContent({
   className,
   children,
-  showCloseButton = true,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean;
-}) {
+}: ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -57,15 +54,13 @@ function DialogContent({
         {...props}
       >
         {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            aria-label="Close"
-            className="absolute top-2 right-2 flex size-5 items-center justify-center"
-          >
-            <Icon.X />
-          </DialogPrimitive.Close>
-        )}
+        <DialogPrimitive.Close
+          data-slot="dialog-close"
+          aria-label="Close"
+          className="absolute top-2 right-2 flex size-5 items-center justify-center"
+        >
+          <Icon.X />
+        </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>
   );

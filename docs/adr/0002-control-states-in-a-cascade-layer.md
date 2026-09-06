@@ -51,14 +51,37 @@ The pressure ADR 1 wanted is kept by the rule it was there to enforce: when a
 region is redressed, its legacy rules are deleted in the same change. MEM-223
 does that for the topbar and the project bar.
 
-Inside the controls layer, source order settles the states, so every exclusion
-is wrapped in `:where()` to keep it out of the specificity sum. Without that,
-`:not(.file-error button)` quietly outranks `[aria-pressed="true"]` and a
-pressed toggle stops reading as pressed.
+Inside the controls layer a control paints itself from five custom properties
+and changes state by redeclaring them. What a control **is** — a chip, a field,
+a bare section header, a slider handle, an accent call to action — is said once
+where that kind is described; each of the four states is one short block that
+does not know which kind it is acting on. A new kind of control joins by
+declaring its own five values, not by being added to an exclusion list in every
+rule. That is not only tidier: the first draft of this file did use exclusion
+lists, and `:not(.file-error button)` silently outranked
+`[aria-pressed="true"]` and `:disabled`, so a pressed toggle did not read as
+pressed and a disabled accent button stayed fully lit. Where selectors do still
+overlap, source order settles them and every exclusion is wrapped in `:where()`
+to keep it out of the specificity sum.
 
-Component files carry density and geometry only. Colour and state are not
-theirs to state; a colour declaration in `src/components/ui` is a defect, in
-the same way ADR 1 says a component-level colour override is.
+Component files carry density, geometry, and the theme token a surface is
+made of — a dialog is `bg-card`, a tooltip is `bg-popover`. What they may not
+carry is a **control state's** colour, or a **colour literal** of any kind. A
+hex, an `rgba()` or a `black/50` in `src/components/ui` is a defect: it is a
+palette decision made where nobody will look for it. The scrim and the one
+popover shadow are therefore tokens (`--scrim`, `--shadow-popover`), not
+values written into the two components that need them.
+
+ADR 1 says "no component is generated until a ticket consumes it". MEM-223
+generates all eight anyway, and that is a deliberate exception rather than an
+oversight: its acceptance criteria name buttons, fields, sliders, accordions,
+tabs, tooltips, dialogs and sheets individually, and the point of the ticket is
+that there is one documented answer for each of them before the regions that
+use them are built. Six of the eight have no caller yet. The rule ADR 1 was
+protecting — that stock density is overridden as a component lands, never
+later — is kept: every one of the eight was generated and then rewritten in
+this change, and each was rendered and measured against the density in the
+spec rather than assumed.
 
 ## Consequences
 
@@ -75,9 +98,10 @@ duration, so no component can be left out of the preference.
 **Legacy controls are redressed ahead of their region.** The controls layer
 reaches every button and select in the application, including panels still on
 `src/styles.css`. Their density stays legacy until their ticket lands, but
-their states are already the new ones. Two shapes opt out of the fill because
-they are not chips — the accent-filled `.primary-button` and the borderless
-text buttons — and they are named in `src/controls.css`.
+their states are already the new ones. The shapes that are not chips — the
+accent-filled `.primary-button`, the borderless text buttons, the slider
+handle — declare what they are in `src/controls.css`, so they take the four
+states without taking the chip's fill.
 
 **Adding a primitive means deleting, not writing, colour.** `shadcn add`
 generates a component full of state classes; the override strips them and
