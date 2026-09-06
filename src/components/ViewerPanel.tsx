@@ -268,7 +268,7 @@ export function ViewerPanel({
               Preview cap 2048 px
             </span>
             <span className="shrink-0 font-mono">
-              Source tag: {encodingLabel(graph.colour.input)}
+              Source: {encodingLabel(graph.colour.input)}
             </span>
           </>
         )}
