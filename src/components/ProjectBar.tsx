@@ -37,7 +37,7 @@ export function ProjectBar({
   return (
     <section
       aria-label="Project"
-      className="flex min-h-[30px] flex-none flex-wrap items-center gap-2.5 border-b border-border bg-card px-3 py-1 text-[11.5px]"
+      className="flex min-h-[30px] flex-none flex-wrap items-center gap-2.5 border-b border-border bg-card px-3 py-[3px] text-[11.5px]"
     >
       <Button
         size="bar"

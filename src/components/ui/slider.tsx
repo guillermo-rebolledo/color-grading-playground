@@ -4,10 +4,8 @@ import { cn } from "@/lib/utils";
 
 /* Generated from shadcn/ui and then overridden. A slider lives in a 24px
  * inspector row between a 72px label and a 56px field, so it is drawn as thin
- * as it can be and still be grabbed: a 2px track with a 9px thumb. The thumb
- * is the one round thing in the interface — a handle, not a surface, and the
- * only shape the radius rule does not reach. Its shape and its states are
- * stated with the other controls, in src/controls.css. */
+ * as it can be and still be grabbed: a 2px track with a 9px thumb. The square thumb's states are stated with the other controls in
+ * src/controls.css. */
 function Slider({
   className,
   defaultValue,

@@ -6,8 +6,7 @@ import { cn } from "@/lib/utils";
 /* Generated from shadcn/ui and then overridden. A dialog is separated from the
  * application by a hairline border and the scrim, not by a shadow — a shadow
  * simulates depth and lightness next to an image being judged, which is the
- * one thing the chrome may never do. It keeps the 2px radius buttons and
- * fields use, and it does not animate in. */
+ * one thing the chrome may never do. It has square corners and does not animate in. */
 function Dialog(props: ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
@@ -48,7 +47,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-3 rounded-[2px] border border-border bg-card p-4 text-xs outline-none",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-3 rounded-none border border-border bg-card p-4 text-xs outline-none",
           className,
         )}
         {...props}
@@ -57,9 +56,10 @@ function DialogContent({
         <DialogPrimitive.Close
           data-slot="dialog-close"
           aria-label="Close"
-          className="absolute top-2 right-2 flex size-5 items-center justify-center"
+          className="absolute top-2 right-2 flex h-5 items-center justify-center gap-1 px-2"
         >
           <Icon.X />
+          Close
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>

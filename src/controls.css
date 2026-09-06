@@ -44,6 +44,7 @@
 
   --control-fill-pressed: var(--control-pressed);
   --control-line-pressed: var(--ring);
+  --control-ink-pressed: var(--foreground);
 
   --control-fill-disabled: var(--control-disabled);
   --control-line-disabled: var(--input);
@@ -87,6 +88,7 @@
   --control-line-hover: transparent;
   --control-border-width: 0;
   --control-ink: var(--muted-foreground);
+  border-radius: 0;
 }
 
 /* A tab's selection is its underline and nothing else: the one border it keeps
@@ -97,6 +99,7 @@
 
 :where([data-slot="tabs-trigger"])[data-state="active"] {
   --control-line: var(--primary);
+  --control-line-hover: var(--primary);
   --control-ink: var(--foreground);
   --control-ink-hover: var(--foreground);
 }
@@ -107,8 +110,7 @@
   --control-ink: inherit;
 }
 
-/* The slider thumb is a handle rather than a surface: the one round shape in
- * the interface, and the only place the radius rule does not reach. */
+/* Slider handles use square corners, like other non-field primitives. */
 :where([data-slot="slider-thumb"]) {
   --control-fill: var(--foreground);
   --control-fill-hover: var(--ring);
@@ -118,7 +120,7 @@
   --control-line: transparent;
   --control-line-hover: transparent;
   --control-border-width: 0;
-  border-radius: 9999px;
+  border-radius: 0;
 }
 
 /* An accent fill is a call to action, and the one surface the accent ring
@@ -126,7 +128,7 @@
  * surface already uses. It is recoloured, never removed. */
 :where(.primary-button, [data-accent-surface]) {
   --control-fill: var(--primary);
-  --control-fill-hover: color-mix(in srgb, var(--primary) 85%, #ffffff);
+  --control-fill-hover: var(--control-accent-hover);
   --control-line: var(--primary);
   --control-line-hover: var(--primary);
   --control-ink: var(--primary-foreground);
@@ -155,12 +157,16 @@
 :where(button)[aria-pressed="true"] {
   --control-fill: var(--control-fill-pressed);
   --control-line: var(--control-line-pressed);
-  --control-fill-hover: color-mix(
-    in srgb,
-    var(--control-fill-pressed) 82%,
-    #ffffff
-  );
+  --control-ink: var(--control-ink-pressed);
+  --control-fill-hover: var(--control-pressed-hover);
   --control-line-hover: var(--control-line-pressed);
+}
+
+/* Momentary buttons show the same pressed feedback while held down. */
+:where(button):active:not(:disabled, [data-disabled]) {
+  --control-fill: var(--control-fill-pressed);
+  --control-line: var(--control-line-pressed);
+  --control-ink: var(--control-ink-pressed);
 }
 
 :where([data-slot="slider-thumb"]):active {
@@ -168,7 +174,7 @@
 }
 
 /* Disabled is unmistakably unavailable and still legible: the dimmed ink holds
- * 4.6:1 against the recessed fill, so a disabled control can be read rather
+ * above 4.5:1 against the recessed fill, so a disabled control can be read rather
  * than guessed at. It is stated after every kind of control, so an accent call
  * to action goes recessed like everything else rather than staying lit. */
 :where(button, select, [data-slot="input"]):disabled,

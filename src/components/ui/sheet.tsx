@@ -4,7 +4,7 @@ import { Icon } from "@/icons";
 import { cn } from "@/lib/utils";
 
 /* Generated from shadcn/ui and then overridden, on the same terms as the
- * dialog: a hairline border in place of the shadow, the 2px radius, and no
+ * dialog: a hairline border in place of the shadow, square corners, and no
  * slide-in. The motion budget has room for hover, press and panel collapse,
  * and a sheet is none of those. */
 function Sheet(props: ComponentProps<typeof SheetPrimitive.Root>) {
@@ -57,7 +57,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "fixed z-50 flex flex-col gap-3 rounded-[2px] border-border bg-card text-xs outline-none",
+          "fixed z-50 flex flex-col gap-3 rounded-none border-border bg-card text-xs outline-none",
           sides[side],
           className,
         )}
@@ -67,9 +67,10 @@ function SheetContent({
         <SheetPrimitive.Close
           data-slot="sheet-close"
           aria-label="Close"
-          className="absolute top-2 right-2 flex size-5 items-center justify-center"
+          className="absolute top-2 right-2 flex h-5 items-center justify-center gap-1 px-2"
         >
           <Icon.X />
+          Close
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>

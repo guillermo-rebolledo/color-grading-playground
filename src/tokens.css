@@ -50,12 +50,18 @@
    * plus --focus-ring, 8.7:1 against --card, and is never removed, only
    * recoloured where it sits on an accent surface; --control-pressed is a
    * desaturated accent fill that reads as genuinely pressed rather than
-   * tinted; disabled is a recessed fill that stays legible at 4.6:1. */
+   * tinted; disabled is a recessed fill that stays legible above 4.5:1. */
   --line-hover: #4a4a4a;
   --focus-ring: 0 0 0 2px color-mix(in srgb, var(--ring) 32%, transparent);
   --control-pressed: #2f4046;
+  --control-pressed-hover: color-mix(
+    in srgb,
+    var(--control-pressed) 82%,
+    #ffffff
+  );
+  --control-accent-hover: color-mix(in srgb, var(--primary) 85%, #ffffff);
   --control-disabled: #1a1a1a;
-  --control-disabled-foreground: #585858;
+  --control-disabled-foreground: var(--text-faint);
 
   /* The whole motion budget. Colour-only feedback on hover and press, a brief
    * height transition on panel collapse, and nothing else. */
