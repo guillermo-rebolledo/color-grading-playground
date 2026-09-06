@@ -104,6 +104,11 @@ const nodeTypes = {
   qualifier: GradeNode,
   blend: GradeNode,
 };
+/* One fit for the panel: the toolbar's Fit View, the automatic fit and the
+ * first paint all leave the same margin. The margin is wide because the dock
+ * is short — nodes fitted tight against the pane edge sit inside the band
+ * where a connection drag auto-pans the canvas away from the pointer. */
+const fit = { padding: 0.3, maxZoom: 1.25 };
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   !!target.closest(
@@ -115,7 +120,7 @@ export function GraphEditor() {
   const { graph } = state;
   const [flow, setFlow] = useState<ReactFlowInstance<GradingNode> | null>(null);
   useEffect(() => {
-    if (flow) void flow.fitView({ padding: 0.2, maxZoom: 1.25 });
+    if (flow) void flow.fitView(fit);
   }, [flow, graph.nodes.length]);
   const error = GradingEngine.validate(graph);
   const warnings = GradingEngine.warnings(graph);
@@ -139,9 +144,8 @@ export function GraphEditor() {
     return () => window.removeEventListener("keydown", key);
   }, []);
   return (
-    <section className="graph-panel" aria-label="Grading graph">
+    <>
       <div className="panel-bar graph-toolbar">
-        <h2>Graph</h2>
         <div className="graph-actions">
           {(
             [
@@ -223,6 +227,7 @@ export function GraphEditor() {
           nodeTypes={nodeTypes}
           colorMode="dark"
           fitView
+          fitViewOptions={fit}
           multiSelectionKeyCode="Shift"
           deleteKeyCode={["Backspace", "Delete"]}
           snapToGrid
@@ -303,9 +308,9 @@ export function GraphEditor() {
           }}
         >
           <Background gap={16} />
-          <Controls />
+          <Controls fitViewOptions={fit} />
         </ReactFlow>
       </div>
-    </section>
+    </>
   );
 }
