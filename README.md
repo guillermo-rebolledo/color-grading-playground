@@ -44,7 +44,7 @@ Use **Load precision chart** to try ARRI LogC3 EI 800 / ARRI Wide Gamut 3 or Son
 
 ## Compatibility
 
-WebGL2, `EXT_color_buffer_float`, and high-precision fragment floats are required. Framebuffer completeness and allocation errors are checked; unavailable capabilities produce a visible explanation. There is no WebGL1 or inaccurate integer fallback. Context loss currently asks the user to reload; automatic restoration belongs to MEM-218.
+WebGL2, `EXT_color_buffer_float`, and high-precision fragment floats are required. Framebuffer completeness and allocation errors are checked; unavailable capabilities produce a visible explanation. There is no WebGL1 or inaccurate integer fallback. Context loss preserves the editable graph and automatically rebuilds GPU resources on restoration. Transient recovery failures offer a retry. Numeric edits use half-resolution previews until release or 80 ms idle. See [GPU recovery and tested configurations](docs/gpu-recovery.md).
 
 Local tests use Chromium with ANGLE SwiftShader. This validates the actual WebGL2 path, including float rendering/readback, but is not a claim of physical-GPU or cross-browser certification. Real device coverage is part of the later release tickets.
 

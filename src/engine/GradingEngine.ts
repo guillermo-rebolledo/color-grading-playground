@@ -87,6 +87,8 @@ export type ViewerOptions = {
   snapshot?: GradingGraph;
   wipe?: number;
   outOfRange?: boolean;
+  /** Half-sized interactive preview; measurements still use the full capped image. */
+  interactive?: boolean;
 };
 
 export type LatticeFormat = "RGBA32F" | "RGBA16F";
@@ -99,6 +101,43 @@ export class GradingEngine {
   private framebuffer: WebGLFramebuffer | null = null;
   private disposed = false;
   private imageRevision = 0;
+  private retainedImage: ImageData | FloatImage | null = null;
+  private recoveryError = "";
+  private previewWidth = 1;
+  private previewHeight = 1;
+  private previewFormat = 0;
+
+  private readonly contextLost = (event: Event) => {
+    event.preventDefault();
+    this.invalidateScopes();
+    this.imageRevision++;
+    // Lost-context handles are invalid in the restored context; never delete them there.
+    this.programs.clear();
+    this.curveTextures = [];
+    this.source = this.target = this.framebuffer = null;
+    this.latticeTarget = null;
+  };
+
+  private readonly contextRestored = () => {
+    if (this.disposed) return;
+    this.releaseResources();
+    this.latticeTarget = null;
+    this.recoveryError = "";
+    try {
+      this.initialize();
+      if (this.retainedImage) this.setImage(this.retainedImage);
+    } catch (cause) {
+      this.recoveryError = `Graphics recovery failed: ${cause instanceof Error ? cause.message : String(cause)}. Retry graphics recovery; your graph is safe.`;
+    }
+  };
+
+  /** Retry a transient allocation failure after the browser restores the context. */
+  recover() {
+    if (this.disposed || this.gl.isContextLost()) this.assertAvailable();
+    this.contextRestored();
+    this.assertAvailable();
+  }
+
   private readonly scopes = new ScopeQueue();
   private curveTextures: WebGLTexture[] = [];
   private latticeTarget: {
@@ -118,6 +157,19 @@ export class GradingEngine {
         "WebGL2 is unavailable. Try a desktop browser with hardware acceleration enabled.",
       );
     this.gl = gl;
+    try {
+      this.initialize();
+    } catch (cause) {
+      this.releaseResources();
+      this.scopes.dispose();
+      throw cause;
+    }
+    canvas.addEventListener("webglcontextlost", this.contextLost);
+    canvas.addEventListener("webglcontextrestored", this.contextRestored);
+  }
+
+  private initialize() {
+    const gl = this.gl;
     if (!gl.getExtension("EXT_color_buffer_float")) {
       throw new Error(
         "Floating-point rendering is unavailable on this device. Try another browser or graphics device.",
@@ -174,8 +226,9 @@ export class GradingEngine {
     if (this.disposed) throw new Error("The grading engine has been disposed.");
     if (this.gl.isContextLost())
       throw new Error(
-        "The graphics connection was lost. Reload this page to continue.",
+        "The graphics connection was lost. Waiting for restoration; your graph is safe.",
       );
+    if (this.recoveryError) throw new Error(this.recoveryError);
   }
 
   /** Input is full-range straight RGBA, top to bottom; graph.colour.input declares its encoding. */
@@ -203,6 +256,31 @@ export class GradingEngine {
     if (image.width > maxSize || image.height > maxSize)
       throw new Error("This image exceeds the graphics device texture limit.");
     const { width, height } = previewSize(image.width, image.height);
+    const viewport = gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array;
+    const targetLimit = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number;
+    if (
+      width > Math.min(targetLimit, viewport[0]) ||
+      height > Math.min(targetLimit, viewport[1])
+    )
+      throw new Error(
+        "This preview exceeds the graphics device render-target limit. Try a smaller image.",
+      );
+    let retained: ImageData | FloatImage;
+    if ("data" in image) {
+      retained = floating
+        ? {
+            width: image.width,
+            height: image.height,
+            data: new Float32Array(image.data),
+          }
+        : new ImageData(
+            new Uint8ClampedArray(image.data),
+            image.width,
+            image.height,
+          );
+    } else {
+      retained = new ImageData(image.width, image.height);
+    }
     const source = gl.createTexture();
     const target = gl.createTexture();
     const framebuffer = gl.createFramebuffer();
@@ -232,6 +310,31 @@ export class GradingEngine {
           gl.RGBA,
           gl.UNSIGNED_BYTE,
           image,
+        );
+        // Read the uploaded RGBA8 texels directly. A 2D canvas round trip would
+        // premultiply alpha and destroy straight RGB at low/zero alpha.
+        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+        gl.framebufferTexture2D(
+          gl.FRAMEBUFFER,
+          gl.COLOR_ATTACHMENT0,
+          gl.TEXTURE_2D,
+          source,
+          0,
+        );
+        if (
+          gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
+        )
+          throw new Error(
+            "Could not retain the uploaded image for graphics recovery.",
+          );
+        gl.readPixels(
+          0,
+          0,
+          image.width,
+          image.height,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          retained.data,
         );
       }
       gl.bindTexture(gl.TEXTURE_2D, target);
@@ -274,12 +377,91 @@ export class GradingEngine {
     gl.deleteTexture(this.source);
     gl.deleteTexture(this.target);
     gl.deleteFramebuffer(this.framebuffer);
+    this.retainedImage = retained;
+    this.previewWidth = width;
+    this.previewHeight = height;
+    this.previewFormat = floating ? gl.RGBA32F : gl.RGBA16F;
     this.source = source;
     this.imageRevision++;
     this.target = target;
     this.framebuffer = framebuffer;
     this.canvas.width = width;
     this.canvas.height = height;
+  }
+
+  private resizePreview(interactive: boolean) {
+    const width = Math.max(
+      1,
+      Math.floor(this.previewWidth / (interactive ? 2 : 1)),
+    );
+    const height = Math.max(
+      1,
+      Math.floor(this.previewHeight / (interactive ? 2 : 1)),
+    );
+    if (this.canvas.width === width && this.canvas.height === height) return;
+    const gl = this.gl;
+    const texture = gl.createTexture();
+    const framebuffer = gl.createFramebuffer();
+    try {
+      if (!texture || !framebuffer)
+        throw new Error("Could not allocate interactive preview resources.");
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      this.configureTexture();
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        this.previewFormat,
+        width,
+        height,
+        0,
+        gl.RGBA,
+        this.previewFormat === gl.RGBA32F ? gl.FLOAT : gl.HALF_FLOAT,
+        null,
+      );
+      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        texture,
+        0,
+      );
+      if (
+        gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE ||
+        gl.getError() !== gl.NO_ERROR
+      )
+        throw new Error(
+          "Could not resize the floating-point preview. Try again.",
+        );
+    } catch (cause) {
+      gl.deleteTexture(texture);
+      gl.deleteFramebuffer(framebuffer);
+      throw cause;
+    } finally {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+    gl.deleteTexture(this.target);
+    gl.deleteFramebuffer(this.framebuffer);
+    this.target = texture;
+    this.framebuffer = framebuffer;
+    this.canvas.width = width;
+    this.canvas.height = height;
+  }
+
+  /** Compatibility warnings never imply an untested precision route. */
+  compatibilityWarnings(): string[] {
+    this.assertAvailable();
+    const gl = this.gl;
+    const limited =
+      gl.getParameter(gl.MAX_TEXTURE_SIZE) < 4096 ||
+      gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) < 4096 ||
+      gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS) < 16;
+    return limited || matchMedia("(pointer: coarse)").matches
+      ? [
+          "Desktop is recommended. This mobile or limited graphics device may have slower previews and tiled exports. Export precision is tested independently and shown in the export panel.",
+        ]
+      : [];
   }
 
   private configureTexture() {
@@ -342,6 +524,13 @@ export class GradingEngine {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         this.configureTexture();
         gl.texStorage2D(gl.TEXTURE_2D, 1, gl.R32F, 1024, 1);
+        if (gl.getError() !== gl.NO_ERROR) {
+          gl.deleteTexture(this.curveTextures.pop()!);
+          gl.activeTexture(gl.TEXTURE0);
+          throw new Error(
+            "Could not allocate curve texture. Try again or remove a Curves node.",
+          );
+        }
       } else gl.bindTexture(gl.TEXTURE_2D, this.curveTextures[i]);
       gl.texSubImage2D(
         gl.TEXTURE_2D,
@@ -354,6 +543,10 @@ export class GradingEngine {
         gl.FLOAT,
         curve.samples,
       );
+      if (gl.getError() !== gl.NO_ERROR) {
+        gl.activeTexture(gl.TEXTURE0);
+        throw new Error("Could not update curve texture. Try again.");
+      }
       gl.uniform1i(gl.getUniformLocation(program, `curve${i}`), i + 1);
     });
     gl.activeTexture(gl.TEXTURE0);
@@ -439,6 +632,7 @@ export class GradingEngine {
       throw new Error("Load an image before measuring LUT fidelity.");
     if (!["trilinear", "tetrahedral"].includes(options.interpolation))
       throw new Error("Choose trilinear or tetrahedral interpolation.");
+    this.resizePreview(false);
     const { size, interpolation } = options;
     const cube = serializeCube({
       title: options.title ?? "Grade",
@@ -556,6 +750,7 @@ export class GradingEngine {
     return (
       !this.disposed &&
       !this.gl.isContextLost() &&
+      !this.recoveryError &&
       report.imageRevision === this.imageRevision &&
       report.graphRevision === fidelityGraphRevision(graph) &&
       (!options ||
@@ -655,6 +850,10 @@ export class GradingEngine {
       gl.deleteTexture(texture);
       gl.deleteFramebuffer(framebuffer);
     }
+    if (!samples.every(Number.isFinite))
+      throw new Error(
+        "The GPU produced non-finite LUT samples. Reduce the grade range or use a higher-precision device.",
+      );
     return samples;
   }
 
@@ -696,6 +895,7 @@ export class GradingEngine {
 
   render(input: number | GradingGraph, solo?: string) {
     this.assertAvailable();
+    this.resizePreview(false);
     const graph = typeof input === "number" ? createGraph() : input;
     if (typeof input === "number") graph.nodes[1].data.stops = input;
     this.drawGrade(graph, solo);
@@ -714,13 +914,15 @@ export class GradingEngine {
   /** Viewer diagnostics leave readPixels() on the active grading output. */
   renderViewer(graph: GradingGraph, options: ViewerOptions = {}) {
     this.assertAvailable();
+    this.resizePreview(!!options.interactive);
     if (
       !options.solo &&
       !options.before &&
       !options.snapshot &&
       !options.outOfRange
     ) {
-      this.render(graph);
+      this.drawGrade(graph);
+      this.drawDisplay(this.viewEncoding(graph));
       return;
     }
     try {
@@ -913,6 +1115,16 @@ export class GradingEngine {
     if (this.disposed) return;
     this.disposed = true;
     this.scopes.dispose();
+    this.canvas.removeEventListener("webglcontextlost", this.contextLost);
+    this.canvas.removeEventListener(
+      "webglcontextrestored",
+      this.contextRestored,
+    );
+    this.retainedImage = null;
+    this.releaseResources();
+  }
+
+  private releaseResources() {
     const gl = this.gl;
     gl.deleteTexture(this.source);
     gl.deleteTexture(this.target);
@@ -921,5 +1133,8 @@ export class GradingEngine {
     this.programs.clear();
     this.curveTextures.forEach((texture) => gl.deleteTexture(texture));
     this.curveTextures = [];
+    this.source = null;
+    this.target = null;
+    this.framebuffer = null;
   }
 }

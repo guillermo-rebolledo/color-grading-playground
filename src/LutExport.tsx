@@ -189,8 +189,10 @@ export function LutExport({
         {clamp === "unbounded"
           ? "out-of-range values are preserved."
           : "values clamp to 0–1."}
-        {support && "format" in support && support.format === "RGBA16F"
-          ? " This device reads back half-float samples, about three decimal digits."
+        {support && "format" in support
+          ? support.format === "RGBA16F"
+            ? " This device reads back half-float samples, about three decimal digits."
+            : " This device reads back 32-bit float samples (RGBA32F)."
           : ""}
       </p>
       {size === 65 && (
