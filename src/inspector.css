@@ -161,7 +161,7 @@
     .output-policy,
     .curve-controls > label,
     .curve-controls fieldset label,
-    .lut-content > label:not(.fidelity-toggle)
+    .lut-content > label
   ) {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) 56px;
