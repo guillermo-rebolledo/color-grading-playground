@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { openNeutralGraph } from "./fixtures";
+import { openNeutralGraph, openLutExport } from "./fixtures";
 
 test("measure, overlay, download the measured artifact, and invalidate changed settings", async ({
   page,
 }) => {
   await openNeutralGraph(page);
+  await openLutExport(page);
   await expect(
     page.getByRole("button", { name: "Measure LUT fidelity", exact: true }),
   ).toBeDisabled();
