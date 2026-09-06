@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useGraph } from "@/graphStore";
 import {
   GradingEngine,
@@ -216,13 +217,14 @@ export function LutExport({
                 most grades.
               </p>
             )}
-            <button
-              className="primary-button"
+            <Button
+              accent
+              className="my-2"
               disabled={!support || !!reason}
               onClick={exportLut}
             >
               Export .cube
-            </button>
+            </Button>
             <label>
               Interpolation
               <select
@@ -240,13 +242,14 @@ export function LutExport({
                 <option value="tetrahedral">Tetrahedral</option>
               </select>
             </label>
-            <button
-              className="primary-button"
+            <Button
+              accent
+              className="my-2"
               disabled={!hasImage || !support || !!reason}
               onClick={measure}
             >
               Measure LUT fidelity
-            </button>
+            </Button>
             {!hasImage && (
               <p className="lut-summary">
                 Load an image to measure LUT fidelity.
@@ -257,20 +260,23 @@ export function LutExport({
             )}
             {validReport && (
               <section
-                className="fidelity-report"
+                className="grid gap-2 border-t border-border pt-3 text-xs text-foreground [&_p]:m-0 [&_p]:leading-normal"
                 aria-label="LUT fidelity report"
               >
                 <p>
-                  <strong>
-                    Overall maximum: {validReport.maximum.toFixed(3)}
+                  <strong className="font-medium">
+                    Overall maximum:{" "}
+                    <span className="font-mono text-[11px] tabular-nums">
+                      {validReport.maximum.toFixed(3)}
+                    </span>
                   </strong>{" "}
                   code values
                 </p>
-                <table>
-                  <caption>
+                <table className="w-full border-collapse text-[11px] [&_th]:h-6 [&_th]:border-b [&_th]:border-border [&_th]:px-1 [&_th]:py-1 [&_th]:text-right [&_th]:font-medium [&_th:first-child]:text-left [&_td]:h-6 [&_td]:border-b [&_td]:border-border [&_td]:px-1 [&_td]:py-1 [&_td]:text-right [&_td]:font-mono [&_td]:tabular-nums">
+                  <caption className="mb-2 text-left text-xs text-foreground">
                     Absolute RGB error × 255, before display conversion
                   </caption>
-                  <thead>
+                  <thead className="bg-secondary">
                     <tr>
                       <th scope="col">Channel</th>
                       <th scope="col">Maximum</th>
@@ -280,33 +286,36 @@ export function LutExport({
                   <tbody>
                     {validReport.channels.map((channel, i) => (
                       <tr key={i}>
-                        <th scope="row">{["R", "G", "B"][i]}</th>
+                        <th
+                          className={["text-ch-r", "text-ch-g", "text-ch-b"][i]}
+                          scope="row"
+                        >
+                          {["R", "G", "B"][i]}
+                        </th>
                         <td>{channel.maximum.toFixed(3)}</td>
                         <td>{channel.p95.toFixed(3)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <p>
+                <p className="font-mono text-[11px] tabular-nums">
                   {validReport.sampleCount.toLocaleString()} in-domain samples ·{" "}
                   {validReport.width} × {validReport.height} full capped
                   preview. {validReport.transparentCount.toLocaleString()}{" "}
                   transparent pixels excluded.
                 </p>
                 <p
-                  className={
-                    validReport.outOfDomainCount ? "lut-warning" : "lut-summary"
-                  }
+                  className={`font-mono text-[11px] tabular-nums ${validReport.outOfDomainCount ? "text-warning" : "text-foreground"}`}
                 >
                   {validReport.outOfDomainCount.toLocaleString()} inputs outside
                   the LUT domain (0–1), excluded from metrics and overlay.
                 </p>
                 {validReport.sampleCount === 0 && (
-                  <p className="lut-warning">
+                  <p className="text-warning">
                     No eligible samples. Zero metrics do not indicate fidelity.
                   </p>
                 )}
-                <p>
+                <p className="font-mono text-[11px] tabular-nums">
                   {validReport.size}³ ·{" "}
                   {validReport.interpolation === "trilinear"
                     ? "Trilinear"
@@ -320,12 +329,13 @@ export function LutExport({
                   colours.
                 </p>
                 {validReport.advice.map((text) => (
-                  <p key={text} className="lut-warning">
+                  <p key={text} className="text-warning">
                     {text}
                   </p>
                 ))}
-                <label className="fidelity-toggle">
+                <label className="flex h-6 items-center gap-2 text-[11px]">
                   <input
+                    className="m-0 h-3 w-3 p-0 accent-primary"
                     type="checkbox"
                     checked={showOverlay}
                     onChange={(e) => setShowOverlay(e.target.checked)}

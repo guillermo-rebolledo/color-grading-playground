@@ -8,9 +8,7 @@
  * --destructive blocking, --ok doubles as the RGB port colour, and
  * --ch-r / --ch-g / --ch-b are channel identity wherever channels appear.
  *
- * Some values are defined here before anything consumes them; they are part of
- * the system and are wired up as each region is redressed. The application is
- * dark-only: there is no light theme and no theme toggle. */
+ * The application is dark-only: there is no light theme and no theme toggle. */
 :root,
 .dark {
   --background: #131313;

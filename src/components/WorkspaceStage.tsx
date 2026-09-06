@@ -63,9 +63,12 @@ export function WorkspaceStage({
       }`
     : "minmax(0, 1fr)";
   return (
-    <section className="stage">
-      <div className="stage-main" ref={main}>
-        <section className="viewer-region" aria-label="Viewer">
+    <section className="stage grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_328px]">
+      <div className="stage-main flex min-h-0 min-w-0 flex-col" ref={main}>
+        <section
+          className="viewer-region relative flex min-h-0 flex-1 flex-col"
+          aria-label="Viewer"
+        >
           {viewer}
         </section>
         {!bothCollapsed && (
@@ -83,7 +86,7 @@ export function WorkspaceStage({
           />
         )}
         <div
-          className={`dock ${stacked ? "dock-stacked" : "dock-split"}`}
+          className={`dock grid min-h-0 ${stacked ? "dock-stacked [&>.dock-panel+.dock-panel]:border-t [&>.dock-panel+.dock-panel]:border-border" : "dock-split"}`}
           ref={dock}
           style={{
             height,

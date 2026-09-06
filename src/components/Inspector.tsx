@@ -78,8 +78,8 @@ export function Inspector({
   }
   return (
     <aside className="inspector" aria-label="Inspector">
-      <div className="panel-bar">
-        <h2>Inspector</h2>
+      <div className="flex h-[26px] shrink-0 items-center justify-between gap-3 border-b border-border px-3 text-[11px] text-muted-foreground">
+        <h2 className="text-[13px] font-medium text-foreground">Inspector</h2>
         <span className="inspector-count">
           {graph.nodes.filter((node) => node.selected).length} /{" "}
           {graph.nodes.length} selected
