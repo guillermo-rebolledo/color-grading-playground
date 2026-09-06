@@ -1,4 +1,6 @@
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
+import { Button } from "@/components/ui/button";
+import { encodingLabel } from "@/engine/GradingEngine";
 import { UnsupportedDevice } from "@/components/UnsupportedDevice";
 import { FidelityOverlay } from "@/FidelityOverlay";
 import { ViewerNavigation } from "@/ViewerNavigation";
@@ -65,20 +67,37 @@ export function ViewerPanel({
   onRetryPreview: () => void;
   onChooseImage: () => void;
 }) {
+  // Keep zoom/pan state beside its image surface while placing its controls
+  // in the judging toolbar. The portal preserves their existing names and events.
+  const [navigationHost, setNavigationHost] = useState<HTMLDivElement | null>(
+    null,
+  );
+  const shown = `${comparison !== "off" ? `${comparison === "before" ? "Before" : `Snapshot ${comparison}`} ← wipe → ` : ""}${solo ? `Solo: ${nodeTitle(graph.nodes.find((node) => node.id === solo)) || solo}` : "Current grade"}`;
   return (
     <>
-      <div className="panel-bar">
-        <h1>Viewer</h1>
+      <div className="flex h-[26px] shrink-0 items-center gap-4 border-0 border-b border-solid border-border bg-card px-3 text-[11px] text-muted-foreground">
+        <h1 className="m-0 text-[13px] font-medium text-foreground">Viewer</h1>
         <span>
           {image
             ? "Display: sRGB · Rec.709 primaries"
             : "Start with a still image"}
         </span>
+        {image && (
+          <span className="font-mono tabular-nums">
+            Preview {image.width} × {image.height}
+          </span>
+        )}
+        {loading && (
+          <span className="ml-auto" role="status">
+            Opening image…
+          </span>
+        )}
       </div>
-      <div className="viewer-toolbar">
-        <label>
+      <div className="viewer-toolbar flex h-7 shrink-0 items-center gap-1.5 border-0 border-b border-solid border-border bg-card px-3 text-[11px]">
+        <label className="flex shrink-0 items-center gap-1.5">
           Compare{" "}
           <select
+            className="h-5 max-w-32 px-1 text-[11px]"
             aria-label="Compare view"
             value={comparison}
             disabled={!image}
@@ -104,39 +123,44 @@ export function ViewerPanel({
           </select>
         </label>
         {(["A", "B"] as const).map((slot) => (
-          <button
+          <Button
+            size="toolbar"
             key={slot}
             disabled={!image || !!graphError || !!capabilityError}
             onClick={() => onCapture(slot)}
           >
             Capture {slot}
-          </button>
+          </Button>
         ))}
-        <button
+        <Button
+          size="toolbar"
           disabled={!image}
           aria-pressed={outOfRange}
           onClick={() => onOutOfRange(!outOfRange)}
         >
           Out-of-range
-        </button>
-        <span>
-          {comparison !== "off"
-            ? `${comparison === "before" ? "Before" : `Snapshot ${comparison}`} ← wipe → `
-            : ""}
-          {solo
-            ? `Solo: ${nodeTitle(graph.nodes.find((n) => n.id === solo)) || solo}`
-            : "Current grade"}
+        </Button>
+        <span
+          className="min-w-0 flex-1 truncate text-muted-foreground"
+          title={shown}
+        >
+          {shown}
         </span>
+        <div ref={setNavigationHost} className="ml-auto shrink-0" />
       </div>
       {outOfRange && (
-        <p className="viewer-legend">
+        <p className="m-0 shrink-0 bg-card px-3 py-1.5 text-[11px] text-muted-foreground">
           Blue: below 0 · Orange: above 1 · Magenta: both. Any RGB channel
           before output clamping, in output encoding (solo: node encoding).
           Masks excluded.
         </p>
       )}
-      <div className={`viewer ${image ? "has-image" : ""}`} aria-busy={loading}>
+      <div
+        className="viewer relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-surface-void p-4"
+        aria-busy={loading}
+      >
         <ViewerNavigation
+          navigationHost={navigationHost}
           width={image?.width ?? 1}
           height={image?.height ?? 1}
           comparison={!!image && comparison !== "off"}
@@ -146,7 +170,11 @@ export function ViewerPanel({
           <canvas
             ref={canvas}
             aria-label="Graded image preview"
-            className={image ? "" : "empty-canvas"}
+            className={
+              image
+                ? "block h-full w-full"
+                : "empty-canvas invisible absolute h-0 w-0"
+            }
           />
           {fidelityOverlay &&
             image &&
@@ -155,27 +183,44 @@ export function ViewerPanel({
               <FidelityOverlay report={fidelityOverlay} />
             )}
         </ViewerNavigation>
+        {solo && (
+          <span className="absolute left-4 top-3 border border-solid border-primary bg-surface-void px-1.5 py-1 text-[10px] font-medium tracking-wider">
+            SOLO
+          </span>
+        )}
         {!image && !capabilityError && (
-          <div className="empty-state">
-            <div className="empty-frame" aria-hidden="true">
+          <div className="relative px-4 text-center">
+            <div
+              className="mx-auto mb-4 grid h-10 w-12 place-items-center border border-solid border-line-strong text-xl text-muted-foreground"
+              aria-hidden="true"
+            >
               <span>＋</span>
             </div>
-            <span className="eyebrow">YOUR IMAGE. YOUR DEVICE.</span>
-            <h2>A little light changes everything.</h2>
-            <p>
+            <span className="text-[10px] tracking-[2px] text-text-faint">
+              YOUR IMAGE. YOUR DEVICE.
+            </span>
+            <h2 className="my-3 text-lg font-medium">
+              A little light changes everything.
+            </h2>
+            <p className="mb-4 mt-0 text-xs leading-relaxed text-muted-foreground">
               Drop a still here and find its exposure.
               <br />
               JPEG, PNG and uncompressed RGB TIFF. Your image stays in this
               browser.
             </p>
-            <button className="primary-button" onClick={onChooseImage}>
+            <Button size="body" onClick={onChooseImage}>
               Choose an image <span aria-hidden="true">↗</span>
-            </button>
-            <span className="file-hint">JPEG or PNG · up to 50 MB</span>
+            </Button>
+            <span className="mt-3 block text-[10px] text-text-faint">
+              JPEG or PNG · up to 50 MB
+            </span>
           </div>
         )}
         {graphicsWarning && (
-          <p role="status" className="encoding-note">
+          <p
+            role="status"
+            className="absolute bottom-3 mx-4 border border-solid border-border bg-card px-3 py-1.5 text-[11px] text-warning"
+          >
             {graphicsWarning}
           </p>
         )}
@@ -185,38 +230,47 @@ export function ViewerPanel({
             heading="Preview unavailable"
             detail={capabilityError}
             action={
-              <button onClick={onRetryGraphics}>Retry graphics recovery</button>
+              <Button size="toolbar" onClick={onRetryGraphics}>
+                Retry graphics recovery
+              </Button>
             }
           />
         )}
         {image && (graphError || renderError) && (
-          <div className="preview-paused" role="alert">
+          <div
+            className="absolute inset-0 grid content-center bg-background/95 p-6 text-center text-xs leading-relaxed text-destructive"
+            role="alert"
+          >
             Preview paused: {graphError || renderError}
             <br />
             {graphError ? (
               "Connect a valid graph to resume."
             ) : (
-              <button onClick={onRetryPreview}>Retry preview</button>
+              <Button size="toolbar" onClick={onRetryPreview}>
+                Retry preview
+              </Button>
             )}
           </div>
         )}
-        {loading && (
-          <div className="loading-indicator" role="status">
-            Opening image…
-          </div>
-        )}
       </div>
-      <div className="image-bar">
-        <span className="image-name">{image?.name ?? "No image loaded"}</span>
-        <span>
+      <div className="flex h-6 shrink-0 items-center gap-4 border-0 border-t border-solid border-border bg-card px-3 text-[10px] text-muted-foreground">
+        <span className="mr-auto min-w-0 truncate">
+          {image?.name ?? "No image loaded"}
+        </span>
+        <span className="shrink-0 font-mono tabular-nums">
           {image
             ? `${image.originalWidth} × ${image.originalHeight}`
             : "All processing stays on your device"}
         </span>
         {image && (
-          <span>
-            Preview {image.width} × {image.height}
-          </span>
+          <>
+            <span className="shrink-0 font-mono tabular-nums">
+              Preview cap 2048 px
+            </span>
+            <span className="shrink-0 font-mono">
+              Source: {encodingLabel(graph.colour.input)}
+            </span>
+          </>
         )}
       </div>
     </>

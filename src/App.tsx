@@ -520,7 +520,7 @@ export default function App() {
         />
         <AppFooter />
         {dragging && !capabilityError && (
-          <div className="drop-overlay">
+          <div className="pointer-events-none fixed inset-3 z-10 grid place-items-center border border-dashed border-line-strong bg-background/95 text-lg text-foreground">
             <span>Drop your image to open</span>
           </div>
         )}
