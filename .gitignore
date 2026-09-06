@@ -6,3 +6,4 @@ playwright-report/
 .vercel
 .env*
 dist-test/
+release-evidence/

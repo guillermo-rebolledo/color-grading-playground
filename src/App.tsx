@@ -21,7 +21,7 @@ import { useGraph } from "./graphStore";
 import { GraphEditor } from "./GraphEditor";
 import { ViewerNavigation } from "./ViewerNavigation";
 import { LutExport, OutputRangeSelect, type LatticeSupport } from "./LutExport";
-import type { GradingGraph } from "./engine/GradingEngine";
+import type { GradingGraph, GradingNode } from "./engine/GradingEngine";
 import "./styles.css";
 
 type ImageInfo = {
@@ -703,7 +703,7 @@ export default function App() {
                 ? `${comparison === "before" ? "Before" : `Snapshot ${comparison}`} ← wipe → `
                 : ""}
               {solo
-                ? `Solo: ${graph.nodes.find((n) => n.id === solo)?.data.label ?? solo}`
+                ? `Solo: ${nodeTitle(graph.nodes.find((n) => n.id === solo)) || solo}`
                 : "Current grade"}
             </span>
           </div>
@@ -849,19 +849,7 @@ export default function App() {
             <div className="selected-node">
               <span className="node-symbol">±</span>
               <div>
-                <h3>
-                  {selected
-                    ? (selected.data.label ??
-                      (selected.type === "qualifier"
-                        ? "HSL Qualifier"
-                        : selected.type === "cdl"
-                          ? "CDL"
-                          : selected.type === "cst"
-                            ? "Colour Space Transform"
-                            : selected.type[0].toUpperCase() +
-                              selected.type.slice(1)))
-                    : "Select a node"}
-                </h3>
+                <h3>{nodeTitle(selected) || "Select a node"}</h3>
                 <p>
                   {selected?.type === "exposure"
                     ? "Linear light adjustment"
@@ -962,6 +950,23 @@ export default function App() {
         </div>
       )}
     </main>
+  );
+}
+
+/** The inspector heading and solo indicator name every node type, not only labelled ones. */
+function nodeTitle(node: GradingNode | undefined) {
+  if (!node) return "";
+  return (
+    node.data.label ??
+    (node.type === "qualifier"
+      ? "HSL Qualifier"
+      : node.type === "whiteBalance"
+        ? "White Balance"
+        : node.type === "cdl"
+          ? "CDL"
+          : node.type === "cst"
+            ? "Colour Space Transform"
+            : node.type[0].toUpperCase() + node.type.slice(1))
   );
 }
 

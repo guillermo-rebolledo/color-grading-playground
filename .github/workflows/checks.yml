@@ -15,10 +15,18 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # FFmpeg lut3d is the release check's automated LUT host (MEM-220).
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm run format:check
       - run: npm run build
       - run: npm run samples:release-check
       - run: npm test
+      - run: npm run release:hosts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-evidence
+          path: release-evidence/
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
