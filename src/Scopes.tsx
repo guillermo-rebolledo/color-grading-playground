@@ -4,9 +4,7 @@ import {
   type GradingEngine,
   type GradingGraph,
   type ScopeResult,
-} from "./engine/GradingEngine";
-
-const colours = ["#ee7777", "#7fd79a", "#7eaaff"];
+} from "@/engine/GradingEngine";
 
 function ScopePlot({
   report,
@@ -20,6 +18,10 @@ function ScopePlot({
     const element = canvas.current!;
     const context = element.getContext("2d");
     if (!context) return;
+    const theme = getComputedStyle(element);
+    const colours = ["--ch-r", "--ch-g", "--ch-b"].map((token) =>
+      theme.getPropertyValue(token).trim(),
+    );
     const width = parade ? report.width * 3 : 256;
     element.width = width;
     element.height = 256;
@@ -60,7 +62,7 @@ function ScopePlot({
         context.stroke();
       });
     }
-    context.strokeStyle = "#ffffff20";
+    context.strokeStyle = theme.getPropertyValue("--border").trim();
     for (const y of [0.5, 64, 128, 192, 255.5]) {
       context.beginPath();
       context.moveTo(0, y);
@@ -69,19 +71,22 @@ function ScopePlot({
     }
   }, [report, parade]);
   return (
-    <figure className="scope-plot">
-      <figcaption>{parade ? "RGB parade" : "Histogram"}</figcaption>
+    <figure className="m-0 min-w-0 text-[10px] text-text-faint">
+      <figcaption className="mb-1.5 text-[11px] font-medium text-foreground">
+        {parade ? "RGB parade" : "Histogram"}
+      </figcaption>
       <canvas
+        className="block h-[110px] w-full bg-surface-void"
         ref={canvas}
         role="img"
         aria-label={parade ? "RGB parade" : "RGB histogram"}
       />
-      <div className="scope-axis">
+      <div className="mt-1 flex justify-between gap-1 font-mono text-[10px] tabular-nums">
         {parade ? (
           <>
-            <span>R · left → right</span>
-            <span>G · left → right</span>
-            <span>B · left → right</span>
+            <span className="flex-1 text-ch-r">R · left → right</span>
+            <span className="flex-1 text-ch-g">G · left → right</span>
+            <span className="flex-1 text-ch-b">B · left → right</span>
           </>
         ) : (
           <>
@@ -92,7 +97,9 @@ function ScopePlot({
         )}
       </div>
       {parade && (
-        <p>Vertical: 0 at bottom → 1 at top · brightness shows density</p>
+        <p className="m-0 mt-1 leading-normal">
+          Vertical: 0 at bottom → 1 at top · brightness shows density
+        </p>
       )}
     </figure>
   );
@@ -147,13 +154,17 @@ export function Scopes({
       : null;
   const report = current?.report;
   return (
-    <>
-      <p className="scope-description">
-        Measured: {encodingLabel(graph.colour.output)} · diagnostic range 0–1,
+    <div className="flex flex-none flex-col gap-2 p-3 text-[11px] leading-normal text-muted-foreground">
+      <p className="m-0">
+        Measured:{" "}
+        <span className="font-mono tabular-nums text-foreground">
+          {encodingLabel(graph.colour.output)}
+        </span>{" "}
+        · diagnostic range <span className="font-mono tabular-nums">0–1</span>,
         after Output policy, before display conversion. Outside values
         accumulate at the endpoints.
       </p>
-      <p className="scope-status" aria-label="Scope status">
+      <p className="m-0 font-mono tabular-nums" aria-label="Scope status">
         {!image
           ? "Load an image to inspect scopes."
           : paused
@@ -170,14 +181,18 @@ export function Scopes({
               <ScopePlot report={report} parade={false} />
               <ScopePlot report={report} parade />
             </div>
-            <p className="scope-description">
-              RGB counts below 0: {report.below.join(" / ")} · above 1:{" "}
-              {report.above.join(" / ")} · non-finite excluded:{" "}
-              {report.nonFinite.join(" / ")}
+            <p className="m-0 mt-2 font-mono tabular-nums">
+              <span className="block">
+                RGB counts below 0: {report.below.join(" / ")}
+              </span>
+              <span className="block">above 1: {report.above.join(" / ")}</span>
+              <span className="block">
+                non-finite excluded: {report.nonFinite.join(" / ")}
+              </span>
             </p>
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }

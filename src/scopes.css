@@ -1,0 +1,22 @@
+/* Plot layout follows the resizable dock, not just the viewport. At the
+ * default split, 1440px fits both plots; 1280px puts the parade below. */
+.scopes {
+  container: scopes / inline-size;
+}
+.scope-plots {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 12px;
+}
+/* Keep the measurement area reserved while a new report is pending. */
+.scope-measurement {
+  min-height: 240px;
+}
+@container scopes (max-width: 440px) {
+  .scope-plots {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .scope-measurement {
+    min-height: 400px;
+  }
+}
