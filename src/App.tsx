@@ -6,12 +6,9 @@ import {
   saveProject,
   type ProjectSource,
 } from "./projects";
-import {
-  SamplePicker,
-  SampleProvenance,
-  samples,
-  type Sample,
-} from "./SamplePicker";
+import { SamplePicker, SampleProvenance } from "./SamplePicker";
+import { samples, type Sample } from "./samples";
+import { offlineStatusText, sampleLoadError, useOffline } from "./offline";
 import { AdjustmentControls } from "./AdjustmentControls";
 import { EncodingControl } from "./EncodingControl";
 import { useEffect, useRef, useState } from "react";
@@ -222,6 +219,7 @@ export default function App() {
     null,
   );
   const [showSamples, setShowSamples] = useState(false);
+  const offline = useOffline();
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
@@ -321,7 +319,9 @@ export default function App() {
           if (!isCurrent()) return;
           if (!loaded)
             setProjectError(
-              `Source “${source?.name}” is unavailable. Upload your own image or choose a sample; the restored grade and source tags are preserved.`,
+              source?.kind === "sample" && !navigator.onLine
+                ? `Source “${source.name}” is not stored on this device. Reconnect to load it, or choose a stored sample; the restored grade and source tags are preserved.`
+                : `Source “${source?.name}” is unavailable. Upload your own image or choose a sample; the restored grade and source tags are preserved.`,
             );
           setProjectStatus(
             shared
@@ -433,11 +433,14 @@ export default function App() {
     setLoading(true);
     try {
       if (sample) {
-        const response = await fetch(`/samples/${sample.file}`);
-        if (!response.ok)
-          throw new Error(
-            `Could not load ${sample.title}. Try again or choose another sample.`,
-          );
+        let response: Response | null = null;
+        try {
+          response = await fetch(`/samples/${sample.file}`);
+        } catch {
+          // Without a service worker an offline fetch rejects instead of 503.
+        }
+        if (!response?.ok)
+          throw new Error(sampleLoadError(sample.title, response));
         file = new File([await response.blob()], sample.file);
       }
       const loaded = await loadImage(file!);
@@ -621,11 +624,18 @@ export default function App() {
         )}
         <span aria-label="Project status">{projectStatus}</span>
         {projectError && <span role="alert">{projectError}</span>}
+        <span className="offline-status" aria-label="Offline status">
+          {offlineStatusText(offline)}
+          {offline.updateReady && (
+            <button onClick={offline.applyUpdate}>Reload to update</button>
+          )}
+        </span>
       </section>
       {showSamples && (
         <SamplePicker
           selected={image?.sample?.id}
           disabled={disabled}
+          offlineReady={offline.support === "ready" && offline.online}
           onSelect={(sample) => void openFile(undefined, sample)}
         />
       )}

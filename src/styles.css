@@ -851,6 +851,24 @@ dd {
   object-fit: contain;
   background: #141414;
 }
+.sample-grid em {
+  display: block;
+  margin: 6px 10px 0;
+  font-style: normal;
+  font-size: 11px;
+  color: #9cbba5;
+}
+.sample-offline button {
+  color: inherit;
+  background: #24282a;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 8px;
+  margin-right: 8px;
+}
+.sample-offline button:disabled {
+  opacity: 0.4;
+}
 .sample-grid strong,
 .sample-grid span {
   display: block;
@@ -1099,6 +1117,14 @@ dd {
 }
 .project-toolbar [role="alert"] {
   color: #ffc08d;
+}
+.offline-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: var(--muted);
 }
 .share-link {
   display: flex;

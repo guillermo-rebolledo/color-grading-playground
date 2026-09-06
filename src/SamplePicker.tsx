@@ -1,58 +1,102 @@
-import inventory from "../public/samples/inventory.json";
-import { encodingLabel, type Encoding } from "./engine/GradingEngine";
+import { useEffect, useState } from "react";
+import { encodingLabel } from "./engine/GradingEngine";
+import { storeAllSamples, storedSamples } from "./offline";
+import { samples, type Sample } from "./samples";
 
-export const samples = inventory.assets.map((asset) => ({
-  ...asset,
-  encoding: asset.encoding as Encoding,
-}));
-export type Sample = (typeof samples)[number];
+const sampleMiB = Math.ceil(
+  samples.reduce((total, sample) => total + sample.bytes, 0) / 2 ** 20,
+);
 
 export function SamplePicker({
   selected,
   disabled,
+  offlineReady,
   onSelect,
 }: {
   selected?: string;
   disabled: boolean;
+  /** Service worker active and online, so samples can be stored. */
+  offlineReady: boolean;
   onSelect: (sample: Sample) => void;
 }) {
+  const [stored, setStored] = useState<Set<string>>(new Set());
+  const [storing, setStoring] = useState(false);
+  const [storeStatus, setStoreStatus] = useState("");
+  useEffect(() => {
+    let active = true;
+    void storedSamples().then((ids) => active && setStored(ids));
+    return () => {
+      active = false;
+    };
+  }, [selected, storing]);
+  async function storeAll() {
+    setStoring(true);
+    setStoreStatus("");
+    try {
+      await storeAllSamples((done, total) =>
+        setStoreStatus(`Storing samples offline: ${done} of ${total}…`),
+      );
+      setStoreStatus(`All ${samples.length} samples are stored offline.`);
+    } catch (cause) {
+      setStoreStatus(
+        cause instanceof Error ? cause.message : "Samples were not stored.",
+      );
+    } finally {
+      setStoring(false);
+    }
+  }
+  // The offline controls sit beside the gallery region so its buttons remain
+  // exactly the sample choices.
   return (
-    <section className="sample-gallery" aria-label="Bundled log samples">
-      <h2>Bundled log samples</h2>
-      <p>
-        HDR photographs prepared as log. Choose a scene to apply its verified
-        input tags and keep your grade.
-      </p>
-      <div className="sample-grid">
-        {samples.map((sample) => (
-          <button
-            key={sample.id}
-            disabled={disabled}
-            aria-label={sample.title}
-            aria-pressed={selected === sample.id}
-            onClick={() => onSelect(sample)}
-          >
-            <img
-              src={`/samples/previews/${sample.id}.png`}
-              alt=""
-              width="240"
-              height="150"
-              loading="lazy"
-            />
-            <strong>{sample.title}</strong>
-            <span>{encodingLabel(sample.encoding)}</span>
-          </button>
-        ))}
+    <div className="sample-gallery">
+      <section aria-label="Bundled log samples">
+        <h2>Bundled log samples</h2>
+        <p>
+          HDR photographs prepared as log. Choose a scene to apply its verified
+          input tags and keep your grade.
+        </p>
+        <div className="sample-grid">
+          {samples.map((sample) => (
+            <button
+              key={sample.id}
+              disabled={disabled}
+              aria-label={sample.title}
+              aria-pressed={selected === sample.id}
+              onClick={() => onSelect(sample)}
+            >
+              <img
+                src={`/samples/previews/${sample.id}.png`}
+                alt=""
+                width="240"
+                height="150"
+                loading="lazy"
+              />
+              <strong>{sample.title}</strong>
+              <span>{encodingLabel(sample.encoding)}</span>
+              {stored.has(sample.id) && <em>Stored offline</em>}
+            </button>
+          ))}
+        </div>
+        <p>
+          Tears of Steel · (CC) Blender Foundation | mango.blender.org ·{" "}
+          <a href="/samples/licenses/TearsOfSteel.txt">
+            CC BY 3.0, source and modifications
+          </a>
+          . Previews are resized sRGB renditions; grading loads the original
+          PNG16 files.
+        </p>
+      </section>
+      <div className="sample-offline" role="group" aria-label="Offline samples">
+        Opening a sample stores it on this device for offline use.{" "}
+        <button
+          disabled={!offlineReady || storing || stored.size === samples.length}
+          onClick={() => void storeAll()}
+        >
+          Store all samples offline ({sampleMiB} MiB)
+        </button>
+        {storeStatus && <span role="status">{storeStatus}</span>}
       </div>
-      <p>
-        Tears of Steel · (CC) Blender Foundation | mango.blender.org ·{" "}
-        <a href="/samples/licenses/TearsOfSteel.txt">
-          CC BY 3.0, source and modifications
-        </a>
-        . Previews are resized sRGB renditions; grading loads the original PNG16
-        files.
-      </p>
-    </section>
+    </div>
   );
 }
 
