@@ -54,7 +54,9 @@
   padding: 0 6px;
   font-size: 11px;
 }
-.inspector :is(p, .control-help, .encoding-note, .lut-summary, caption) {
+:where(
+  .inspector :is(p, .control-help, .encoding-note, .lut-summary, caption)
+) {
   color: var(--foreground);
   font-size: 12px;
   line-height: 1.5;
