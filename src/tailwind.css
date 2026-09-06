@@ -16,6 +16,7 @@
 @import "./viewer.css" layer(utilities);
 @import "./graph.css" layer(utilities);
 @import "./inspector.css" layer(utilities);
+@import "./scopes.css" layer(utilities);
 @import "./styles.css" layer(legacy);
 @import "./controls.css" layer(controls);
 
