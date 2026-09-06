@@ -450,4 +450,25 @@ test("initial program allocation failure can be retried without reloading", asyn
     page.getByRole("heading", { name: "Preview unavailable" }),
   ).toHaveCount(0);
   await expect(page.getByText("32-bit float", { exact: false })).toBeVisible();
+  const canvas = page.getByLabel("Graded image preview");
+  await canvas.evaluate((element: HTMLCanvasElement) => {
+    const extension = element
+      .getContext("webgl2")!
+      .getExtension("WEBGL_lose_context")!;
+    element.addEventListener("test-restore", () => extension.restoreContext(), {
+      once: true,
+    });
+    extension.loseContext();
+  });
+  await expect(
+    page.getByRole("heading", { name: "Preview unavailable" }),
+  ).toBeVisible();
+  await canvas.dispatchEvent("test-restore");
+  await expect(
+    page.getByRole("heading", { name: "Preview unavailable" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("32-bit float", { exact: false })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Export .cube", exact: true }),
+  ).toBeEnabled();
 });

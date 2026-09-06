@@ -259,7 +259,13 @@ export default function App() {
         "The graphics connection was lost. Waiting for automatic restoration; your editable graph is safe.",
       );
     };
-    const restored = () => queueMicrotask(refreshGraphics);
+    let recoveryTimer: ReturnType<typeof setTimeout> | undefined;
+    // Native event dispatch may run microtasks between listeners. A later task
+    // lets engine restoration finish even when the engine was created by Retry.
+    const restored = () => {
+      clearTimeout(recoveryTimer);
+      recoveryTimer = setTimeout(refreshGraphics, 0);
+    };
     element.addEventListener("webglcontextlost", lost);
     element.addEventListener("webglcontextrestored", restored);
     return () => {
@@ -268,6 +274,7 @@ export default function App() {
       engine.current = null;
       element.removeEventListener("webglcontextlost", lost);
       element.removeEventListener("webglcontextrestored", restored);
+      clearTimeout(recoveryTimer);
     };
   }, []);
 
