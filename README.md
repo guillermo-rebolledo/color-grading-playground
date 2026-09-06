@@ -78,7 +78,8 @@ npm test
 
 Release verification adds an integrated acceptance pass and LUT host
 interoperability checks. `npm run release:verify` runs the whole gate; it needs
-FFmpeg on the path. Evidence is written to the ignored `release-evidence/`
+FFmpeg on the path, and it deliberately fails while release blockers remain
+open. Evidence is written to the ignored `release-evidence/`
 directory and uploaded by CI. See
 [release verification](docs/release-verification.md) for the recorded
 configuration, the tolerances used by each precision route, and the open

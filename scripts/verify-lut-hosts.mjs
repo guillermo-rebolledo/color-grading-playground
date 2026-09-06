@@ -10,18 +10,11 @@ import { fileURLToPath } from "node:url";
 import { PNG } from "pngjs";
 
 const evidence = new URL("../release-evidence/", import.meta.url);
+const evidenceDir = fileURLToPath(evidence);
 const inputsPath = new URL("host-inputs.json", evidence);
-if (!existsSync(inputsPath)) {
-  console.error(
-    `Missing ${fileURLToPath(inputsPath)}. Run \`npm run release:evidence\` first.`,
-  );
-  process.exit(1);
-}
-const inputs = JSON.parse(readFileSync(inputsPath));
-const matrix = JSON.parse(
+const hostMatrix = JSON.parse(
   readFileSync(new URL("release-hosts.json", import.meta.url)),
 );
-const dir = fileURLToPath(evidence);
 
 function ffmpegVersion() {
   try {
@@ -33,23 +26,15 @@ function ffmpegVersion() {
   }
 }
 
-const version = ffmpegVersion();
-if (!version) {
-  console.error(
-    "FFmpeg is not installed. An untested host is a release blocker, not a pass.",
-  );
-  process.exit(1);
-}
-
 /** 16-bit RGB samples exactly as stored, so no rescaling hides a mismatch. */
-function codes(file) {
+function readSamples(file) {
   const png = PNG.sync.read(readFileSync(new URL(file, evidence)), {
     skipRescale: true,
   });
   return {
     width: png.width,
     height: png.height,
-    data: new Uint16Array(
+    samples: new Uint16Array(
       png.data.buffer,
       png.data.byteOffset,
       png.data.byteLength / 2,
@@ -63,10 +48,11 @@ function compare(expected, actual) {
     throw new Error("The host output has different dimensions.");
   const errors = [];
   let maximum = 0;
-  for (let i = 0; i < expected.data.length; i += 4)
+  for (let i = 0; i < expected.samples.length; i += 4)
     for (let c = 0; c < 3; c++) {
       const error =
-        (Math.abs(expected.data[i + c] - actual.data[i + c]) / 65535) * 255;
+        (Math.abs(expected.samples[i + c] - actual.samples[i + c]) / 65535) *
+        255;
       errors.push(error);
       maximum = Math.max(maximum, error);
     }
@@ -83,83 +69,118 @@ function compare(expected, actual) {
 // Quantization budget: the probe, the expectation and the host output are each
 // rounded to 16-bit codes, and lut3d interpolates in single precision.
 const tolerance = { maximum: 0.05, p95: 0.02 };
-const results = [];
-let failures = 0;
-for (const artifact of inputs.artifacts)
-  for (const interpolation of inputs.interpolations) {
-    const output = `host-${artifact.name}-${interpolation}-ffmpeg.png`;
-    const filter = `format=rgb48le,lut3d=file=${artifact.cube}:interp=${interpolation}`;
-    execFileSync(
-      "ffmpeg",
-      [
-        "-y",
-        "-loglevel",
-        "error",
-        "-i",
-        inputs.probe,
-        "-vf",
-        filter,
-        "-pix_fmt",
-        "rgb48le",
-        output,
-      ],
-      { cwd: dir },
-    );
-    const measured = compare(
-      codes(artifact.expected[interpolation]),
-      codes(output),
-    );
-    const passed =
-      measured.maximum <= tolerance.maximum && measured.p95 <= tolerance.p95;
-    if (!passed) failures++;
-    results.push({
-      artifact: artifact.name,
-      grade: artifact.grade,
-      cube: artifact.cube,
-      size: artifact.size,
-      interpolation,
-      filter,
-      output,
-      maximumCodeValues: Number(measured.maximum.toFixed(4)),
-      p95CodeValues: Number(measured.p95.toFixed(4)),
-      samples: measured.samples,
-      passed,
-    });
-    console.log(
-      `FFmpeg lut3d · ${artifact.name} · ${interpolation}: max ${measured.maximum.toFixed(4)}, P95 ${measured.p95.toFixed(4)} code values ${passed ? "OK" : "FAILED"}`,
-    );
-  }
 
-const blockers = matrix.hosts
-  .filter((host) => !host.automated)
-  .map((host) => `${host.name}: ${host.blocker}`);
-const record = {
-  generated: new Date().toISOString(),
-  ffmpeg: version,
-  probe: inputs.probe,
-  probeDescription: inputs.probeDescription,
-  range: inputs.range,
-  tolerance,
-  results,
-  verifiedHosts: matrix.hosts.filter((h) => h.automated).map((h) => h.name),
-  releaseBlockers: blockers,
-};
-writeFileSync(
-  new URL("host-verification.json", evidence),
-  `${JSON.stringify(record, null, 2)}\n`,
-);
-console.log(`${version}`);
-console.log(
-  `Recorded ${fileURLToPath(new URL("host-verification.json", evidence))}`,
-);
-console.log(`Release readiness: ${blockers.length ? "BLOCKED" : "READY"}`);
-for (const blocker of blockers) console.log(`- ${blocker}`);
-if (failures) {
-  console.error(
-    `${failures} host comparison(s) exceeded the stated tolerance.`,
-  );
-  process.exitCode = 1;
-} else if (blockers.length && process.argv.includes("--release")) {
-  console.error("Untested hosts remain release blockers.");
-  process.exitCode = 1;
+/** One FFmpeg run per artifact and interpolation, compared with its expectation. */
+function verify(inputs) {
+  const results = [];
+  for (const artifact of inputs.artifacts)
+    for (const interpolation of inputs.interpolations) {
+      const output = `host-${artifact.name}-${interpolation}-ffmpeg.png`;
+      const filter = `format=rgb48le,lut3d=file=${artifact.cube}:interp=${interpolation}`;
+      execFileSync(
+        "ffmpeg",
+        [
+          "-y",
+          "-loglevel",
+          "error",
+          "-i",
+          inputs.probe,
+          "-vf",
+          filter,
+          "-pix_fmt",
+          "rgb48le",
+          output,
+        ],
+        { cwd: evidenceDir },
+      );
+      const measured = compare(
+        readSamples(artifact.expected[interpolation]),
+        readSamples(output),
+      );
+      const passed =
+        measured.maximum <= tolerance.maximum && measured.p95 <= tolerance.p95;
+      results.push({
+        artifact: artifact.name,
+        grade: artifact.grade,
+        cube: artifact.cube,
+        size: artifact.size,
+        interpolation,
+        filter,
+        output,
+        maximumCodeValues: Number(measured.maximum.toFixed(4)),
+        p95CodeValues: Number(measured.p95.toFixed(4)),
+        samples: measured.samples,
+        passed,
+      });
+      console.log(
+        `FFmpeg lut3d \u00b7 ${artifact.name} \u00b7 ${interpolation}: max ${measured.maximum.toFixed(4)}, P95 ${measured.p95.toFixed(4)} code values ${passed ? "OK" : "FAILED"}`,
+      );
+    }
+  return results;
 }
+
+function main() {
+  if (!existsSync(inputsPath)) {
+    console.error(
+      `Missing ${fileURLToPath(inputsPath)}. Run \`npm run release:evidence\` first.`,
+    );
+    return 1;
+  }
+  const version = ffmpegVersion();
+  if (!version) {
+    console.error(
+      "FFmpeg is not installed. Missing tooling is a release blocker, not a pass.",
+    );
+    return 1;
+  }
+  const inputs = JSON.parse(readFileSync(inputsPath));
+  const results = verify(inputs);
+  const blockers = hostMatrix.hosts
+    .filter((host) => !host.automated)
+    .map((host) => `${host.name}: ${host.blocker}`);
+  writeFileSync(
+    new URL("host-verification.json", evidence),
+    `${JSON.stringify(
+      {
+        generated: new Date().toISOString(),
+        ffmpeg: version,
+        probe: inputs.probe,
+        probeDescription: inputs.probeDescription,
+        range: inputs.range,
+        tolerance,
+        results,
+        verifiedHosts: hostMatrix.hosts
+          .filter((host) => host.automated)
+          .map((host) => host.name),
+        releaseBlockers: blockers,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(version);
+  console.log(
+    `Recorded ${fileURLToPath(new URL("host-verification.json", evidence))}`,
+  );
+  console.log(`Release readiness: ${blockers.length ? "BLOCKED" : "READY"}`);
+  for (const blocker of blockers) console.log(`- ${blocker}`);
+
+  const failures = results.filter((result) => !result.passed).length;
+  if (failures) {
+    console.error(
+      `${failures} host comparison(s) exceeded the stated tolerance.`,
+    );
+    return 1;
+  }
+  // Only the release gate fails on manual blockers, so CI still reports the
+  // FFmpeg comparison while Resolve, Photoshop and Lightroom stay unverified.
+  if (blockers.length && process.argv.includes("--release")) {
+    console.error(
+      "Untested hosts remain release blockers; the MVP is not release-ready.",
+    );
+    return 1;
+  }
+  return 0;
+}
+
+process.exitCode = main();

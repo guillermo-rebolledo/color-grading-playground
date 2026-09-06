@@ -96,6 +96,63 @@ async function buildElevenNodeGraph(page: Page) {
   });
 }
 
+/**
+ * Pixels that differ between two element screenshots, ignoring a one-pixel
+ * border: a canvas laid out on a fractional offset is captured one row taller
+ * than it is, and that edge row blends with the page behind it. Comparing the
+ * decoded interior also avoids expect's element-by-element diff of a large
+ * buffer, which does not finish.
+ */
+function differingPixels(a: Buffer, b: Buffer, margin = 1) {
+  const [left, right] = [a, b].map((bytes) => PNG.sync.read(bytes));
+  if (left.width !== right.width || left.height !== right.height)
+    throw new Error(
+      `Screenshot sizes differ: ${left.width}×${left.height} and ${right.width}×${right.height}.`,
+    );
+  let differing = 0;
+  for (let y = margin; y < left.height - margin; y++)
+    for (let x = margin; x < left.width - margin; x++) {
+      const i = (y * left.width + x) * 4;
+      for (let c = 0; c < 4; c++)
+        if (left.data[i + c] !== right.data[i + c]) {
+          differing++;
+          break;
+        }
+    }
+  return differing;
+}
+
+/** Evaluate colours through the store's current graph, on the engine's float path. */
+const evaluateCurrentGraph = (
+  page: Page,
+  colours: [number, number, number][],
+) =>
+  page.evaluate(async (probes) => {
+    const { useGraph } = await import(
+      /* @vite-ignore */ "/src/graphStore.ts" as string
+    );
+    const { GradingEngine } = (await import(
+      /* @vite-ignore */ "/src/engine/GradingEngine.ts" as string
+    )) as typeof import("../src/engine/GradingEngine");
+    const engine = new GradingEngine(document.createElement("canvas"));
+    try {
+      engine.setImage({
+        width: probes.length,
+        height: 1,
+        data: new Float32Array(probes.flatMap((c) => [...c, 1])),
+      });
+      engine.render(useGraph.getState().graph);
+      const pixels = engine.readPixels();
+      return probes.map((_, i) => [
+        pixels[i * 4],
+        pixels[i * 4 + 1],
+        pixels[i * 4 + 2],
+      ]);
+    } finally {
+      engine.dispose();
+    }
+  }, colours);
+
 const graphOf = (page: Page) =>
   page.evaluate(async () => {
     const { useGraph } = await import(
@@ -237,17 +294,34 @@ test("integrated acceptance: bundled sample, eleven node types, editing, viewer,
     page.getByRole("button", { name: "Export .cube", exact: true }).click(),
   ]);
   expect(download.suggestedFilename()).toBe("Release-check.cube");
-  await save(download, "acceptance-grade.cube");
+  const artifact = parseCube(
+    readFileSync(await save(download, "acceptance-grade.cube"), "utf8"),
+  );
+  expect(artifact.title).toBe("Release check");
+  expect(artifact.size).toBe(33);
 
-  const measurement = await page.evaluate(async () => {
-    const { useGraph } = await import(
-      /* @vite-ignore */ "/src/graphStore.ts" as string
-    );
-    return {
-      nodes: useGraph.getState().graph.nodes.length,
-      edges: useGraph.getState().graph.edges.length,
-    };
-  });
+  // The report says Export .cube downloads the measured artifact. Check the
+  // downloaded rows really carry this grade: at exact lattice coordinates the
+  // independent parser must agree with the engine's own evaluation.
+  const lattice: [number, number, number][] = [
+    [0, 0, 0],
+    [1, 1, 1],
+    [8 / 32, 16 / 32, 24 / 32],
+    [1, 4 / 32, 0],
+    [12 / 32, 0, 31 / 32],
+  ];
+  const evaluated = await evaluateCurrentGraph(page, lattice);
+  lattice.forEach((probe, i) =>
+    applyCube(artifact, probe).forEach((value, channel) =>
+      expect(value).toBeCloseTo(evaluated[i][channel], 4),
+    ),
+  );
+
+  const current = await graphOf(page);
+  const measurement = {
+    nodes: current.nodes.length,
+    edges: current.edges.length,
+  };
   const reportText = await report.innerText();
 
   // The remedy the report suggests must actually reduce the measured error.
@@ -366,21 +440,28 @@ test("records browser, GPU, precision and interactive preview evidence", async (
   });
 });
 
-/** Structured probe codes: lattice points, off-grid values, primaries and greys. */
+/**
+ * Probe codes in three bands: exact 33³ lattice coordinates, cell centres, and
+ * pseudo-random off-grid values. The lattice band catches axis ordering and
+ * domain handling; cell centres are furthest from every lattice point, which is
+ * where trilinear and tetrahedral interpolation disagree most, so a host using
+ * the wrong method cannot pass.
+ */
 function probePng(size = 64) {
   const samples = new Uint16Array(size * size * 3);
+  const centre = (n: number) => ((n % 32) + 0.5) / 32;
+  const scattered = (n: number, prime: number) => ((n * prime) % 1000) / 999;
   for (let y = 0; y < size; y++)
     for (let x = 0; x < size; x++) {
       const i = (y * size + x) * 3;
-      // Column 0-31 walks 33³ lattice coordinates exactly; the rest sit between them.
-      const onLattice = x < size / 2;
-      const r = onLattice ? (x % 33) / 32 : ((x * 7919) % 1000) / 999;
-      const g = onLattice ? (y % 33) / 32 : ((y * 6271) % 1000) / 999;
-      const b = onLattice
-        ? ((x + y) % 33) / 32
-        : (((x + y) * 4093) % 1000) / 999;
+      const rgb =
+        y < 16
+          ? [(x % 33) / 32, (y % 33) / 32, ((x + y) % 33) / 32]
+          : y < 40
+            ? [centre(x), centre(y + x), centre(x * 3 + y)]
+            : [scattered(x, 7919), scattered(y, 6271), scattered(x + y, 4093)];
       samples.set(
-        [r, g, b].map((v) => Math.round(v * 65535)),
+        rgb.map((v) => Math.round(v * 65535)),
         i,
       );
     }
@@ -516,5 +597,98 @@ test("emits identity and graded artifacts with independent expectations for host
     interpolations: ["trilinear", "tetrahedral"],
     range: "full range, 0–1 domain, values clamped by the Output policy",
     artifacts,
+  });
+});
+
+// Offline caching exists only in the built application, so this part of the
+// integrated pass runs against the production preview (see playwright.config.ts).
+test.describe("production build", () => {
+  test.use({ baseURL: "http://127.0.0.1:4173" });
+
+  test("a graded sample project keeps working offline, including LUT export", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(180_000);
+    const foreign: string[] = [];
+    context.on(
+      "request",
+      (request) =>
+        request.url().startsWith("http://127.0.0.1:4173") ||
+        foreign.push(request.url()),
+    );
+    await page.goto("/");
+    await expect(page.getByLabel("Offline status")).toContainText(
+      "Stored for offline use",
+      { timeout: 30_000 },
+    );
+
+    // Opening a sample online stores it for offline grading.
+    await page.getByRole("button", { name: "Browse samples" }).click();
+    await page
+      .getByRole("region", { name: "Bundled log samples" })
+      .getByRole("button", { name: "Red flower", exact: true })
+      .click();
+    await expect(page.getByText("Preview 610 × 406")).toBeVisible();
+    // Close the gallery so the viewer has the same layout as it will after a
+    // reload; an element screenshot captures the canvas at its displayed size.
+    await page.getByRole("button", { name: "Browse samples" }).click();
+    await page.locator('.react-flow__node[data-id="exposure"]').click();
+    const stops = page.getByRole("spinbutton", { name: "Exposure in stops" });
+    await stops.fill("-0.75");
+    await stops.press("Enter");
+    const preview = page.getByLabel("Graded image preview");
+    const online = await preview.screenshot();
+    await page
+      .getByRole("button", { name: "Save project", exact: true })
+      .click();
+    await expect(page.getByLabel("Project status")).toContainText(
+      "Saved on this device",
+    );
+
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.getByLabel("Offline status")).toContainText("Offline");
+    await expect(page.getByLabel("Project status")).toContainText(
+      "Restored from this device",
+    );
+    await expect(page.getByLabel("Sample provenance")).toContainText(
+      "DaVinci Intermediate",
+    );
+    expect(
+      differingPixels(await preview.screenshot(), online),
+      "the restored offline grade must render the same pixels",
+    ).toBe(0);
+
+    // Grading, scopes and export all run locally, so none of them needs a network.
+    await page.locator('.react-flow__node[data-id="exposure"]').click();
+    await stops.fill("0.5");
+    await stops.press("Enter");
+    await expect(page.getByLabel("Scope status")).toContainText(
+      "measured pixels",
+    );
+    await page.getByLabel("LUT title").fill("Offline grade");
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Export .cube", exact: true }).click(),
+    ]);
+    const offlineCube = parseCube(
+      readFileSync(await save(download, "offline-grade.cube"), "utf8"),
+    );
+    expect(offlineCube.size).toBe(33);
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    expect(foreign).toEqual([]);
+    record("offline.json", {
+      generated: new Date().toISOString(),
+      origin: "http://127.0.0.1:4173 (vite preview of the production build)",
+      sample: "flower (stored on first online open)",
+      offlineWorkflow: [
+        "reload with the network disabled",
+        "restore the saved project and its grade",
+        "edit exposure and re-measure scopes",
+        "export offline-grade.cube",
+      ],
+      requestsToOtherOrigins: foreign.length,
+    });
   });
 });

@@ -12,7 +12,7 @@
     "samples:release-check": "node scripts/verify-log-samples.mjs --release",
     "release:evidence": "playwright test tests/release.spec.ts",
     "release:hosts": "node scripts/verify-lut-hosts.mjs",
-    "release:verify": "npm run format:check && npm run build && npm run samples:release-check && npm test && npm run release:hosts",
+    "release:verify": "npm run format:check && npm run build && npm run samples:release-check && npm test && npm run release:hosts -- --release",
     "preview": "vite preview",
     "format:check": "prettier --check ."
   },
