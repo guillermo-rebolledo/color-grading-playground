@@ -150,8 +150,11 @@ export function SampleProvenance({ sample }: { sample: Sample }) {
         · <a href="/samples/inventory.json">Verified inventory</a>
       </p>
       <p>
-        Scene-linear HDR source converted to {encodingLabel(sample.encoding)},
-        with{" "}
+        Scene-linear HDR source converted to{" "}
+        <span className="font-mono text-[11px] tabular-nums">
+          {encodingLabel(sample.encoding)}
+        </span>
+        , with{" "}
         <span className="font-mono text-[11px] tabular-nums">
           {sample.preparation.exposureStops}
         </span>{" "}
