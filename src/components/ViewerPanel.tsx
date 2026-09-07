@@ -98,6 +98,7 @@ export function ViewerPanel({
           <select
             className="h-5 max-w-32 px-1 text-[11px]"
             aria-label="Compare view"
+            title="Compare Before or a captured grade on the left with the current view on the right. Drag the divider."
             value={comparison}
             disabled={!image}
             onChange={(event) => {
@@ -126,6 +127,7 @@ export function ViewerPanel({
             size="toolbar"
             key={slot}
             disabled={!image || !!graphError || !!capabilityError}
+            title={`Capture grade settings in snapshot ${slot}. Capturing again replaces this slot; no image file is saved.`}
             onClick={() => onCapture(slot)}
           >
             Capture {slot}
@@ -211,7 +213,7 @@ export function ViewerPanel({
               Choose an image <span aria-hidden="true">↗</span>
             </Button>
             <span className="mt-3 block text-[10px] text-text-faint">
-              JPEG or PNG · up to 50 MB
+              JPEG, PNG or RGB TIFF · up to 50 MB
             </span>
           </div>
         )}
@@ -243,7 +245,7 @@ export function ViewerPanel({
             Preview paused: {graphError || renderError}
             <br />
             {graphError ? (
-              "Connect a valid graph to resume."
+              "Check the connection named above, or use Undo to restore the previous graph."
             ) : (
               <Button size="toolbar" onClick={onRetryPreview}>
                 Retry preview

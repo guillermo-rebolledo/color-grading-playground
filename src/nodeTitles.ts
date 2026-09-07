@@ -11,7 +11,7 @@ const titles: Record<NodeType, string> = {
   saturation: "Saturation",
   whiteBalance: "White Balance",
   curves: "Curves",
-  qualifier: "HSL Qualifier",
+  qualifier: "HSV Qualifier",
   blend: "Blend",
   output: "Output",
 };

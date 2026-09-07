@@ -110,11 +110,13 @@ export function Scopes({
   graph,
   image,
   paused,
+  editing,
 }: {
   engine: GradingEngine | null;
   graph: GradingGraph;
   image: object | null;
   paused: boolean;
+  editing: boolean;
 }) {
   const [measurement, setMeasurement] = useState<{
     graph: GradingGraph;
@@ -125,7 +127,7 @@ export function Scopes({
   useEffect(() => {
     if (!engine) return;
     engine.invalidateScopes();
-    if (!image || paused) return;
+    if (!image || paused || editing) return;
     let active = true;
     void engine
       .measureScopes(graph)
@@ -147,24 +149,34 @@ export function Scopes({
       active = false;
       engine.invalidateScopes();
     };
-  }, [engine, graph, image, paused]);
-  const current =
-    !paused && measurement?.graph === graph && measurement.image === image
-      ? measurement
-      : null;
-  const report = current?.report;
+  }, [engine, graph, image, paused, editing]);
+  // Keep the last plot mounted while editing and while its replacement is
+  // measured. Never carry measurements across images or invalid previews.
+  const visible = !paused && measurement?.image === image ? measurement : null;
+  const current = visible?.graph === graph ? visible : null;
+  const report = visible?.report;
+  const measuredText = report
+    ? `${report.width} × ${report.height} · ${report.sampleCount.toLocaleString()} measured pixels · transparent pixels excluded`
+    : "";
   return (
     <div className="flex flex-none flex-col gap-2 p-3 text-[11px] leading-normal text-muted-foreground">
-      <p className="m-0 font-mono tabular-nums" aria-label="Scope status">
-        {!image
-          ? "Load an image to inspect scopes."
-          : paused
-            ? "Scopes paused — waiting for a valid image and graph."
-            : (current?.error ??
-              (report
-                ? `${report.width} × ${report.height} · ${report.sampleCount.toLocaleString()} measured pixels · transparent pixels excluded`
-                : "Updating scopes…"))}
-      </p>
+      <div className="grid font-mono tabular-nums">
+        {/* Reserve the last measurement's wrapped height so the plots do not
+            jump when the shorter editing/pending status replaces it. */}
+        <p aria-hidden="true" className="invisible col-start-1 row-start-1 m-0">
+          {measuredText}
+        </p>
+        <p className="col-start-1 row-start-1 m-0" aria-label="Scope status">
+          {!image
+            ? "Load an image to inspect scopes."
+            : paused
+              ? "Scopes paused — waiting for a valid image and graph."
+              : editing
+                ? "Adjusting — scopes update when you finish."
+                : (current?.error ??
+                  (current?.report ? measuredText : "Updating scopes…"))}
+        </p>
+      </div>
       <div className="scope-measurement">
         {report && (
           <>
@@ -191,7 +203,7 @@ export function Scopes({
         <p className="m-0">
           Measured:{" "}
           <span className="font-mono tabular-nums text-foreground">
-            {encodingLabel(graph.colour.output)}
+            {encodingLabel(report?.encoding ?? graph.colour.output)}
           </span>{" "}
           · diagnostic range <span className="font-mono tabular-nums">0–1</span>
           , after Output policy, before display conversion. Outside values

@@ -124,7 +124,9 @@ export function ExposureControl({
       <details className="control-help">
         <summary className="cursor-pointer">About exposure</summary>
         <p>
-          One stop doubles or halves the light.
+          +1 stop doubles RGB values; −1 stop halves them. On a linear-light
+          branch, this doubles or halves the light. Use a CST to convert a log
+          branch to linear first.
           <br />
           Double-click a control to reset.
         </p>

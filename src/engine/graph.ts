@@ -261,13 +261,18 @@ export function inspectGraph(
       );
     const key = `${target.id}:${edge.targetHandle}`;
     if (inputs.has(key))
-      throw new Error("This input already has a connection. Remove it first.");
+      throw new Error(
+        "This input already has a connection. Select that connection and press Delete, then reconnect.",
+      );
     inputs.set(key, source.id);
   }
   const visited = new Set<string>(),
     visiting = new Set<string>();
   const visit = (id: string) => {
-    if (visiting.has(id)) throw new Error("Connection would create a cycle.");
+    if (visiting.has(id))
+      throw new Error(
+        "Connection would create a cycle. Keep connections flowing toward Output; do not reconnect a branch to itself.",
+      );
     if (visited.has(id)) return;
     visiting.add(id);
     for (const edge of graph.edges.filter((e) => e.target === id))
@@ -293,7 +298,7 @@ export function inspectGraph(
     for (const port of required) {
       if (!inputs.has(`${node.id}:${port}`) && !draft)
         throw new Error(
-          `${node.type} requires an RGB input (${port}). Connect it to Source.`,
+          `${node.type} requires an RGB input (${port}). Connect that input to an RGB output from Source or an adjustment node.`,
         );
     }
     for (const edge of graph.edges.filter((e) => e.target === node.id))

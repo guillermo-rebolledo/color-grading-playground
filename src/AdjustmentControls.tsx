@@ -212,11 +212,15 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
       <div className="adjustment-controls">
         {node.type === "blend" ? (
           <>
-            <p className="encoding-note">
-              Mix A → B by amount × mask (0–1). A disconnected mask is one.
-              Branches use their declared encoding; match them with explicit CST
-              nodes.
-            </p>
+            <details className="control-help">
+              <summary className="cursor-pointer">About Blend</summary>
+              <p className="encoding-note">
+                Amount 0 keeps A; 1 uses B. With a mask, black keeps A and white
+                applies the full amount of B; gray mixes them. Without a mask,
+                amount applies everywhere (mask = 1). Match branch encodings
+                with CST nodes before blending.
+              </p>
+            </details>
             <NumericControl
               label="Blend amount"
               value={node.data.amount!}
@@ -228,12 +232,17 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
           </>
         ) : (
           <>
-            <p className="encoding-note">
-              HSV on current RGB code values, clamped to 0–1 for qualification
-              only. Hue wraps in degrees; gray requires the full 0–360 hue
-              range. Softness extends outside each inclusive band; zero gives
-              hard edges. Component memberships multiply.
-            </p>
+            <details className="control-help">
+              <summary className="cursor-pointer">About the qualifier</summary>
+              <p className="encoding-note">
+                Select by hue, saturation and value (HSV). Connect this mask to
+                Blend to limit where B applies; Solo mask previews the
+                selection. Qualification alone clamps current RGB code values to
+                0–1. Hue wraps; gray requires the full 0–360° hue range.
+                Softness extends outside each inclusive band; zero gives hard
+                edges. The three selections multiply.
+              </p>
+            </details>
             <button
               onClick={() =>
                 useGraph.setState((s) => ({
@@ -308,7 +317,25 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
   );
   return (
     <div className="adjustment-controls">
-      {node.type === "whiteBalance" ? (
+      {node.type === "cdl" ? (
+        <details className="control-help">
+          <summary className="cursor-pointer">About CDL</summary>
+          <p>
+            CDL (Colour Decision List): slope multiplies RGB, offset adds to it,
+            power shapes tone, then saturation adjusts colour intensity. SOP is
+            unbounded above; values clamp at zero before power. Saturation uses
+            Rec.709 luma. Uses the current branch’s RGB code values; Rec.709
+            primaries are recommended for saturation. Insert CST nodes for a
+            deliberate log or linear response.
+          </p>
+          <p id="wheel-help">
+            Drag wheels or use arrow keys (0.02 disc units per press); Home or
+            double-click resets the vector. Values outside the disc stay
+            editable in the RGB fields; the marker shows their direction at the
+            rim.
+          </p>
+        </details>
+      ) : node.type === "whiteBalance" ? (
         <p className="encoding-note">
           Linear-light CAT02 · 6500 K / zero tint preserves the declared branch
           white. Source-relative temperature: lower is warmer, higher is cooler
@@ -317,24 +344,16 @@ export function AdjustmentControls({ node }: { node: GradingNode }) {
         </p>
       ) : (
         <p className="encoding-note">
-          {node.type === "cdl"
-            ? "Unbounded SOP + saturation · lower pre-power clamp at zero · Rec.709 luma."
-            : node.type === "contrast"
-              ? "Pivot-scaled power · positive amount and pivot. Inputs below 0.000001 are floored, even at amount 1."
-              : "Rec.709 luma saturation. Vibrance preferentially boosts less-saturated colours using normalized RGB chroma."}{" "}
+          {node.type === "contrast"
+            ? "Pivot-scaled power · positive amount and pivot. Inputs below 0.000001 are floored, even at amount 1."
+            : "Rec.709 luma saturation. Vibrance preferentially boosts less-saturated colours using normalized RGB chroma."}{" "}
           Uses the current branch’s RGB code values; Rec.709 primaries
           recommended for saturation. Insert CST nodes for a deliberate log or
           linear response.
         </p>
-      )}
+      )}{" "}
       {node.type === "cdl" && (
         <>
-          <p id="wheel-help" className="encoding-note">
-            Drag wheels or use arrow keys (0.02 disc units per press); Home or
-            double-click resets the vector. Values outside the disc stay
-            editable in the RGB fields; the marker shows their direction at the
-            rim.
-          </p>
           <div className="cdl-wheels">
             {(["slope", "offset", "power"] as const).map((parameter) => (
               <div key={parameter}>

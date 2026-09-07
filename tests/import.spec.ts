@@ -214,7 +214,9 @@ test("live 16-bit uploads allow encoding correction and preserve the project on 
   await page
     .getByLabel("Input transfer", { exact: true })
     .selectOption("linear");
-  await expect(page.getByText("Source tag:")).toContainText("Linear");
+  await expect(
+    page.getByRole("button", { name: "Colour pipeline", exact: true }),
+  ).toContainText("Linear");
   await expect
     .poll(async () => (await canvas.screenshot()).equals(before))
     .toBe(false);

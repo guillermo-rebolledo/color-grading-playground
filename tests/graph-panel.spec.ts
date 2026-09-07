@@ -14,8 +14,8 @@ test("graph help remains available while the preview is paused", async ({
   for (const instruction of [
     "RGB: solid",
     "Mask: dashed",
-    "Double-click a node to solo",
-    "Drag ports to connect",
+    "Double-click a node to preview it alone; repeat to exit",
+    "Drag an output port to a matching input",
     "Shift-drag to box select",
   ]) {
     await expect(page.getByText(instruction, { exact: true })).toBeVisible();

@@ -54,7 +54,9 @@ test("pipeline and export collapse independently and retain their settings", asy
   await updated.click();
   await expect(inspector.getByLabel("LUT size")).toHaveValue("17");
   await pipeline.click();
-  await expect(inspector.getByText(/Source tag:/)).toBeVisible();
+  await expect(
+    inspector.getByText(/Input describes how the source/),
+  ).toBeVisible();
 });
 
 test("encoding advisory names both branches without applying a conversion", async ({

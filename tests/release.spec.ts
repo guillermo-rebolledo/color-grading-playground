@@ -331,7 +331,9 @@ test("integrated acceptance: bundled sample, eleven node types, editing, viewer,
   // The remedy the report suggests must actually reduce the measured error.
   await page.getByLabel("LUT size").selectOption("65");
   await expect(
-    page.getByText("Settings changed. Measure again."),
+    page.getByText(
+      "Image or grade settings changed. Measure LUT fidelity again.",
+    ),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Measure LUT fidelity", exact: true })

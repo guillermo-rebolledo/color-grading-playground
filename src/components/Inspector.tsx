@@ -24,16 +24,16 @@ import {
 import { Icon } from "@/icons";
 
 const descriptions: Record<NodeType, string> = {
-  source: "Declared source encoding",
-  exposure: "Linear light adjustment",
-  cst: "Explicit encoding conversion",
-  cdl: "Slope, offset, power and saturation",
+  source: "Interpret the image’s RGB values",
+  exposure: "Brighten or darken in stops",
+  cst: "Colour Space Transform (CST)",
+  cdl: "Shape tone and colour with CDL",
   contrast: "Contrast around a tonal pivot",
   saturation: "Saturation and selective vibrance",
   whiteBalance: "Source-relative temperature and tint",
   curves: "Master and per-channel tone curves",
-  qualifier: "HSV bands produce a mask",
-  blend: "Mix two branches by amount and mask",
+  qualifier: "Select colours to create a mask",
+  blend: "Mix two grades, optionally through a mask",
   output: "Final encoding and output range",
 };
 
@@ -115,7 +115,11 @@ export function Inspector({
             )}
           </div>
           <h3>{nodeTitle(selected) || "Select a node"}</h3>
-          <p>{selected ? descriptions[selected.type] : "RGB grading graph"}</p>
+          <p>
+            {selected
+              ? descriptions[selected.type]
+              : "Select a graph node to edit its controls"}
+          </p>
         </div>
         {selected?.type === "exposure" && (
           <ExposureControl
@@ -134,6 +138,17 @@ export function Inspector({
             key={`adjustment-${selected.id}`}
             node={selected}
           />
+        )}
+        {selected?.type === "cst" && (
+          <details className="control-help">
+            <summary className="cursor-pointer">About CST</summary>
+            <p>
+              Convert RGB values from one encoding to another. Set From to the
+              incoming branch’s encoding and To to the encoding you want next.
+              This converts values; changing the source input tag only changes
+              how the original values are interpreted.
+            </p>
+          </details>
         )}
         {selected?.type === "cst" &&
           (["from", "to"] as const).map((direction) => (
@@ -183,13 +198,24 @@ export function Inspector({
                 />
               ))}
               <p className="encoding-note">
-                Source tag: {encodingLabel(graph.colour.input)}. Full-range code
-                values; embedded profiles are not applied. Correct the input tag
-                to match your source. Retagging does not restore highlight
-                range.
-                <br />
-                Viewer conversion is sRGB only; output pixels keep the chosen
-                output encoding.
+                Input describes how the source image’s RGB values are encoded.
+                Match it to your source; changing the tag does not restore
+                clipped highlights. Full-range code values are assumed; embedded
+                profiles are not applied.
+              </p>
+              <p className="encoding-note">
+                Working is the colour space used after the Source node converts
+                the input. A CST can change the encoding within a branch. Output
+                is the encoding produced by the Output node and the exported
+                LUT.
+              </p>
+              <p className="encoding-note">
+                Transfer describes the light-to-code curve, such as linear or
+                log. Primaries / white defines the RGB gamut and white point.
+              </p>
+              <p className="encoding-note">
+                Display preview: the viewer converts to sRGB for display. This
+                does not change the selected output encoding or the LUT.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -216,12 +242,17 @@ export function Inspector({
               with Exposure.
             </li>
             <li>
-              Use Compare in the viewer to judge your changes. Undo brings back
-              the previous adjustment.
+              Use Compare → Before / current to see the image without grading
+              adjustments on the left and your current view on the right. Drag
+              the divider to compare. Colour pipeline settings and output range
+              still apply to Before.
             </li>
           </ol>
           <p>
-            Build a grade, one connection at a time. Your edits are reversible.
+            Capture A or B keeps a snapshot of the current grade settings for
+            comparison on this image. Choose A / current or B / current in
+            Compare. Capturing again replaces that slot; it does not save an
+            image or download a file. Undo restores previous grading edits.
           </p>
           <p>
             Every adjustment depends only on a pixel’s colour—the kind of change

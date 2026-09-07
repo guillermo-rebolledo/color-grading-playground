@@ -178,6 +178,7 @@ test("shows current output scopes while editing and hides measurements when the 
   const input = page.getByLabel("Exposure in stops", { exact: true });
   for (const value of ["1", "2", "-1", "0.5"]) await input.fill(value);
   await expect(input).toHaveValue("0.5");
+  await input.press("Enter");
   await expect(page.getByLabel("Scope status")).toContainText(
     "measured pixels",
   );
@@ -280,3 +281,114 @@ test("discards an in-flight response while grading and animation frames continue
   expect(result.half).toBe(1);
   expect(result.old).toBe(0);
 });
+
+test("holds scope plots during an exposure drag and refreshes once on release", async ({
+  page,
+}) => {
+  const { openNeutralGraph } = await import("./fixtures");
+  await openNeutralGraph(page);
+  await page.getByLabel("Load precision chart").selectOption("slog3");
+  await expect(page.getByLabel("Scope status")).toContainText(
+    "measured pixels",
+  );
+  await page.evaluate(async () => {
+    const { GradingEngine } = await import(
+      /* @vite-ignore */ "/src/engine/GradingEngine.ts" as string
+    );
+    const state = Object.assign(window, { scopeCalls: 0 });
+    const measure = GradingEngine.prototype.measureScopes;
+    GradingEngine.prototype.measureScopes = function (
+      ...args: Parameters<typeof measure>
+    ) {
+      state.scopeCalls++;
+      return measure.apply(this, args);
+    };
+  });
+  const histogram = page.getByRole("img", { name: "RGB histogram" });
+  const initialPlot = await histogram.evaluate((el) =>
+    (el as HTMLCanvasElement).toDataURL(),
+  );
+  const originalCanvas = await histogram.elementHandle();
+  const originalBounds = await histogram.boundingBox();
+  const preview = page.getByLabel("Graded image preview");
+  const initialPreview = await preview.screenshot();
+  const slider = page.getByLabel("Scrub exposure");
+  const box = (await slider.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.7, box.y + box.height / 2, {
+    steps: 6,
+  });
+  // A pause within a held gesture must not trigger a scope refresh.
+  await page.waitForTimeout(250);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { scopeCalls: number }).scopeCalls,
+    ),
+  ).toBe(0);
+  expect(await originalCanvas!.evaluate((el) => el.isConnected)).toBe(true);
+  expect(await histogram.boundingBox()).toEqual(originalBounds);
+  expect(
+    await histogram.evaluate((el) => (el as HTMLCanvasElement).toDataURL()),
+  ).toBe(initialPlot);
+  expect((await preview.screenshot()).equals(initialPreview)).toBe(false);
+  await page.mouse.up();
+  await expect
+    .poll(() =>
+      histogram.evaluate((el) => (el as HTMLCanvasElement).toDataURL()),
+    )
+    .not.toBe(initialPlot);
+  await expect(page.getByLabel("Scope status")).toContainText(
+    "measured pixels",
+  );
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { scopeCalls: number }).scopeCalls,
+    ),
+  ).toBe(1);
+  expect(await originalCanvas!.evaluate((el) => el.isConnected)).toBe(true);
+  expect(await histogram.boundingBox()).toEqual(originalBounds);
+});
+
+for (const finish of ["keyup", "Enter", "blur"] as const) {
+  test(`holds scopes until ${finish} completes a control edit`, async ({
+    page,
+  }) => {
+    const { openNeutralGraph } = await import("./fixtures");
+    await openNeutralGraph(page);
+    await page.getByLabel("Load precision chart").selectOption("slog3");
+    await expect(page.getByLabel("Scope status")).toContainText(
+      "measured pixels",
+    );
+    const histogram = page.getByRole("img", { name: "RGB histogram" });
+    const initial = await histogram.evaluate((el) =>
+      (el as HTMLCanvasElement).toDataURL(),
+    );
+    const input = page.getByLabel("Exposure in stops", { exact: true });
+    if (finish === "keyup") {
+      await page.getByLabel("Scrub exposure").focus();
+      await page.keyboard.down("End");
+    } else {
+      await input.fill("-1.5");
+    }
+    await expect(page.getByLabel("Scope status")).toContainText(
+      "update when you finish",
+    );
+    // Wait beyond both the scope throttle and preview idle timer.
+    await page.waitForTimeout(250);
+    expect(
+      await histogram.evaluate((el) => (el as HTMLCanvasElement).toDataURL()),
+    ).toBe(initial);
+    if (finish === "keyup") await page.keyboard.up("End");
+    else if (finish === "Enter") await input.press("Enter");
+    else await input.blur();
+    await expect(page.getByLabel("Scope status")).toContainText(
+      "measured pixels",
+    );
+    await expect
+      .poll(() =>
+        histogram.evaluate((el) => (el as HTMLCanvasElement).toDataURL()),
+      )
+      .not.toBe(initial);
+  });
+}

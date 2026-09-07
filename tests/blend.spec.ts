@@ -288,7 +288,7 @@ test("starter mask controls and graph edits are reversible and solo is clearly i
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(amount).toHaveValue("1");
   await page
-    .getByRole("button", { name: "Add HSL Qualifier", exact: true })
+    .getByRole("button", { name: "Add HSV Qualifier", exact: true })
     .click();
   await expect(
     page.getByRole("spinbutton", { name: "Hue max", exact: true }),

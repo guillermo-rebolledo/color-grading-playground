@@ -98,7 +98,7 @@ export function LutExport({
     support && "reason" in support
       ? support.reason
       : graphError
-        ? `Connect a valid graph to export. ${graphError}`
+        ? `LUT export paused: ${graphError}`
         : null;
   const megabytes = cubeFileBytes(size) / 1e6;
 
@@ -199,7 +199,9 @@ export function LutExport({
               <OutputRangeSelect output={output} label="LUT output range" />
             </label>
             <p className="lut-summary">
-              Maps {encodingLabel(graph.colour.input)} codes 0–1 to{" "}
+              Downloads a .cube 3D LUT of your grade, not a rendered image.
+              Apply it to matching input encoding in a compatible editor. Maps{" "}
+              {encodingLabel(graph.colour.input)} codes 0–1 to{" "}
               {encodingLabel(graph.colour.output)}, using the preview's grading
               program. Range is shared with the Output node:{" "}
               {clamp === "unbounded"
@@ -256,7 +258,9 @@ export function LutExport({
               </p>
             )}
             {measured && !validReport && (
-              <p role="status">Settings changed. Measure again.</p>
+              <p role="status">
+                Image or grade settings changed. Measure LUT fidelity again.
+              </p>
             )}
             {validReport && (
               <section
