@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { openNeutralGraph } from "./fixtures";
 
-test("graph instructions remain visible while the preview is paused", async ({
+test("graph help remains available while the preview is paused", async ({
   page,
 }) => {
   await openNeutralGraph(page);
@@ -10,6 +10,7 @@ test("graph instructions remain visible while the preview is paused", async ({
     .getByRole("button", { name: "Delete selection", exact: true })
     .click();
   await expect(page.getByRole("status")).toContainText("Preview paused");
+  await page.locator("summary").filter({ hasText: "Graph help" }).click();
   for (const instruction of [
     "RGB: solid",
     "Mask: dashed",
@@ -51,6 +52,8 @@ test("graph navigation preserves zoom limits and the interaction lock", async ({
   await expect(zoomOut).toBeDisabled();
   await page.getByRole("button", { name: "Fit View", exact: true }).click();
 
+  // Fit is scheduled by React Flow; wait for its viewport update before measuring.
+  await expect(zoom).not.toHaveText("25%");
   const node = page.locator('.react-flow__node[data-id="exposure"]');
   const before = (await node.boundingBox())!;
   const drag = async () => {

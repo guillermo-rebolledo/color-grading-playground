@@ -30,8 +30,8 @@ export function DockPanel({
       aria-label={label}
       data-collapsed={collapsed ? "" : undefined}
     >
-      <div className="panel-bar dock-strip">
-        <h2>{title}</h2>
+      <div className="dock-strip flex shrink-0 items-center gap-3 border-0 border-b border-solid border-border px-3 text-[11px] text-muted-foreground">
+        <h2 className="m-0 text-xs font-medium text-foreground">{title}</h2>
         {meta}
         <button
           type="button"

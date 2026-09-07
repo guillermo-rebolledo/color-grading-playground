@@ -19,3 +19,19 @@ export async function openNeutralGraph(page: Page) {
     });
   });
 }
+
+/** Open a disclosed workspace section through its actual UI. */
+export async function revealInspector(
+  page: Page,
+  section: "Colour pipeline" | "Export LUT",
+) {
+  const summary = page
+    .locator(".inspector summary")
+    .filter({ hasText: section });
+  if (
+    !(await summary
+      .locator("..")
+      .evaluate((element) => element.hasAttribute("open")))
+  )
+    await summary.click();
+}

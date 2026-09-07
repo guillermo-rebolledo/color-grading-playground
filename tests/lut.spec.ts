@@ -1,3 +1,4 @@
+import { revealInspector } from "./fixtures";
 import { test, expect, type Page } from "@playwright/test";
 import { applyCube, parseCube } from "./cube-tools";
 
@@ -405,6 +406,7 @@ test("the inspector exports a titled cube that shares the Output range and warns
   page,
 }) => {
   await page.goto("/");
+  await revealInspector(page, "Export LUT");
   const exportButton = page.getByRole("button", { name: "Export .cube" });
   await expect(exportButton).toBeEnabled();
   await expect(
@@ -509,6 +511,7 @@ test("export is disabled with a clear reason when float lattices are unsupported
     };
   });
   await page.goto("/");
+  await revealInspector(page, "Export LUT");
   await expect(
     page.getByRole("button", { name: "Export .cube" }),
   ).toBeDisabled();

@@ -43,7 +43,11 @@ export function Topbar({
         <Icon.FolderOpen />
         Open image
       </Button>
-      <Button aria-expanded={showSamples} onClick={onToggleSamples}>
+      <Button
+        aria-label="Browse samples"
+        aria-expanded={showSamples}
+        onClick={onToggleSamples}
+      >
         <Icon.Images />
         Browse samples
       </Button>

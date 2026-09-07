@@ -48,16 +48,17 @@ export function SamplePicker({
   // The offline controls sit beside the gallery region so its buttons remain
   // exactly the sample choices.
   return (
-    <div className="sample-gallery">
+    <div className="sample-gallery space-y-4 text-xs [&_p]:leading-relaxed [&_a]:text-primary">
       <section aria-label="Bundled log samples">
-        <h2>Bundled log samples</h2>
+        <h2 className="sr-only">Bundled log samples</h2>
         <p>
           HDR photographs prepared as log. Choose a scene to apply its verified
           input tags and keep your grade.
         </p>
-        <div className="sample-grid">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
           {samples.map((sample) => (
             <button
+              className="overflow-hidden rounded-sm border border-solid border-border bg-background p-0 pb-3 text-left text-foreground [&_strong]:mx-3 [&_strong]:mt-2 [&_strong]:block [&_span]:mx-3 [&_span]:mt-2 [&_span]:block [&_span]:text-muted-foreground [&_em]:mx-3 [&_em]:mt-2 [&_em]:block [&_em]:text-ok [&_em]:not-italic"
               key={sample.id}
               disabled={disabled}
               aria-label={sample.title}
@@ -65,6 +66,7 @@ export function SamplePicker({
               onClick={() => onSelect(sample)}
             >
               <img
+                className="h-28 w-full bg-surface-void object-contain"
                 src={`/samples/previews/${sample.id}.png`}
                 alt=""
                 width="240"
@@ -86,7 +88,11 @@ export function SamplePicker({
           PNG16 files.
         </p>
       </section>
-      <div className="sample-offline" role="group" aria-label="Offline samples">
+      <div
+        className="sample-offline flex flex-wrap items-center gap-2 border-0 border-t border-solid border-border pt-3 text-muted-foreground"
+        role="group"
+        aria-label="Offline samples"
+      >
         Opening a sample stores it on this device for offline use.{" "}
         <button
           disabled={!offlineReady || storing || stored.size === samples.length}
@@ -102,8 +108,13 @@ export function SamplePicker({
 
 export function SampleProvenance({ sample }: { sample: Sample }) {
   return (
-    <details className="sample-provenance" aria-label="Sample provenance" open>
-      <summary>Source and preparation · {sample.title}</summary>
+    <details
+      className="sample-provenance shrink-0 overflow-y-auto border-0 border-t border-solid border-border px-3 py-1 text-[11px] leading-relaxed text-muted-foreground open:max-h-40 [&_a]:text-primary"
+      aria-label="Sample provenance"
+    >
+      <summary className="cursor-pointer py-1">
+        Source and preparation · {sample.title}
+      </summary>
       <p>
         {encodingLabel(sample.encoding)} · {sample.bitDepth}-bit ·{" "}
         {sample.codeRange} range ({sample.codeNormalization}).

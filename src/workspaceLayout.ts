@@ -20,10 +20,10 @@ export const MINIMUM_DOCK_HEIGHT = 140;
 export const MINIMUM_SPLIT = 0.2;
 export const MAXIMUM_SPLIT = 0.8;
 /** The viewer keeps at least this much of the main column while dragging. */
-export const MINIMUM_VIEWER_HEIGHT = 240;
+export const MINIMUM_VIEWER_HEIGHT = 300;
 
 const defaults: WorkspaceLayout = {
-  dockHeight: 320,
+  dockHeight: 288,
   dockSplit: 0.58,
   graphCollapsed: false,
   scopesCollapsed: false,

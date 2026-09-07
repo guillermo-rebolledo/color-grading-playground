@@ -1,3 +1,4 @@
+import { revealInspector } from "./fixtures";
 import { test, expect } from "@playwright/test";
 import { PNG } from "pngjs";
 import { openNeutralGraph } from "./fixtures";
@@ -17,6 +18,7 @@ test("save and reload restores the private still, colour settings and evaluated 
   const exposure = page.getByRole("spinbutton", { name: "Exposure in stops" });
   await exposure.fill("1.25");
   await exposure.press("Enter");
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Output transfer", { exact: true })
     .selectOption("gamma24");
@@ -57,6 +59,7 @@ test("share links round trip without image bytes or uploads and preserve recipie
     mimeType: "image/png",
     buffer: bytes,
   });
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Input transfer", { exact: true })
     .selectOption("logc3");
@@ -338,6 +341,7 @@ test("quota failure leaves the previous saved project intact", async ({
   await expect(page.getByLabel("Project status")).toContainText(
     "Saved on this device",
   );
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Input transfer", { exact: true })
     .selectOption("linear");
@@ -372,6 +376,7 @@ test("all registered node data and explicit chart tags survive a share and save 
     "Add White Balance",
   ])
     await page.getByRole("button", { name, exact: true }).click();
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Input transfer", { exact: true })
     .selectOption("gamma22");
@@ -436,6 +441,7 @@ test("bundled sample links restore provenance and corrected input tags", async (
     .first()
     .click();
   await expect(page.getByLabel("Graded image preview")).toBeVisible();
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Input transfer", { exact: true })
     .selectOption("gamma22");

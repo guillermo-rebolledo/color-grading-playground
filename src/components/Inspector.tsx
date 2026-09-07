@@ -26,17 +26,20 @@ export function Inspector({
   const { graph } = graphState;
   const selected = graph.nodes.find((n) => n.selected);
   return (
-    <aside className="inspector" aria-label="Inspector">
-      <div className="panel-bar">
-        <h2>Inspector</h2>
-        <span>02</span>
+    <aside
+      className="inspector flex min-h-0 flex-col border-0 border-l border-solid border-border bg-card [contain:size]"
+      aria-label="Inspector"
+    >
+      <div className="flex h-9 shrink-0 items-center border-0 border-b border-solid border-border px-4">
+        <h2 className="m-0 text-[13px] font-medium">Inspector</h2>
       </div>
-      <div className="inspector-body">
-        <div className="selected-node">
-          <span className="node-symbol">±</span>
+      <div className="inspector-body min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="mb-6">
           <div>
-            <h3>{nodeTitle(selected) || "Select a node"}</h3>
-            <p>
+            <h3 className="m-0 text-base font-medium">
+              {nodeTitle(selected) || "Select a node"}
+            </h3>
+            <p className="mt-1 mb-0 text-xs text-muted-foreground">
               {selected?.type === "exposure"
                 ? "Linear light adjustment"
                 : "RGB grading graph"}
@@ -80,43 +83,79 @@ export function Inspector({
             <OutputRangeSelect output={selected} label="Output range" />
           </label>
         )}
-        <div className="space-info">
-          <span className="eyebrow">COLOUR PIPELINE</span>
-          {(["input", "working", "output"] as const).map((boundary) => (
-            <EncodingControl
-              key={boundary}
-              label={boundary[0].toUpperCase() + boundary.slice(1)}
-              value={graph.colour[boundary]}
-              onChange={(value) =>
-                graphState.updateColour({
-                  ...graph.colour,
-                  [boundary]: value,
-                })
-              }
-            />
-          ))}
-        </div>
-        <p className="encoding-note">
-          Source tag: {encodingLabel(graph.colour.input)}. Full-range code
-          values; embedded profiles are not applied. Correct the input tag to
-          match your source. Retagging does not restore highlight range.
-          <br />
-          Viewer conversion is sRGB only; output pixels keep the chosen output
-          encoding.
-        </p>
-        <LutExport
-          hasImage={hasImage}
-          onOverlay={onOverlay}
-          engine={engine}
-          support={
-            capabilityError ? { reason: capabilityError } : latticeSupport
-          }
-        />
-      </div>
-      <div className="inspector-footer">
-        Build a grade, one connection at a time.
-        <br />
-        <span>Your edits are reversible.</span>
+        <details className="mt-6 border-0 border-t border-solid border-border pt-3">
+          <summary className="cursor-pointer py-2 text-[13px] font-medium">
+            Colour pipeline
+            <span className="mt-1 block truncate text-[11px] font-normal text-muted-foreground">
+              Input: {encodingLabel(graph.colour.input)}
+            </span>
+          </summary>
+          <div className="space-y-3">
+            {(["input", "working", "output"] as const).map((boundary) => (
+              <EncodingControl
+                key={boundary}
+                label={boundary[0].toUpperCase() + boundary.slice(1)}
+                value={graph.colour[boundary]}
+                onChange={(value) =>
+                  graphState.updateColour({
+                    ...graph.colour,
+                    [boundary]: value,
+                  })
+                }
+              />
+            ))}
+          </div>
+          <p className="encoding-note">
+            Source tag: {encodingLabel(graph.colour.input)}. Full-range code
+            values; embedded profiles are not applied. Correct the input tag to
+            match your source. Retagging does not restore highlight range.
+            <br />
+            Viewer conversion is sRGB only; output pixels keep the chosen output
+            encoding.
+          </p>
+        </details>
+        <details className="mt-3 border-0 border-t border-solid border-border pt-3">
+          <summary className="cursor-pointer py-2 text-[13px] font-medium">
+            Export LUT
+            <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
+              Save your grade as a .cube file
+            </span>
+          </summary>
+          <LutExport
+            hasImage={hasImage}
+            onOverlay={onOverlay}
+            engine={engine}
+            support={
+              capabilityError ? { reason: capabilityError } : latticeSupport
+            }
+          />
+        </details>
+        <details className="mt-3 border-0 border-t border-solid border-border pt-3 text-xs leading-relaxed text-muted-foreground">
+          <summary className="cursor-pointer py-2 text-[13px] text-foreground">
+            Getting started
+          </summary>
+          <ol className="space-y-3 pl-4">
+            <li>
+              Open an image or choose a sample. Samples set the input colour
+              settings for you.
+            </li>
+            <li>
+              Select a node in the graph and adjust its controls here. Start
+              with Exposure.
+            </li>
+            <li>
+              Use Compare in the viewer to judge your changes. Undo brings back
+              the previous adjustment.
+            </li>
+          </ol>
+          <p>
+            Build a grade, one connection at a time. Your edits are reversible.
+          </p>
+          <p>
+            Every adjustment depends only on a pixel’s colour—the kind of change
+            a 3D LUT can represent.
+          </p>
+        </details>
       </div>
     </aside>
   );

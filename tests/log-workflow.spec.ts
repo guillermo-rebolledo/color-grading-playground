@@ -1,3 +1,4 @@
+import { revealInspector } from "./fixtures";
 import { openNeutralGraph } from "./fixtures";
 import { test, expect } from "@playwright/test";
 import { PNG } from "pngjs";
@@ -45,9 +46,11 @@ for (const profile of [
     await exposure.press("Enter");
     await expect.poll(grey).toBeGreaterThanOrEqual(161);
     expect(await grey()).toBeLessThanOrEqual(163);
+    await revealInspector(page, "Colour pipeline");
     await page
       .getByLabel("Output transfer", { exact: true })
       .selectOption(profile.transfer);
+    await revealInspector(page, "Colour pipeline");
     await page
       .getByLabel("Output primaries", { exact: true })
       .selectOption(profile.primaries);

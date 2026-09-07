@@ -148,11 +148,6 @@ export function Scopes({
   const report = current?.report;
   return (
     <>
-      <p className="scope-description">
-        Measured: {encodingLabel(graph.colour.output)} · diagnostic range 0–1,
-        after Output policy, before display conversion. Outside values
-        accumulate at the endpoints.
-      </p>
       <p className="scope-status" aria-label="Scope status">
         {!image
           ? "Load an image to inspect scopes."
@@ -178,6 +173,16 @@ export function Scopes({
           </>
         )}
       </div>
+      <details className="mx-4 my-2 text-[11px] text-muted-foreground">
+        <summary className="cursor-pointer py-1">
+          How to read these scopes
+        </summary>
+        <p className="scope-description">
+          Measured: {encodingLabel(graph.colour.output)} · diagnostic range 0–1,
+          after Output policy, before display conversion. Outside values
+          accumulate at the endpoints.
+        </p>
+      </details>
     </>
   );
 }

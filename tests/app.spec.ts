@@ -1,3 +1,4 @@
+import { revealInspector } from "./fixtures";
 import { openNeutralGraph } from "./fixtures";
 import { test, expect } from "@playwright/test";
 
@@ -473,6 +474,7 @@ test("project colour settings and CST edits share reversible graph history", asy
   await expect(
     page.getByLabel("Working transfer", { exact: true }),
   ).toHaveValue("linear");
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Input primaries", { exact: true })
     .selectOption("dci-p3");
@@ -484,6 +486,7 @@ test("project colour settings and CST edits share reversible graph history", asy
   await expect(page.getByLabel("Input primaries", { exact: true })).toHaveValue(
     "dci-p3",
   );
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Output transfer", { exact: true })
     .selectOption("gamma24");
