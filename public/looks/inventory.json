@@ -128,7 +128,12 @@
             "vibrance": 0.12
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/warm-portrait-negative.png",
+        "sha256": "0fe9d184734749d8a634bf37ce34cb19053f552490a433b88927798ead55904d",
+        "definitionHash": "dc63c2f3"
+      }
     },
     {
       "id": "consumer-warm-negative",
@@ -268,7 +273,12 @@
             "vibrance": 0.1
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/consumer-warm-negative.png",
+        "sha256": "11ee687075bfd88cd029b0289dee3074eb6b382ece63e1327fd8e52dd939d13d",
+        "definitionHash": "3601c0f3"
+      }
     },
     {
       "id": "vivid-negative",
@@ -380,7 +390,12 @@
             "vibrance": -0.05
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/vivid-negative.png",
+        "sha256": "88dd0028d053009008eb98a50d1eaf40469370c7b97a1a86d9da1f6693aedd51",
+        "definitionHash": "ba63fd06"
+      }
     },
     {
       "id": "cool-consumer-negative",
@@ -516,7 +531,12 @@
             "vibrance": 0.08
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/cool-consumer-negative.png",
+        "sha256": "0e1aca22e3c4d6090f449f08ab975195c53e1713d7999b4ce830f1521235e042",
+        "definitionHash": "f2c65730"
+      }
     },
     {
       "id": "tungsten-night",
@@ -640,7 +660,12 @@
             "vibrance": 0.06
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/tungsten-night.png",
+        "sha256": "478683e1cb1fa65506f39cf50df63139ec52abca2a88d54b1149939b7975dfbf",
+        "definitionHash": "092b488b"
+      }
     },
     {
       "id": "saturated-slide",
@@ -776,7 +801,12 @@
             "vibrance": -0.1
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/saturated-slide.png",
+        "sha256": "d08239a35015344dbfc9086e702c9b2f77d0ccd70eb3314c0291e4f9a7ed9f7d",
+        "definitionHash": "a085af8f"
+      }
     },
     {
       "id": "neutral-slide",
@@ -876,7 +906,12 @@
             "vibrance": 0.04
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/neutral-slide.png",
+        "sha256": "9c7662c42698c8260196327b458415f71315d20c0d1ec9f84973d5756e1a831d",
+        "definitionHash": "a93266ba"
+      }
     },
     {
       "id": "classic-panchromatic-bw",
@@ -980,7 +1015,12 @@
             "vibrance": 0
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/classic-panchromatic-bw.png",
+        "sha256": "6e430d231d858b87def1d8bf166939b4ef0d583ff576b2123c2b4eeb74386268",
+        "definitionHash": "8e1901a4"
+      }
     },
     {
       "id": "modern-tabular-bw",
@@ -1084,7 +1124,12 @@
             "vibrance": 0
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/modern-tabular-bw.png",
+        "sha256": "87dfea7baf99709caebf6a1e21103b631f56ef9af82d848e8be16ccd53173797",
+        "definitionHash": "140abf64"
+      }
     },
     {
       "id": "budget-bw",
@@ -1188,7 +1233,12 @@
             "vibrance": 0
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/budget-bw.png",
+        "sha256": "559ec2d7d9155b0972b79942f031eaec759fa969d8663a3046f98a1d07c9a51b",
+        "definitionHash": "9e3e02fb"
+      }
     },
     {
       "id": "chromogenic-bw",
@@ -1288,7 +1338,12 @@
             "vibrance": 0
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/chromogenic-bw.png",
+        "sha256": "eb9cc1cc56e9a98d3dc4ae2b32dee10f69af3ddf6b99ce43491c9a7281245c3b",
+        "definitionHash": "a5477f12"
+      }
     },
     {
       "id": "daylight-motion-picture",
@@ -1412,7 +1467,12 @@
             "vibrance": 0.06
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/daylight-motion-picture.png",
+        "sha256": "73dbd9eccd6af7559adda494e4680201337324dc4525ab1bed8e05f1a974f393",
+        "definitionHash": "e2d75729"
+      }
     },
     {
       "id": "tungsten-motion-picture",
@@ -1548,7 +1608,17 @@
             "vibrance": 0.06
           }
         }
-      ]
+      ],
+      "preview": {
+        "file": "previews/tungsten-motion-picture.png",
+        "sha256": "440c284de2f783bfcdc86b305ba0243e0585d18128d62265e7ac011db2c97bcb",
+        "definitionHash": "66505f01"
+      }
     }
-  ]
+  ],
+  "reference": {
+    "sample": "canal-actors",
+    "title": "Canal conversation — Tears of Steel",
+    "license": "CC-BY-3.0"
+  }
 }
