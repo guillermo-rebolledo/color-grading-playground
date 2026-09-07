@@ -419,6 +419,11 @@ test("rebuild the active graph with Delete and resume live exposure rendering", 
     await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
     await page.mouse.down();
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 });
+    // A deliberate drop must not let edge auto-pan move the target port away.
+    await page.waitForTimeout(300);
+    const targetAfterHold = (await to.boundingBox())!;
+    expect(targetAfterHold.x).toBeCloseTo(b.x, 1);
+    expect(targetAfterHold.y).toBeCloseTo(b.y, 1);
     await page.mouse.up();
   };
   await connect(
