@@ -264,3 +264,154 @@ test("look provenance must be text", async ({ page }) => {
   );
   expect(error).toContain("Look provenance must be text");
 });
+
+/** The picker and the inspector Look section, through their real UI. */
+async function openApp(page: Page) {
+  await page.goto("/");
+  // The app restores any saved project on startup; wait for that to settle
+  // before driving the store, or the restore lands on top of the test.
+  await expect(page.getByLabel("Inspector")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Browse looks" }),
+  ).toBeEnabled();
+}
+
+async function applyFirstLook(page: Page, name = "Warm Portrait Negative") {
+  await openApp(page);
+  await page.getByRole("button", { name: "Browse looks" }).click();
+  await page.getByRole("button", { name: `Apply ${name}` }).click();
+}
+
+test("the picker applies a look and the topbar regains focus", async ({
+  page,
+}) => {
+  await applyFirstLook(page);
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Browse looks" }),
+  ).toBeFocused();
+  const inspector = page.getByLabel("Inspector");
+  await expect(
+    inspector.getByRole("heading", { name: "Warm Portrait Negative" }),
+  ).toBeVisible();
+  await expect(
+    inspector.getByRole("spinbutton", { name: "Look intensity" }),
+  ).toHaveValue("1");
+});
+
+test("the Look section rides above the selected node's own controls", async ({
+  page,
+}) => {
+  await applyFirstLook(page);
+  const inspector = page.getByLabel("Inspector");
+  // Blend is selected after insertion, so both sections are on screen at once.
+  const look = inspector.getByRole("region", { name: "Look" });
+  await expect(look).toBeVisible();
+  await expect(
+    inspector.getByRole("spinbutton", { name: "Blend amount" }),
+  ).toBeVisible();
+  const lookBox = await look.boundingBox();
+  const blendBox = await inspector
+    .getByRole("spinbutton", { name: "Blend amount" })
+    .boundingBox();
+  expect(lookBox!.y).toBeLessThan(blendBox!.y);
+});
+
+test("intensity is one history step and undo restores it", async ({ page }) => {
+  await applyFirstLook(page);
+  const intensity = page.getByRole("spinbutton", { name: "Look intensity" });
+  await intensity.fill("0.4");
+  await intensity.blur();
+  await expect(intensity).toHaveValue("0.4");
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(intensity).toHaveValue("1");
+});
+
+test("remove look takes the graph back to where it started", async ({
+  page,
+}) => {
+  await openApp(page);
+  const nodes = page.locator(".graph-node");
+  const before = await nodes.count();
+  await page.getByRole("button", { name: "Browse looks" }).click();
+  await page.getByRole("button", { name: "Apply Saturated Slide" }).click();
+  await expect(page.locator(".look-node")).toHaveCount(6);
+  expect(await nodes.count()).toBe(before + 6);
+  await page.getByRole("button", { name: "Remove look" }).click();
+  await expect(page.locator(".look-node")).toHaveCount(0);
+  expect(await nodes.count()).toBe(before);
+});
+
+test("swapping an edited look asks first; an untouched one does not", async ({
+  page,
+}) => {
+  await applyFirstLook(page);
+  // Untouched: the swap goes straight through.
+  await page.getByRole("button", { name: "Swap look" }).click();
+  await page.getByRole("button", { name: "Apply Vivid Negative" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Vivid Negative" }),
+  ).toBeVisible();
+
+  // Edit one of the look's own nodes on the canvas, through the inspector.
+  await page.locator(".look-node").filter({ hasText: "CDL" }).click();
+  const slope = page.getByRole("spinbutton", { name: "Slope R", exact: true });
+  await slope.fill("1.4");
+  await slope.blur();
+  await expect(
+    page.getByRole("heading", { name: "Vivid Negative (modified)" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Swap look" }).click();
+  await page.getByRole("button", { name: "Apply Neutral Slide" }).click();
+  const confirm = page.getByRole("alertdialog", {
+    name: "Replace edited look",
+  });
+  await expect(confirm).toBeVisible();
+  await confirm.getByRole("button", { name: "Replace look" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Neutral Slide" }),
+  ).toBeVisible();
+});
+
+test("reset look is offered for a shipped look and withheld for a broken one", async ({
+  page,
+}) => {
+  await applyFirstLook(page);
+  await expect(page.getByRole("button", { name: "Reset look" })).toBeEnabled();
+  // Delete one of the look's nodes: the cluster is no longer a shipped look.
+  await page.locator(".look-node").filter({ hasText: "CDL" }).click();
+  await page.getByRole("button", { name: "Delete selection" }).click();
+  await page.locator(".look-node").first().click();
+  await expect(
+    page.getByRole("heading", { name: /^Custom look \(from/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reset look" })).toBeDisabled();
+});
+
+test("the picker refuses a graph with no Output to apply a look to", async ({
+  page,
+}) => {
+  await openApp(page);
+  await page.locator(".graph-node").filter({ hasText: "Output" }).click();
+  await page.getByRole("button", { name: "Delete selection" }).click();
+  await page.getByRole("button", { name: "Browse looks" }).click();
+  await expect(page.getByText(/Add an Output node/)).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Apply Vivid Negative" }),
+  ).toBeDisabled();
+});
+
+test("the stage still does not scroll with a look applied", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await applyFirstLook(page);
+  const overflow = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollHeight,
+    client: document.documentElement.clientHeight,
+    rail: document.querySelector(".inspector")?.getBoundingClientRect().width,
+  }));
+  expect(overflow.scroll).toBeLessThanOrEqual(overflow.client);
+  expect(overflow.rail).toBe(328);
+});
