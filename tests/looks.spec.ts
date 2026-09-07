@@ -153,9 +153,7 @@ test("intensity is the Blend amount, and zero is a no-op", async ({ page }) => {
     })()`,
   );
   expect(none).toBe(base);
-  // The placeholder definitions are still identity, so this only asserts that
-  // the sandwich itself is transparent. MEM-236 makes the looks differ.
-  expect(full.length).toBeGreaterThan(0);
+  expect(full).not.toBe(base);
 });
 
 test("a dismantled cluster degrades to a custom look", async ({ page }) => {
@@ -414,4 +412,52 @@ test("the stage still does not scroll with a look applied", async ({
   }));
   expect(overflow.scroll).toBeLessThanOrEqual(overflow.client);
   expect(overflow.rail).toBe(328);
+});
+
+test("every look changes the image, and no two looks agree", async ({
+  page,
+}) => {
+  const { identity, lattices } = await evaluateLooks<{
+    identity: string;
+    lattices: Record<string, string>;
+  }>(
+    page,
+    `(() => {
+      const canvas = document.createElement("canvas");
+      const gpu = new engine.GradingEngine(canvas);
+      try {
+        const neutral = engine.createGraph();
+        const lattice = (graph) =>
+          Array.from(gpu.renderLattice(graph, 17)).map((v) => v.toFixed(4)).join(",");
+        const lattices = {};
+        for (const look of looks.looks)
+          lattices[look.id] = lattice(looks.withLook(neutral, look));
+        return { identity: lattice(neutral), lattices };
+      } finally {
+        gpu.dispose();
+      }
+    })()`,
+  );
+  const seen = new Map<string, string>();
+  for (const [id, samples] of Object.entries(lattices)) {
+    expect(samples, `${id} is an identity transform`).not.toBe(identity);
+    const twin = seen.get(samples);
+    expect(twin, `${id} is indistinguishable from ${twin}`).toBeUndefined();
+    seen.set(samples, id);
+  }
+});
+
+test("a graded project with a look still fits a share link", async ({
+  page,
+}) => {
+  const length = await evaluateLooks<number>(
+    page,
+    `(async () => {
+      const shared = await import("/src/sharedProject.ts");
+      const graph = looks.withLook(engine.createStarterGraph(), looks.looks[5]);
+      return shared.createShareLink({ version: 1, graph, source: null }).length;
+    })()`,
+  );
+  // The fragment limit is 16 KiB; a look must not eat the user's budget.
+  expect(length).toBeLessThan(8 * 1024);
 });
