@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "issue": "MEM-233",
+  "lookSpace": {
+    "transfer": "davinci-intermediate",
+    "primaries": "davinci-wide-gamut"
+  },
+  "looks": [
+    {
+      "id": "warm-portrait-negative",
+      "name": "Warm Portrait Negative",
+      "group": "Colour negative",
+      "description": "Gentle warm skin, soft shoulder, restrained saturation.",
+      "referenceStocks": ["Kodak Portra 160", "Portra 400", "Portra 800"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "consumer-warm-negative",
+      "name": "Consumer Warm Negative",
+      "group": "Colour negative",
+      "description": "Yellow-forward warmth with a brighter, punchier midtone.",
+      "referenceStocks": [
+        "Kodak Gold 200",
+        "Kodak ColorPlus 200",
+        "Kodak UltraMax 400"
+      ],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "vivid-negative",
+      "name": "Vivid Negative",
+      "group": "Colour negative",
+      "description": "High saturation and contrast with cool, dense shadows.",
+      "referenceStocks": ["Kodak Ektar 100"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "cool-consumer-negative",
+      "name": "Cool Consumer Negative",
+      "group": "Colour negative",
+      "description": "Green-leaning midtones and cooler skin than the Kodak families.",
+      "referenceStocks": ["Fujicolor C200", "Fujifilm 400"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "tungsten-night",
+      "name": "Tungsten Night",
+      "group": "Colour negative",
+      "description": "Tungsten-balanced night palette with cyan shadows. No halation: see docs/film-looks.md.",
+      "referenceStocks": ["Cinestill 800T"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "saturated-slide",
+      "name": "Saturated Slide",
+      "group": "Slide",
+      "description": "Extreme saturation, deep blacks, a short and steep tonal range.",
+      "referenceStocks": ["Fujifilm Velvia 50", "Velvia 100"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "neutral-slide",
+      "name": "Neutral Slide",
+      "group": "Slide",
+      "description": "Clean neutral transparency: contrast without a colour bias.",
+      "referenceStocks": ["Fujifilm Provia 100F", "Kodak Ektachrome E100"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "classic-panchromatic-bw",
+      "name": "Classic Panchromatic B&W",
+      "group": "Black and white",
+      "description": "Traditional grain-era tonality: heavier reds, a long shoulder.",
+      "referenceStocks": [
+        "Ilford HP5 Plus 400",
+        "Kodak Tri-X 400",
+        "Ilford FP4 Plus 125"
+      ],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "modern-tabular-bw",
+      "name": "Modern Tabular B&W",
+      "group": "Black and white",
+      "description": "Straighter, cleaner monochrome response with an even grey scale.",
+      "referenceStocks": [
+        "Kodak T-Max 100",
+        "Kodak T-Max P3200",
+        "Ilford Delta 3200"
+      ],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "budget-bw",
+      "name": "Budget B&W",
+      "group": "Black and white",
+      "description": "Blue-sensitive, higher contrast, brighter skies than the classics.",
+      "referenceStocks": [
+        "Kentmere 100",
+        "Kentmere 400",
+        "Fomapan 100/200/400"
+      ],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "chromogenic-bw",
+      "name": "Chromogenic B&W",
+      "group": "Black and white",
+      "description": "Low-contrast monochrome with a soft toe and open highlights.",
+      "referenceStocks": ["Ilford XP2 Super"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "daylight-motion-picture",
+      "name": "Daylight Motion Picture",
+      "group": "Motion picture",
+      "description": "Daylight-balanced camera negative with a printed contrast curve.",
+      "referenceStocks": ["Kodak Vision3 50D (5203)", "Vision3 250D (5207)"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    },
+    {
+      "id": "tungsten-motion-picture",
+      "name": "Tungsten Motion Picture",
+      "group": "Motion picture",
+      "description": "Tungsten-balanced camera negative with a printed contrast curve.",
+      "referenceStocks": ["Kodak Vision3 200T (5213)", "Vision3 500T (5219)"],
+      "nodes": [
+        { "type": "curves" },
+        { "type": "cdl" },
+        { "type": "saturation" }
+      ]
+    }
+  ]
+}
