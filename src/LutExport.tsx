@@ -1,5 +1,13 @@
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
-import { useGraph } from "./graphStore";
+import { Button } from "@/components/ui/button";
+import { useGraph } from "@/graphStore";
 import {
   GradingEngine,
   cubeFileBytes,
@@ -15,7 +23,7 @@ import {
   type LatticeFormat,
   type FidelityResult,
   type LutInterpolation,
-} from "./engine/GradingEngine";
+} from "@/engine/GradingEngine";
 
 /** The Output node's clamp policy; the inspector and LUT export edit the same value. */
 export function OutputRangeSelect({
@@ -146,187 +154,217 @@ export function LutExport({
 
   return (
     <section className="lut-export" aria-labelledby="lut-heading">
-      <span className="eyebrow" id="lut-heading">
-        LUT EXPORT
-      </span>
-      <label>
-        Title
-        <input
-          aria-label="LUT title"
-          value={title}
-          maxLength={cubeTitleLength}
-          onChange={(event) => {
-            setTitle(event.target.value);
-            setReport(null);
-          }}
-        />
-      </label>
-      <label>
-        Size
-        <select
-          aria-label="LUT size"
-          value={size}
-          onChange={(event) => {
-            const value = Number(event.target.value);
-            if (isCubeSize(value)) setSize(value);
-          }}
-        >
-          {cubeSizes.map((option) => (
-            <option key={option} value={option}>
-              {option}³ · {option ** 3} rows
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Output range
-        <OutputRangeSelect output={output} label="LUT output range" />
-      </label>
-      <p className="lut-summary">
-        Maps {encodingLabel(graph.colour.input)} codes 0–1 to{" "}
-        {encodingLabel(graph.colour.output)}, using the preview's grading
-        program. Range is shared with the Output node:{" "}
-        {clamp === "unbounded"
-          ? "out-of-range values are preserved."
-          : "values clamp to 0–1."}
-        {support && "format" in support
-          ? support.format === "RGBA16F"
-            ? " This device reads back half-float samples, about three decimal digits."
-            : " This device reads back 32-bit float samples (RGBA32F)."
-          : ""}
-      </p>
-      {size === 65 && (
-        <p className="lut-warning" role="status">
-          65³ writes about {Math.round(megabytes)} MB. 33³ is enough for most
-          grades.
-        </p>
-      )}
-      <button
-        className="primary-button"
-        disabled={!support || !!reason}
-        onClick={exportLut}
-      >
-        Export .cube
-      </button>
-      <label>
-        Interpolation
-        <select
-          aria-label="LUT interpolation"
-          value={interpolation}
-          onChange={(event) =>
-            setInterpolation(
-              event.target.value === "tetrahedral"
-                ? "tetrahedral"
-                : "trilinear",
-            )
-          }
-        >
-          <option value="trilinear">Trilinear</option>
-          <option value="tetrahedral">Tetrahedral</option>
-        </select>
-      </label>
-      <button
-        className="primary-button"
-        disabled={!hasImage || !support || !!reason}
-        onClick={measure}
-      >
-        Measure LUT fidelity
-      </button>
-      {!hasImage && (
-        <p className="lut-summary">Load an image to measure LUT fidelity.</p>
-      )}
-      {measured && !validReport && (
-        <p role="status">Settings changed. Measure again.</p>
-      )}
-      {validReport && (
-        <section className="fidelity-report" aria-label="LUT fidelity report">
-          <p>
-            <strong>Overall maximum: {validReport.maximum.toFixed(3)}</strong>{" "}
-            code values
-          </p>
-          <table>
-            <caption>
-              Absolute RGB error × 255, before display conversion
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Channel</th>
-                <th scope="col">Maximum</th>
-                <th scope="col">P95</th>
-              </tr>
-            </thead>
-            <tbody>
-              {validReport.channels.map((channel, i) => (
-                <tr key={i}>
-                  <th scope="row">{["R", "G", "B"][i]}</th>
-                  <td>{channel.maximum.toFixed(3)}</td>
-                  <td>{channel.p95.toFixed(3)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p>
-            {validReport.sampleCount.toLocaleString()} in-domain samples ·{" "}
-            {validReport.width} × {validReport.height} full capped preview.{" "}
-            {validReport.transparentCount.toLocaleString()} transparent pixels
-            excluded.
-          </p>
-          <p
-            className={
-              validReport.outOfDomainCount ? "lut-warning" : "lut-summary"
-            }
-          >
-            {validReport.outOfDomainCount.toLocaleString()} inputs outside the
-            LUT domain (0–1), excluded from metrics and overlay.
-          </p>
-          {validReport.sampleCount === 0 && (
-            <p className="lut-warning">
-              No eligible samples. Zero metrics do not indicate fidelity.
+      <Accordion type="single" collapsible>
+        <AccordionItem value="export">
+          <AccordionTrigger>
+            <span id="lut-heading">LUT EXPORT</span>
+            <span className="lut-settings">
+              {size}³ ·{" "}
+              {interpolation === "trilinear" ? "Trilinear" : "Tetrahedral"}
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="lut-content">
+            <label>
+              Title
+              <Input
+                field="text"
+                aria-label="LUT title"
+                value={title}
+                maxLength={cubeTitleLength}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  setReport(null);
+                }}
+              />
+            </label>
+            <label>
+              Size
+              <select
+                aria-label="LUT size"
+                value={size}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (isCubeSize(value)) setSize(value);
+                }}
+              >
+                {cubeSizes.map((option) => (
+                  <option key={option} value={option}>
+                    {option}³ · {option ** 3} rows
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Output range
+              <OutputRangeSelect output={output} label="LUT output range" />
+            </label>
+            <p className="lut-summary">
+              Maps {encodingLabel(graph.colour.input)} codes 0–1 to{" "}
+              {encodingLabel(graph.colour.output)}, using the preview's grading
+              program. Range is shared with the Output node:{" "}
+              {clamp === "unbounded"
+                ? "out-of-range values are preserved."
+                : "values clamp to 0–1."}
+              {support && "format" in support
+                ? support.format === "RGBA16F"
+                  ? " This device reads back half-float samples, about three decimal digits."
+                  : " This device reads back 32-bit float samples (RGBA32F)."
+                : ""}
             </p>
-          )}
-          <p>
-            {validReport.size}³ ·{" "}
-            {validReport.interpolation === "trilinear"
-              ? "Trilinear"
-              : "Tetrahedral"}{" "}
-            · {validReport.precision} precision · six-decimal LUT. P95 uses
-            nearest rank.
-          </p>
-          <p>
-            Export .cube downloads this measured artifact. Image-based
-            measurement is not a global error bound for all possible colours.
-          </p>
-          {validReport.advice.map((text) => (
-            <p key={text} className="lut-warning">
-              {text}
-            </p>
-          ))}
-          <label className="fidelity-toggle">
-            <input
-              type="checkbox"
-              checked={showOverlay}
-              onChange={(e) => setShowOverlay(e.target.checked)}
-            />
-            Show LUT error overlay
-          </label>
-          {showOverlay && (
-            <p>
-              Largest channel error per pixel: blue = 0, yellow = 2, red ≥ 4
-              code values. Excluded pixels are clear. Measures the current full
-              grade, regardless of solo or comparison.
-            </p>
-          )}
-        </section>
-      )}
-      {reason && <p className="lut-reason">{reason}</p>}
-      {status && (
-        <p
-          className={status.kind === "error" ? "lut-reason" : "lut-summary"}
-          role={status.kind === "error" ? "alert" : "status"}
-        >
-          {status.text}
-        </p>
-      )}
+            {size === 65 && (
+              <p className="lut-warning" role="status">
+                65³ writes about {Math.round(megabytes)} MB. 33³ is enough for
+                most grades.
+              </p>
+            )}
+            <Button
+              accent
+              className="my-2"
+              disabled={!support || !!reason}
+              onClick={exportLut}
+            >
+              Export .cube
+            </Button>
+            <label>
+              Interpolation
+              <select
+                aria-label="LUT interpolation"
+                value={interpolation}
+                onChange={(event) =>
+                  setInterpolation(
+                    event.target.value === "tetrahedral"
+                      ? "tetrahedral"
+                      : "trilinear",
+                  )
+                }
+              >
+                <option value="trilinear">Trilinear</option>
+                <option value="tetrahedral">Tetrahedral</option>
+              </select>
+            </label>
+            <Button
+              accent
+              className="my-2"
+              disabled={!hasImage || !support || !!reason}
+              onClick={measure}
+            >
+              Measure LUT fidelity
+            </Button>
+            {!hasImage && (
+              <p className="lut-summary">
+                Load an image to measure LUT fidelity.
+              </p>
+            )}
+            {measured && !validReport && (
+              <p role="status">Settings changed. Measure again.</p>
+            )}
+            {validReport && (
+              <section
+                className="grid gap-2 border-t border-border pt-3 text-xs text-foreground [&_p]:m-0 [&_p]:leading-normal"
+                aria-label="LUT fidelity report"
+              >
+                <p>
+                  <strong className="font-medium">
+                    Overall maximum:{" "}
+                    <span className="font-mono text-[11px] tabular-nums">
+                      {validReport.maximum.toFixed(3)}
+                    </span>
+                  </strong>{" "}
+                  code values
+                </p>
+                <table className="w-full border-collapse text-[11px] [&_th]:h-6 [&_th]:border-b [&_th]:border-border [&_th]:px-1 [&_th]:py-1 [&_th]:text-right [&_th]:font-medium [&_th:first-child]:text-left [&_td]:h-6 [&_td]:border-b [&_td]:border-border [&_td]:px-1 [&_td]:py-1 [&_td]:text-right [&_td]:font-mono [&_td]:tabular-nums">
+                  <caption className="mb-2 text-left text-xs text-foreground">
+                    Absolute RGB error × 255, before display conversion
+                  </caption>
+                  <thead className="bg-secondary">
+                    <tr>
+                      <th scope="col">Channel</th>
+                      <th scope="col">Maximum</th>
+                      <th scope="col">P95</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {validReport.channels.map((channel, i) => (
+                      <tr key={i}>
+                        <th
+                          className={["text-ch-r", "text-ch-g", "text-ch-b"][i]}
+                          scope="row"
+                        >
+                          {["R", "G", "B"][i]}
+                        </th>
+                        <td>{channel.maximum.toFixed(3)}</td>
+                        <td>{channel.p95.toFixed(3)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="font-mono text-[11px] tabular-nums">
+                  {validReport.sampleCount.toLocaleString()} in-domain samples ·{" "}
+                  {validReport.width} × {validReport.height} full capped
+                  preview. {validReport.transparentCount.toLocaleString()}{" "}
+                  transparent pixels excluded.
+                </p>
+                <p
+                  className={`font-mono text-[11px] tabular-nums ${validReport.outOfDomainCount ? "text-warning" : "text-foreground"}`}
+                >
+                  {validReport.outOfDomainCount.toLocaleString()} inputs outside
+                  the LUT domain (0–1), excluded from metrics and overlay.
+                </p>
+                {validReport.sampleCount === 0 && (
+                  <p className="text-warning">
+                    No eligible samples. Zero metrics do not indicate fidelity.
+                  </p>
+                )}
+                <p className="font-mono text-[11px] tabular-nums">
+                  {validReport.size}³ ·{" "}
+                  {validReport.interpolation === "trilinear"
+                    ? "Trilinear"
+                    : "Tetrahedral"}{" "}
+                  · {validReport.precision} precision · six-decimal LUT. P95
+                  uses nearest rank.
+                </p>
+                <p>
+                  Export .cube downloads this measured artifact. Image-based
+                  measurement is not a global error bound for all possible
+                  colours.
+                </p>
+                {validReport.advice.map((text) => (
+                  <p key={text} className="text-warning">
+                    {text}
+                  </p>
+                ))}
+                <label className="flex h-6 items-center gap-2 text-[11px]">
+                  <input
+                    className="m-0 h-3 w-3 p-0 accent-primary"
+                    type="checkbox"
+                    checked={showOverlay}
+                    onChange={(e) => setShowOverlay(e.target.checked)}
+                  />
+                  Show LUT error overlay
+                </label>
+                {showOverlay && (
+                  <p>
+                    Largest channel error per pixel: blue = 0, yellow = 2, red ≥
+                    4 code values. Excluded pixels are clear. Measures the
+                    current full grade, regardless of solo or comparison.
+                  </p>
+                )}
+              </section>
+            )}
+            {reason && <p className="lut-reason">{reason}</p>}
+            {status && (
+              <p
+                className={
+                  status.kind === "error" ? "lut-reason" : "lut-summary"
+                }
+                role={status.kind === "error" ? "alert" : "status"}
+              >
+                {status.text}
+              </p>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </section>
   );
 }

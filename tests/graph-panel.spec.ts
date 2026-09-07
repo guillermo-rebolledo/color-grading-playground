@@ -28,6 +28,15 @@ test("graph toolbar reports zoom changes and fits the graph", async ({
   await openNeutralGraph(page);
   const zoom = page.getByLabel("Graph zoom", { exact: true });
   await expect(zoom).toHaveText(/^\d+%$/);
+  // The fixture replaces the starter graph; let its measured nodes fit before
+  // recording the viewport that the toolbar should restore.
+  await page.getByRole("button", { name: "Fit View", exact: true }).click();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      }),
+  );
   const initial = await zoom.textContent();
   await page.getByRole("button", { name: "Zoom In", exact: true }).click();
   await expect(zoom).not.toHaveText(initial!);

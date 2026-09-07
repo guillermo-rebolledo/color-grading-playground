@@ -23,7 +23,7 @@ export function UnsupportedDevice({
     <>
       {inline ? <h2>{heading}</h2> : <h1>{heading}</h1>}
       <p>{detail}</p>
-      <p className="unsupported-requirements">
+      <p className="text-foreground">
         {inline
           ? "Grading needs WebGL2 with 32-bit float rendering."
           : `Grading needs a window at least ${MINIMUM_WIDTH} pixels wide, and WebGL2 with 32-bit float rendering.`}{" "}
@@ -33,13 +33,18 @@ export function UnsupportedDevice({
     </>
   );
   return inline ? (
-    <div className="capability-error" role="alert">
+    <div
+      className="absolute max-w-[410px] border border-destructive bg-card p-6 text-center text-xs leading-normal text-foreground [&_h2]:m-0 [&_h2]:text-lg [&_h2]:font-medium [&_p]:my-3"
+      role="alert"
+    >
       {body}
     </div>
   ) : (
-    <main className="unsupported-device">
-      <div className="unsupported-card">
-        <span className="eyebrow">COLOUR GRADING PLAYGROUND</span>
+    <main className="grid h-dvh place-items-center bg-background p-6">
+      <div className="max-w-[520px] border border-border bg-card p-6 text-xs leading-normal [&_h1]:my-4 [&_h1]:text-lg [&_h1]:font-medium [&_p]:mb-4 [&_button]:h-6 [&_button]:px-2">
+        <span className="text-[10px] tracking-widest text-muted-foreground">
+          COLOUR GRADING PLAYGROUND
+        </span>
         {body}
       </div>
     </main>

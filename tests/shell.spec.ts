@@ -1,4 +1,4 @@
-import { openNeutralGraph } from "./fixtures";
+import { openNeutralGraph, openLutExport } from "./fixtures";
 import { test, expect, type Page } from "@playwright/test";
 
 async function openImage(page: Page) {
@@ -85,12 +85,13 @@ test("the inspector keeps its width and its order across node types", async ({
   await openNeutralGraph(page);
   await openImage(page);
   const inspector = page.getByRole("complementary", { name: "Inspector" });
+  await openLutExport(page);
   // The panel's fixed sections, in the order a colourist learns them.
   const order = async () => {
     const anchors = [
       inspector.getByRole("heading", { name: "Inspector" }),
-      inspector.locator("summary").filter({ hasText: "Colour pipeline" }),
-      inspector.locator("summary").filter({ hasText: "Export LUT" }),
+      inspector.getByRole("button", { name: "Colour pipeline", exact: true }),
+      inspector.getByRole("button", { name: /^LUT EXPORT/ }),
     ];
     const tops = [];
     for (const anchor of anchors) tops.push((await box(page, anchor)).y);

@@ -1,0 +1,318 @@
+/* MEM-228: a fixed rail with 24px rows: 72px label, flexible scrub, 56px
+ * numeric field. Native scrubs keep their accessible roles and keyboard model. */
+.inspector {
+  border-left: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  display: flex;
+  flex-direction: column;
+  contain: size;
+  min-height: 0;
+  font-size: 12px;
+}
+.inspector-count,
+.lut-settings {
+  font: 10px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.inspector-body {
+  padding: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.selected-node {
+  margin-bottom: 12px;
+}
+.selected-node-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 24px;
+}
+.node-type-badge {
+  border: 1px solid var(--line-strong);
+  background: var(--secondary);
+  padding: 0 4px;
+  font-size: 10px;
+}
+.selected-node h3 {
+  margin: 6px 0 4px;
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.selected-node p {
+  margin: 0;
+  font-size: 12px;
+}
+.inspector button {
+  min-height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+:where(
+  .inspector :is(p, .control-help, .encoding-note, .lut-summary, caption)
+) {
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 8px 0;
+}
+.inspector
+  :is(input, select, .range-labels, .lut-summary, .lut-warning, .lut-reason) {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+.inspector input:not([type="range"], [type="checkbox"]),
+.inspector select {
+  height: 20px;
+  min-width: 0;
+  padding: 0 4px;
+}
+.inspector input[type="number"] {
+  width: 56px;
+  text-align: right;
+  appearance: textfield;
+}
+.inspector input[type="number"]::-webkit-inner-spin-button,
+.inspector input[type="number"]::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.parameter-row,
+.adjustment-number {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 56px;
+  align-items: center;
+  column-gap: 6px;
+  height: 24px;
+  font-size: 11px;
+  line-height: 12px;
+}
+.adjustment-number > label {
+  display: contents;
+}
+.adjustment-number > label > span {
+  grid-column: 1;
+  grid-row: 1;
+}
+.adjustment-number input[type="number"],
+.exposure-row .numeric-control {
+  grid-column: 3;
+  grid-row: 1;
+}
+.adjustment-number input[type="range"],
+.exposure-row input[type="range"] {
+  grid-column: 2;
+  grid-row: 1;
+}
+.exposure-row .control-heading {
+  grid-column: 1;
+  grid-row: 1;
+}
+.exposure-row .numeric-control span {
+  display: none;
+}
+.inspector input[type="range"] {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  height: 2px;
+  margin: 0;
+  background: var(--line-strong);
+  cursor: ew-resize;
+}
+.inspector input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
+}
+.inspector input[type="range"]::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
+}
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 62px 0 78px;
+}
+.inspector fieldset {
+  min-width: 0;
+  padding: 4px 0;
+  margin: 8px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+}
+.inspector legend {
+  padding: 0 6px 0 0;
+  font-size: 11px;
+}
+.inspector
+  :is(
+    .encoding-control label,
+    .output-policy,
+    .curve-controls > label,
+    .curve-controls fieldset label,
+    .lut-content > label
+  ) {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 56px;
+  column-gap: 6px;
+  align-items: center;
+  height: 24px;
+  font-size: 11px;
+  line-height: 12px;
+}
+.inspector
+  :is(
+    .encoding-control select,
+    .output-policy select,
+    .curve-controls > label select,
+    .lut-content > label > input,
+    .lut-content > label > select
+  ) {
+  grid-column: 2 / 4;
+  width: 100%;
+}
+.inspector .curve-controls fieldset input {
+  grid-column: 3;
+}
+.pipeline-section,
+.lut-export {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+.inspector [data-slot="accordion"] h3 {
+  margin: 0;
+}
+.inspector [data-slot="accordion-trigger"] {
+  padding: 0;
+  color: var(--foreground);
+}
+.inspector [data-slot="accordion-content"] > div {
+  padding: 4px 0 8px;
+}
+.lut-settings {
+  margin-left: auto;
+}
+.cdl-wheels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  text-align: center;
+  font-size: 11px;
+}
+.colour-wheel {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 8px auto;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--muted-foreground), transparent),
+    conic-gradient(
+      from 90deg,
+      var(--ch-r),
+      var(--ch-b),
+      var(--ch-g),
+      var(--ch-r)
+    );
+  touch-action: none;
+  cursor: crosshair;
+}
+.colour-wheel span {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--foreground);
+  border-radius: 50%;
+  background: var(--surface-void);
+  pointer-events: none;
+}
+.inspector [data-channel="r"] {
+  color: var(--ch-r);
+  --control-ink: var(--ch-r);
+}
+.inspector [data-channel="g"] {
+  color: var(--ch-g);
+  --control-ink: var(--ch-g);
+}
+.inspector [data-channel="b"] {
+  color: var(--ch-b);
+  --control-ink: var(--ch-b);
+}
+.curve-plot {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  touch-action: none;
+  color: var(--foreground);
+  background: var(--surface-void);
+  margin: 8px 0;
+}
+.curve-grid {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 0.6;
+}
+.curve-plot circle {
+  fill: currentColor;
+  stroke: var(--surface-void);
+  stroke-width: 2;
+  cursor: grab;
+}
+.curve-r {
+  color: var(--ch-r);
+}
+.curve-g {
+  color: var(--ch-g);
+}
+.curve-b {
+  color: var(--ch-b);
+}
+.curve-actions {
+  display: flex;
+  gap: 6px;
+}
+.encoding-advisory {
+  border: 1px solid var(--warning);
+  border-left-width: 3px;
+  padding: 8px;
+  margin: 12px 0;
+  background: var(--secondary);
+}
+.encoding-advisory strong,
+.inspector .lut-warning {
+  color: var(--warning);
+}
+.encoding-advisory p {
+  margin: 4px 0;
+}
+.encoding-advisory .declared-encoding {
+  font: 11px/1.5 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.inspector .lut-reason {
+  color: var(--destructive);
+}
+.inspector-footer {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Keep colour fields mounted while the disclosure is closed, without exposing
+ * hidden controls to keyboard or assistive technology. */
+.pipeline-section [data-slot="accordion-content"][data-state="closed"] {
+  display: none;
+}

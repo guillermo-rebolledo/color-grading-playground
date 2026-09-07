@@ -33,9 +33,10 @@ test("beginners can reveal help and experts can reach colour setup and export by
 }) => {
   await page.goto("/");
   const inspector = page.getByRole("complementary", { name: "Inspector" });
-  const pipeline = inspector
-    .locator("summary")
-    .filter({ hasText: "Colour pipeline" });
+  const pipeline = inspector.getByRole("button", {
+    name: "Colour pipeline",
+    exact: true,
+  });
   const input = page.getByLabel("Input transfer", { exact: true });
   await expect(input).toBeHidden();
   await pipeline.focus();
@@ -44,9 +45,7 @@ test("beginners can reveal help and experts can reach colour setup and export by
   await input.selectOption("slog3");
   await pipeline.click();
   await expect(pipeline).toContainText("S-Log3");
-  const exportSection = inspector
-    .locator("summary")
-    .filter({ hasText: "Export LUT" });
+  const exportSection = inspector.getByRole("button", { name: /^LUT EXPORT/ });
   await exportSection.focus();
   await exportSection.press("Enter");
   await expect(

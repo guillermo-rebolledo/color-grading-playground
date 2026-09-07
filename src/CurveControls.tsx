@@ -1,13 +1,14 @@
+import { Input } from "@/components/ui/input";
 import { useRef, useState } from "react";
-import type { GradingNode } from "./engine/GradingEngine";
+import type { GradingNode } from "@/engine/GradingEngine";
 import {
   bakeCurve,
   curveChannels,
   identityCurves,
   type CurveChannel,
   type CurvePoint,
-} from "./engine/curves";
-import { useGraph } from "./graphStore";
+} from "@/engine/curves";
+import { useGraph } from "@/graphStore";
 
 function Coordinate({
   label,
@@ -24,7 +25,7 @@ function Coordinate({
   return (
     <label>
       {label}
-      <input
+      <Input
         aria-label={label}
         type="number"
         min="0"
@@ -62,11 +63,6 @@ export function CurveControls({ node }: { node: GradingNode }) {
   const reset = () => update(identityCurves()[channel]);
   return (
     <div className="adjustment-controls curve-controls">
-      <button
-        onClick={() => updateParameters(node.id, { curves: identityCurves() })}
-      >
-        Reset Curves
-      </button>
       <p className="encoding-note">
         Master then R/G/B, in current branch RGB code values. Drag points or use
         arrow keys. Double-click a point to reset its output to its input.

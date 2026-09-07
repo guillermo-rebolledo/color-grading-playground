@@ -1,4 +1,4 @@
-import { transfers, primaries, type Encoding } from "./engine/GradingEngine";
+import { transfers, primaries, type Encoding } from "@/engine/GradingEngine";
 
 export function EncodingControl({
   label,

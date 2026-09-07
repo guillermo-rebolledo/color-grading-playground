@@ -34,7 +34,7 @@ export function StageDivider({
       : ["ArrowLeft", "ArrowRight"];
   return (
     <div
-      className={`stage-divider stage-divider-${orientation}`}
+      className={`stage-divider shrink-0 border-border bg-background ${orientation === "horizontal" ? "h-1.5 cursor-row-resize border-y" : "w-1.5 cursor-col-resize border-x"}`}
       role="separator"
       tabIndex={0}
       aria-label={label}

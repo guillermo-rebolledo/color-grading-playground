@@ -1,11 +1,41 @@
+import { EncodingAdvisories } from "@/components/EncodingAdvisories";
+import { encodingFlow } from "@/engine/graph";
 import { AdjustmentControls } from "@/AdjustmentControls";
 import { EncodingControl } from "@/EncodingControl";
 import { ExposureControl } from "@/components/ExposureControl";
 import { LutExport, OutputRangeSelect, type LatticeSupport } from "@/LutExport";
 import { encodingLabel } from "@/engine/GradingEngine";
-import type { FidelityResult, GradingEngine } from "@/engine/GradingEngine";
+import {
+  GradingEngine,
+  type FidelityResult,
+  type NodeType,
+} from "@/engine/GradingEngine";
 import { useGraph } from "@/graphStore";
-import { nodeTitle } from "@/nodeTitles";
+import { nodeTypeTitle, nodeTitle } from "@/nodeTitles";
+
+import { adjustmentDefaults } from "@/adjustmentDefaults";
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Icon } from "@/icons";
+
+const descriptions: Record<NodeType, string> = {
+  source: "Declared source encoding",
+  exposure: "Linear light adjustment",
+  cst: "Explicit encoding conversion",
+  cdl: "Slope, offset, power and saturation",
+  contrast: "Contrast around a tonal pivot",
+  saturation: "Saturation and selective vibrance",
+  whiteBalance: "Source-relative temperature and tint",
+  curves: "Master and per-channel tone curves",
+  qualifier: "HSV bands produce a mask",
+  blend: "Mix two branches by amount and mask",
+  output: "Final encoding and output range",
+};
 
 /** The controls for the selected node, the project-wide colour pipeline and
  * LUT export. Fixed on the right, and the same shape for every node type. */
@@ -25,26 +55,67 @@ export function Inspector({
   const graphState = useGraph();
   const { graph } = graphState;
   const selected = graph.nodes.find((n) => n.selected);
+  const flow = GradingEngine.validate(graph) ? null : encodingFlow(graph);
+  function resetSelected() {
+    if (!selected || selected.type === "source") return;
+    graphState.end();
+    if (selected.type === "cst") {
+      const encoding = flow?.inputs.get(selected.id) ?? graph.colour.working;
+      graphState.updateParameters(selected.id, {
+        from: { ...encoding },
+        to: { ...encoding },
+      });
+    } else if (selected.type === "output") {
+      graphState.updateParameters(selected.id, { clamp: "clamp" });
+    } else {
+      graphState.updateParameters(
+        selected.id,
+        selected.type === "exposure"
+          ? { stops: 0 }
+          : structuredClone(adjustmentDefaults[selected.type]),
+      );
+    }
+  }
   return (
-    <aside
-      className="inspector flex min-h-0 flex-col border-0 border-l border-solid border-border bg-card [contain:size]"
-      aria-label="Inspector"
-    >
-      <div className="flex h-9 shrink-0 items-center border-0 border-b border-solid border-border px-4">
-        <h2 className="m-0 text-[13px] font-medium">Inspector</h2>
+    <aside className="inspector" aria-label="Inspector">
+      <div className="flex h-[26px] shrink-0 items-center justify-between gap-3 border-b border-border px-3 text-[11px] text-muted-foreground">
+        <h2 className="text-[13px] font-medium text-foreground">Inspector</h2>
+        <span className="inspector-count">
+          {graph.nodes.filter((node) => node.selected).length} /{" "}
+          {graph.nodes.length} selected
+        </span>
       </div>
-      <div className="inspector-body min-h-0 flex-1 overflow-y-auto p-4">
-        <div className="mb-6">
-          <div>
-            <h3 className="m-0 text-base font-medium">
-              {nodeTitle(selected) || "Select a node"}
-            </h3>
-            <p className="mt-1 mb-0 text-xs text-muted-foreground">
-              {selected?.type === "exposure"
-                ? "Linear light adjustment"
-                : "RGB grading graph"}
-            </p>
+      <div className="inspector-body">
+        <div className="selected-node">
+          <div className="selected-node-heading">
+            {selected && (
+              <span className="node-type-badge">
+                {nodeTypeTitle(selected.type, true)}
+              </span>
+            )}
+            {selected && (
+              <Button
+                size="toolbar"
+                aria-label={
+                  selected.type === "exposure" ? "Reset exposure" : undefined
+                }
+                disabled={selected.type === "source"}
+                title={
+                  selected.type === "source"
+                    ? "Source has no node parameters to reset"
+                    : undefined
+                }
+                onClick={resetSelected}
+              >
+                <Icon.RefreshCw />
+                {selected.type === "exposure"
+                  ? "Reset"
+                  : `Reset ${nodeTypeTitle(selected.type)}`}
+              </Button>
+            )}
           </div>
+          <h3>{nodeTitle(selected) || "Select a node"}</h3>
+          <p>{selected ? descriptions[selected.type] : "RGB grading graph"}</p>
         </div>
         {selected?.type === "exposure" && (
           <ExposureControl
@@ -83,53 +154,54 @@ export function Inspector({
             <OutputRangeSelect output={selected} label="Output range" />
           </label>
         )}
-        <details className="mt-6 border-0 border-t border-solid border-border pt-3">
-          <summary className="cursor-pointer py-2 text-[13px] font-medium">
-            Colour pipeline
-            <span className="mt-1 block truncate text-[11px] font-normal text-muted-foreground">
-              Input: {encodingLabel(graph.colour.input)}
-            </span>
-          </summary>
-          <div className="space-y-3">
-            {(["input", "working", "output"] as const).map((boundary) => (
-              <EncodingControl
-                key={boundary}
-                label={boundary[0].toUpperCase() + boundary.slice(1)}
-                value={graph.colour[boundary]}
-                onChange={(value) =>
-                  graphState.updateColour({
-                    ...graph.colour,
-                    [boundary]: value,
-                  })
-                }
-              />
-            ))}
-          </div>
-          <p className="encoding-note">
-            Source tag: {encodingLabel(graph.colour.input)}. Full-range code
-            values; embedded profiles are not applied. Correct the input tag to
-            match your source. Retagging does not restore highlight range.
-            <br />
-            Viewer conversion is sRGB only; output pixels keep the chosen output
-            encoding.
-          </p>
-        </details>
-        <details className="mt-3 border-0 border-t border-solid border-border pt-3">
-          <summary className="cursor-pointer py-2 text-[13px] font-medium">
-            Export LUT
-            <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
-              Save your grade as a .cube file
-            </span>
-          </summary>
-          <LutExport
-            hasImage={hasImage}
-            onOverlay={onOverlay}
-            engine={engine}
-            support={
-              capabilityError ? { reason: capabilityError } : latticeSupport
-            }
-          />
-        </details>
+        <EncodingAdvisories graph={graph} flow={flow} />
+        <Accordion type="single" collapsible className="pipeline-section">
+          <AccordionItem value="pipeline">
+            <AccordionTrigger
+              aria-label="Colour pipeline"
+              className="h-auto min-h-10 py-2"
+            >
+              <span>
+                Colour pipeline
+                <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
+                  Input: {encodingLabel(graph.colour.input)}
+                </span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent forceMount>
+              {(["input", "working", "output"] as const).map((boundary) => (
+                <EncodingControl
+                  key={boundary}
+                  label={boundary[0].toUpperCase() + boundary.slice(1)}
+                  value={graph.colour[boundary]}
+                  onChange={(value) =>
+                    graphState.updateColour({
+                      ...graph.colour,
+                      [boundary]: value,
+                    })
+                  }
+                />
+              ))}
+              <p className="encoding-note">
+                Source tag: {encodingLabel(graph.colour.input)}. Full-range code
+                values; embedded profiles are not applied. Correct the input tag
+                to match your source. Retagging does not restore highlight
+                range.
+                <br />
+                Viewer conversion is sRGB only; output pixels keep the chosen
+                output encoding.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        <LutExport
+          hasImage={hasImage}
+          onOverlay={onOverlay}
+          engine={engine}
+          support={
+            capabilityError ? { reason: capabilityError } : latticeSupport
+          }
+        />
         <details className="mt-3 border-0 border-t border-solid border-border pt-3 text-xs leading-relaxed text-muted-foreground">
           <summary className="cursor-pointer py-2 text-[13px] text-foreground">
             Getting started

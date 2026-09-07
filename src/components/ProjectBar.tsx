@@ -55,17 +55,19 @@ export function ProjectBar({
         |
       </span>
       {shareLink && (
-        <label className="flex items-center gap-2 text-muted-foreground">
+        <label className="flex min-w-0 flex-wrap items-center gap-2 text-[11px] text-foreground">
           Share link
           <Input
             field="text"
             aria-label="Share link"
             readOnly
             value={shareLink}
-            className="w-[min(360px,32vw)]"
+            className="w-[min(360px,32vw)] shrink-0"
             onFocus={(event) => event.target.select()}
           />
-          <span>Copy this link. Image bytes stay on your device.</span>
+          <span className="text-xs">
+            Copy this link. Image bytes stay on your device.
+          </span>
         </label>
       )}
       <span aria-label="Project status" className="text-muted-foreground">
