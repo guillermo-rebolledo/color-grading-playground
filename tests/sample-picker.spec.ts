@@ -8,12 +8,15 @@ test("browse all bundled samples with verified tags and keep the grade", async (
   page,
 }) => {
   await page.goto("/");
+  await page.getByLabel("Exposure in stops").fill("-2");
+  await page.getByLabel("Exposure in stops").press("Tab");
   await page.getByRole("button", { name: "Browse samples" }).click();
   const gallery = page.getByRole("region", { name: "Bundled log samples" });
   await expect(gallery.getByRole("button")).toHaveCount(9);
-  await page.getByLabel("Exposure in stops").fill("-2");
   let previous: Buffer | undefined;
   for (const sample of inventory.assets) {
+    if (!(await gallery.isVisible()))
+      await page.getByRole("button", { name: "Browse samples" }).click();
     const choice = gallery.getByRole("button", {
       name: sample.title,
       exact: true,
@@ -28,7 +31,7 @@ test("browse all bundled samples with verified tags and keep the grade", async (
       .toBeGreaterThan(0);
     await choice.focus();
     await page.keyboard.press("Enter");
-    await expect(choice).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("dialog")).toBeHidden();
     await expect(
       page.getByLabel("Input transfer", { exact: true }),
     ).toHaveValue(sample.encoding.transfer);
@@ -39,6 +42,9 @@ test("browse all bundled samples with verified tags and keep the grade", async (
     await expect(page.getByLabel("Sample provenance")).toContainText(
       "16-bit · full range",
     );
+    const provenance = page.getByLabel("Sample provenance");
+    if (!(await provenance.evaluate((element) => element.hasAttribute("open"))))
+      await provenance.locator("summary").click();
     await expect(
       page
         .getByLabel("Sample provenance")
@@ -65,7 +71,7 @@ test("failed sample requests preserve the image, source tags and edits, then all
     exact: true,
   });
   await desk.click();
-  await expect(desk).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("dialog")).toBeHidden();
   await page.getByLabel("Exposure in stops").fill("-2");
   await page.getByLabel("Exposure in stops").press("Tab");
   const canvas = page.getByLabel("Graded image preview");
@@ -79,6 +85,8 @@ test("failed sample requests preserve the image, source tags and edits, then all
             body: "broken image",
           }),
     );
+    if (!(await gallery.isVisible()))
+      await page.getByRole("button", { name: "Browse samples" }).click();
     await tree.click();
     await expect(page.getByRole("alert")).toBeVisible();
     await expect(desk).toHaveAttribute("aria-pressed", "true");
@@ -86,11 +94,13 @@ test("failed sample requests preserve the image, source tags and edits, then all
       page.getByLabel("Input transfer", { exact: true }),
     ).toHaveValue("logc3");
     await expect(page.getByLabel("Exposure in stops")).toHaveValue("-2.00");
+    await page.getByRole("button", { name: "Close", exact: true }).click();
     expect((await canvas.screenshot()).equals(before)).toBe(true);
     await page.unroute("**/samples/tree.png");
   }
+  await page.getByRole("button", { name: "Browse samples" }).click();
   await tree.click();
-  await expect(tree).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect
     .poll(async () => (await canvas.screenshot()).equals(before))
@@ -113,7 +123,10 @@ test("a slow sample cannot replace a newer chart selection or its provenance", a
   await page
     .getByRole("button", { name: "Desk by stained-glass window", exact: true })
     .click();
-  await expect(page.getByText("Opening image…", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("dialog").getByText("Opening image…", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByLabel("Load precision chart").selectOption("slog3");
   const canvas = page.getByLabel("Graded image preview");
   const before = await canvas.screenshot();

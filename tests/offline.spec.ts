@@ -55,6 +55,8 @@ test("reloads offline, restores the saved project, opens a stored sample and exp
   });
   await expect(desk).not.toContainText("Stored offline");
   await desk.click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.getByRole("button", { name: "Browse samples" }).click();
   await expect(desk).toHaveAttribute("aria-pressed", "true");
   await expect(desk).toContainText("Stored offline");
   await expect(tree).not.toContainText("Stored offline");
@@ -75,17 +77,19 @@ test("reloads offline, restores the saved project, opens a stored sample and exp
   const offlineSamples = page.getByRole("group", { name: "Offline samples" });
   await expect(offlineSamples.getByRole("button")).toBeDisabled();
   await desk.click();
-  await expect(desk).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.getByLabel("Sample provenance")).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(0);
   await exposure.fill("-1.5");
   await exposure.press("Enter");
   const graded = await preview.screenshot();
 
+  await page.getByRole("button", { name: "Browse samples" }).click();
   await tree.click();
   await expect(page.getByRole("alert")).toContainText("offline");
   await expect(page.getByRole("alert")).toContainText("Sunlit tree");
   await expect(desk).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(exposure).toHaveValue("-1.50");
   expect(await preview.screenshot()).toEqual(graded);
   await page.getByRole("button", { name: "Save project", exact: true }).click();
@@ -94,7 +98,10 @@ test("reloads offline, restores the saved project, opens a stored sample and exp
   );
 
   await context.setOffline(false);
+  await page.getByRole("button", { name: "Browse samples" }).click();
   await tree.click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.getByRole("button", { name: "Browse samples" }).click();
   await expect(tree).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(tree).toContainText("Stored offline");
@@ -123,9 +130,11 @@ test("store all samples offline, then open each one offline", async ({
     "Sunlit tree",
     "Cowboy Town Saloon — photographed neutral and colour chart",
   ]) {
+    if (!(await gallery.isVisible()))
+      await page.getByRole("button", { name: "Browse samples" }).click();
     const choice = gallery.getByRole("button", { name, exact: true });
     await choice.click();
-    await expect(choice).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("dialog")).toBeHidden();
     await expect(page.getByRole("alert")).toHaveCount(0);
   }
 });

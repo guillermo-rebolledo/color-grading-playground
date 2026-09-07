@@ -90,8 +90,8 @@ test("the inspector keeps its width and its order across node types", async ({
   const order = async () => {
     const anchors = [
       inspector.getByRole("heading", { name: "Inspector" }),
-      inspector.getByText("COLOUR PIPELINE"),
-      inspector.getByRole("button", { name: "Export .cube", exact: true }),
+      inspector.getByRole("button", { name: "Colour pipeline", exact: true }),
+      inspector.getByRole("button", { name: /^LUT EXPORT/ }),
     ];
     const tops = [];
     for (const anchor of anchors) tops.push((await box(page, anchor)).y);
@@ -284,7 +284,7 @@ test("a window narrower than 1280px gets the unsupported screen, and widening re
   expect(rail.width).toBe(328);
   const scopes = await box(page, scopesPanel(page));
   expect(scopes.x + scopes.width).toBeLessThanOrEqual(rail.x + 1);
-  // The parade drops to a second row rather than overlapping the histogram.
+  // Both scopes stay visible side by side at the minimum supported width.
   const histogram = await box(
     page,
     scopesPanel(page).getByRole("img", { name: "RGB histogram" }),
@@ -293,7 +293,8 @@ test("a window narrower than 1280px gets the unsupported screen, and widening re
     page,
     scopesPanel(page).getByRole("img", { name: "RGB parade" }),
   );
-  expect(parade.y).toBeGreaterThanOrEqual(histogram.y + histogram.height);
+  expect(parade.y).toBeCloseTo(histogram.y, 0);
+  expect(parade.x).toBeGreaterThanOrEqual(histogram.x + histogram.width);
 });
 
 test("a browser without WebGL2 is told what grading requires, in the viewer", async ({

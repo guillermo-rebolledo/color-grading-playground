@@ -49,9 +49,9 @@ export function SamplePicker({
   // The offline controls sit beside the gallery region so its buttons remain
   // exactly the sample choices.
   return (
-    <div className="max-h-[22vh] shrink-0 overflow-y-auto border-b border-border bg-card px-4 py-3 text-xs leading-normal text-foreground [&_a]:text-primary [&_a]:underline [&_p]:my-2">
+    <div className="sample-gallery space-y-4 bg-card text-xs leading-normal text-foreground [&_a]:text-primary [&_a]:underline [&_p]:my-2">
       <section aria-label="Bundled log samples">
-        <h2 className="m-0 text-[13px] font-medium">Bundled log samples</h2>
+        <h2 className="sr-only">Bundled log samples</h2>
         <p>
           HDR photographs prepared as log. Choose a scene to apply its verified
           input tags and keep your grade.
@@ -126,9 +126,8 @@ export function SamplePicker({
 export function SampleProvenance({ sample }: { sample: Sample }) {
   return (
     <details
-      className="max-h-[72px] shrink-0 overflow-y-auto border-t border-border bg-card px-4 py-2 text-xs leading-normal text-foreground [&_a]:text-primary [&_a]:underline [&_p]:my-1"
+      className="sample-provenance open:max-h-40 shrink-0 overflow-y-auto border-t border-border bg-card px-3 py-1 text-xs leading-normal text-foreground [&_a]:text-primary [&_a]:underline [&_p]:my-1"
       aria-label="Sample provenance"
-      open
     >
       <summary className="cursor-pointer text-[11px] font-medium">
         Source and preparation · {sample.title}

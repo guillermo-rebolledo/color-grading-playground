@@ -1,4 +1,4 @@
-import { openLutExport } from "./fixtures";
+import { revealInspector } from "./fixtures";
 import { test, expect } from "@playwright/test";
 
 test("context restoration rebuilds source, curves and programs and keeps export usable", async ({
@@ -293,7 +293,7 @@ test("mobile warning keeps the independently probed full-float route", async ({
   await expect(
     page.getByText("Desktop is recommended.", { exact: false }),
   ).toBeVisible();
-  await openLutExport(page);
+  await revealInspector(page, "Export LUT");
   await expect(
     page.getByText("32-bit float", { exact: false }).first(),
   ).toBeVisible();
@@ -451,7 +451,7 @@ test("initial program allocation failure can be retried without reloading", asyn
   await expect(
     page.getByRole("heading", { name: "Preview unavailable" }),
   ).toHaveCount(0);
-  await openLutExport(page);
+  await revealInspector(page, "Export LUT");
   await expect(page.getByText("32-bit float", { exact: false })).toBeVisible();
   const canvas = page.getByLabel("Graded image preview");
   await canvas.evaluate((element: HTMLCanvasElement) => {
@@ -470,8 +470,9 @@ test("initial program allocation failure can be retried without reloading", asyn
   await expect(
     page.getByRole("heading", { name: "Preview unavailable" }),
   ).toHaveCount(0);
-  await openLutExport(page);
+  await revealInspector(page, "Export LUT");
   await expect(page.getByText("32-bit float", { exact: false })).toBeVisible();
+  await revealInspector(page, "Export LUT");
   await expect(
     page.getByRole("button", { name: "Export .cube", exact: true }),
   ).toBeEnabled();

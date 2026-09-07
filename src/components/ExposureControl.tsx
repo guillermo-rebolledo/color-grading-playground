@@ -121,11 +121,14 @@ export function ExposureControl({
         <span>0</span>
         <span>+6</span>
       </div>
-      <p className="control-help">
-        One stop doubles or halves the light.
-        <br />
-        Double-click a control to reset.
-      </p>
+      <details className="control-help">
+        <summary className="cursor-pointer">About exposure</summary>
+        <p>
+          One stop doubles or halves the light.
+          <br />
+          Double-click a control to reset.
+        </p>
+      </details>
     </div>
   );
 }

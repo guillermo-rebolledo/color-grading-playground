@@ -1,3 +1,4 @@
+import { revealInspector } from "./fixtures";
 import { openNeutralGraph } from "./fixtures";
 import { test, expect } from "@playwright/test";
 import { PNG } from "pngjs";
@@ -25,6 +26,7 @@ for (const profile of [
       mimeType: "image/png",
       buffer: PNG.sync.write(png),
     });
+    await revealInspector(page, "Colour pipeline");
     for (const label of ["Input", "Working", "Output"]) {
       const transfer = page.getByLabel(`${label} transfer`, { exact: true });
       const primaries = page.getByLabel(`${label} primaries`, { exact: true });
@@ -43,6 +45,7 @@ for (const profile of [
       page.getByLabel("Output primaries", { exact: true }),
     ).toHaveValue(profile.primaries);
     // Exposure expects linear working light. Source and output keep their log tags.
+    await revealInspector(page, "Colour pipeline");
     await page
       .getByLabel("Working transfer", { exact: true })
       .selectOption("linear");

@@ -23,7 +23,12 @@ import { Topbar } from "@/components/Topbar";
 import { ProjectBar } from "@/components/ProjectBar";
 import { ViewerPanel, type Comparison } from "@/components/ViewerPanel";
 import { Inspector } from "@/components/Inspector";
-import { AppFooter } from "@/components/AppFooter";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { WorkspaceStage } from "@/components/WorkspaceStage";
 import { UnsupportedDevice } from "@/components/UnsupportedDevice";
 import { useSupportedWidth } from "@/viewportSupport";
@@ -441,14 +446,44 @@ export default function App() {
           onSave={() => void save()}
           onShare={share}
         />
-        {showSamples && (
-          <SamplePicker
-            selected={image?.sample?.id}
-            disabled={disabled}
-            offlineReady={offline.support === "ready" && offline.online}
-            onSelect={(sample) => void openFile(undefined, sample)}
-          />
-        )}
+        <Sheet open={showSamples} onOpenChange={setShowSamples}>
+          <SheetContent
+            side="top"
+            className="max-h-[80dvh] overflow-y-auto p-6"
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              document
+                .querySelector<HTMLButtonElement>(
+                  '[aria-label="Browse samples"]',
+                )
+                ?.focus();
+            }}
+          >
+            <SheetTitle className="m-0 text-base">Choose a sample</SheetTitle>
+            <SheetDescription className="m-0">
+              Start with a photograph. Its input colour settings are applied for
+              you.
+            </SheetDescription>
+            <SamplePicker
+              selected={image?.sample?.id}
+              disabled={disabled || loading}
+              offlineReady={offline.support === "ready" && offline.online}
+              onSelect={async (sample) => {
+                if (await openFile(undefined, sample)) setShowSamples(false);
+              }}
+            />
+            {loading && (
+              <p role="status" className="m-0 text-muted-foreground">
+                Opening image…
+              </p>
+            )}
+            {error && (
+              <p role="alert" className="text-warning">
+                {error}
+              </p>
+            )}
+          </SheetContent>
+        </Sheet>
         <WorkspaceStage
           viewer={
             <>
@@ -484,7 +519,7 @@ export default function App() {
                 onChooseImage={() => fileInput.current?.click()}
               />
               {image?.sample && <SampleProvenance sample={image.sample} />}
-              {error && (
+              {error && !showSamples && (
                 <div
                   className="file-error absolute inset-x-0 bottom-0 z-5 flex items-center gap-3 border-t border-destructive bg-card px-4 py-2 text-xs text-destructive"
                   role="alert"
@@ -522,7 +557,6 @@ export default function App() {
             />
           }
         />
-        <AppFooter />
         {dragging && !capabilityError && (
           <div className="pointer-events-none fixed inset-3 z-10 grid place-items-center border border-dashed border-line-strong bg-background/95 text-lg text-foreground">
             <span>Drop your image to open</span>

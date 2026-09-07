@@ -20,7 +20,20 @@ export async function openNeutralGraph(page: Page) {
   });
 }
 
-// Export is collapsed by default; workflows open it as a colourist would.
+/** Open a disclosed workspace section through its actual UI. */
+export async function revealInspector(
+  page: Page,
+  section: "Colour pipeline" | "Export LUT",
+) {
+  if (section === "Export LUT") return openLutExport(page);
+  const toggle = page.getByRole("button", {
+    name: "Colour pipeline",
+    exact: true,
+  });
+  if ((await toggle.getAttribute("aria-expanded")) === "false")
+    await toggle.click();
+}
+
 export async function openLutExport(page: Page) {
   const toggle = page.getByRole("button", { name: /^LUT EXPORT/ });
   if ((await toggle.getAttribute("aria-expanded")) === "false")

@@ -37,10 +37,9 @@ test("pipeline and export collapse independently and retain their settings", asy
   const lut = inspector.getByRole("button", {
     name: /LUT export.*33³.*Trilinear/i,
   });
-  await expect(pipeline).toHaveAttribute("aria-expanded", "true");
+  await expect(pipeline).toHaveAttribute("aria-expanded", "false");
   await expect(lut).toHaveAttribute("aria-expanded", "false");
   await expect(inspector.getByLabel("LUT size")).toBeHidden();
-  await pipeline.click();
   await expect(
     inspector.getByLabel("Input transfer", { exact: true }),
   ).toBeHidden();

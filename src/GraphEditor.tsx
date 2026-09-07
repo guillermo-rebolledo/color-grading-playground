@@ -123,10 +123,10 @@ const nodeTypes = {
   blend: GradeNode,
 };
 /* One fit for the panel: the toolbar's Fit View, the automatic fit and the
- * first paint all leave the same margin. The margin is wide because the dock
- * is short — nodes fitted tight against the pane edge sit inside the band
- * where a connection drag auto-pans the canvas away from the pointer. */
-const fit = { padding: 0.3, maxZoom: 1.25 };
+ * first paint all leave the same margin. Use pixels because connection drags
+ * auto-pan within 40px of the pane edge: proportional padding in a short dock
+ * can leave ports inside that band and move them away during a drop. */
+const fit = { padding: "48px" as const, maxZoom: 1.25 };
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   !!target.closest(
@@ -278,34 +278,44 @@ export function GraphEditor() {
             </Button>
           )}
           <Button
+            aria-label="Undo"
+            title="Undo"
             size="toolbar"
             onClick={state.undo}
             disabled={!state.past.length}
           >
-            <Icon.Undo2 /> Undo
+            <Icon.Undo2 />
           </Button>
           <Button
+            aria-label="Redo"
+            title="Redo"
             size="toolbar"
             onClick={state.redo}
             disabled={!state.future.length}
           >
-            <Icon.Redo2 /> Redo
+            <Icon.Redo2 />
           </Button>
           <Button
+            aria-label="Copy"
+            title="Copy"
             size="toolbar"
             onClick={state.copy}
             disabled={!graph.nodes.some((n) => n.selected)}
           >
-            <Icon.Copy /> Copy
+            <Icon.Copy />
           </Button>
           <Button
+            aria-label="Paste"
+            title="Paste"
             size="toolbar"
             onClick={state.paste}
             disabled={!state.clipboard}
           >
-            <Icon.ClipboardPaste /> Paste
+            <Icon.ClipboardPaste />
           </Button>
           <Button
+            aria-label="Delete selection"
+            title="Delete selection"
             size="toolbar"
             onClick={removeSelection}
             disabled={
@@ -313,30 +323,36 @@ export function GraphEditor() {
               !graph.edges.some((e) => e.selected)
             }
           >
-            <Icon.Trash2 /> Delete selection
+            <Icon.Trash2 />
           </Button>
         </div>
         <div ref={setNavigation} className="shrink-0" />
       </div>
-      <div className="flex min-h-[22px] shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px] text-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="w-4 border-x-0 border-b-0 border-t-2 border-solid border-port-rgb"
-          />
-          RGB: solid
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="w-4 border-x-0 border-b-0 border-t-2 border-dashed border-port-mask"
-          />
-          Mask: dashed
-        </span>
-        <span>Double-click a node to solo</span>
-        <span>Drag ports to connect</span>
-        <span>Shift-drag to box select</span>
-      </div>
+      <details className="shrink-0 border-0 border-b border-solid border-border px-2 text-[11px] text-muted-foreground">
+        <summary className="cursor-pointer py-1">
+          Graph help · connections and shortcuts
+        </summary>
+        <div className="flex min-h-[22px] shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-x-0 border-t-0 border-b border-solid border-border px-2 py-1 text-[11px] leading-[14px] text-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="w-4 border-x-0 border-b-0 border-t-2 border-solid border-port-rgb"
+            />
+            RGB: solid
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="w-4 border-x-0 border-b-0 border-t-2 border-dashed border-port-mask"
+            />
+            Mask: dashed
+          </span>
+          <span>Double-click a node to solo</span>
+          <span>Drag ports to connect</span>
+          <span>Shift-drag to box select</span>
+        </div>
+        <p className="my-2">Ctrl/Cmd+C/V/Z to copy, paste, undo</p>
+      </details>
       <div className="flow-canvas relative min-h-[140px] flex-1">
         {/* Feedback must not resize the canvas during a connection drag. */}
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-card">
@@ -347,10 +363,7 @@ export function GraphEditor() {
             )}
             role="status"
           >
-            {state.feedback ||
-              (error
-                ? `Preview paused: ${error}`
-                : "Live graph · Ctrl/Cmd+C/V/Z to copy, paste, undo")}
+            {state.feedback || (error ? `Preview paused: ${error}` : "")}
           </div>
           {warnings.length > 0 && (
             <div

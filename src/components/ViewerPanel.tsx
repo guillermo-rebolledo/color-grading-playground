@@ -1,6 +1,5 @@
 import { useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
-import { encodingLabel } from "@/engine/GradingEngine";
 import { UnsupportedDevice } from "@/components/UnsupportedDevice";
 import { FidelityOverlay } from "@/FidelityOverlay";
 import { ViewerNavigation } from "@/ViewerNavigation";
@@ -93,7 +92,7 @@ export function ViewerPanel({
           </span>
         )}
       </div>
-      <div className="viewer-toolbar flex h-7 shrink-0 items-center gap-1.5 border-0 border-b border-solid border-border bg-card px-3 text-[11px]">
+      <div className="viewer-toolbar flex min-h-7 flex-wrap py-1 shrink-0 items-center gap-1.5 border-0 border-b border-solid border-border bg-card px-3 text-[11px]">
         <label className="flex shrink-0 items-center gap-1.5">
           Compare{" "}
           <select
@@ -262,16 +261,6 @@ export function ViewerPanel({
             ? `${image.originalWidth} × ${image.originalHeight}`
             : "All processing stays on your device"}
         </span>
-        {image && (
-          <>
-            <span className="shrink-0 font-mono tabular-nums">
-              Preview cap 2048 px
-            </span>
-            <span className="shrink-0 font-mono">
-              Source: {encodingLabel(graph.colour.input)}
-            </span>
-          </>
-        )}
       </div>
     </>
   );

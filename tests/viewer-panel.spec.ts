@@ -44,6 +44,7 @@ test("opening progress is text in the viewer chrome, clear of the image", async 
     .getByRole("button", { name: "Browse samples", exact: true })
     .click();
   await page.getByRole("button", { name: sample.title, exact: true }).click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   const viewer = page.getByRole("region", { name: "Viewer", exact: true });
   const status = viewer
     .getByRole("status")

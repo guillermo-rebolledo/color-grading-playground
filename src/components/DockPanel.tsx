@@ -32,7 +32,7 @@ export function DockPanel({
       data-collapsed={collapsed ? "" : undefined}
     >
       <div
-        className={`dock-strip flex shrink-0 items-center gap-3 border-b border-border px-3 text-[11px] text-muted-foreground ${collapsed ? "h-[var(--strip-height)]" : "h-[26px]"}`}
+        className={`dock-strip flex shrink-0 items-center gap-3 border-b border-border px-3 text-[11px] text-muted-foreground ${collapsed ? "h-[var(--strip-height)]" : "h-7"}`}
       >
         <h2 className="text-[13px] font-medium text-foreground">{title}</h2>
         {meta}

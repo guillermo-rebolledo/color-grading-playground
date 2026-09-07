@@ -310,3 +310,9 @@
   font-size: 11px;
   line-height: 1.5;
 }
+
+/* Keep colour fields mounted while the disclosure is closed, without exposing
+ * hidden controls to keyboard or assistive technology. */
+.pipeline-section [data-slot="accordion-content"][data-state="closed"] {
+  display: none;
+}

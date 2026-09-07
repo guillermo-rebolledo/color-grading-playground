@@ -1,3 +1,4 @@
+import { revealInspector } from "./fixtures";
 import { openNeutralGraph } from "./fixtures";
 import { test, expect } from "@playwright/test";
 
@@ -418,6 +419,11 @@ test("rebuild the active graph with Delete and resume live exposure rendering", 
     await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
     await page.mouse.down();
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 });
+    // A deliberate drop must not let edge auto-pan move the target port away.
+    await page.waitForTimeout(300);
+    const targetAfterHold = (await to.boundingBox())!;
+    expect(targetAfterHold.x).toBeCloseTo(b.x, 1);
+    expect(targetAfterHold.y).toBeCloseTo(b.y, 1);
     await page.mouse.up();
   };
   await connect(
@@ -473,6 +479,7 @@ test("project colour settings and CST edits share reversible graph history", asy
   await expect(
     page.getByLabel("Working transfer", { exact: true }),
   ).toHaveValue("linear");
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Input primaries", { exact: true })
     .selectOption("dci-p3");
@@ -484,6 +491,7 @@ test("project colour settings and CST edits share reversible graph history", asy
   await expect(page.getByLabel("Input primaries", { exact: true })).toHaveValue(
     "dci-p3",
   );
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Output transfer", { exact: true })
     .selectOption("gamma24");

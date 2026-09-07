@@ -17,5 +17,5 @@ test("holding a button shows feedback distinct from hover", async ({
   await page.mouse.down();
   await expect.poll(fill).not.toBe(hovered);
   await page.mouse.up();
-  await expect(button).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("dialog")).toBeVisible();
 });

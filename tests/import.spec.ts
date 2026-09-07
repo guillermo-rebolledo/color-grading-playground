@@ -1,3 +1,4 @@
+import { revealInspector } from "./fixtures";
 import { test, expect } from "@playwright/test";
 import { PNG } from "pngjs";
 import { crc32, deflateSync } from "node:zlib";
@@ -209,6 +210,7 @@ test("live 16-bit uploads allow encoding correction and preserve the project on 
   }
   const canvas = page.getByLabel("Graded image preview");
   const before = await canvas.screenshot();
+  await revealInspector(page, "Colour pipeline");
   await page
     .getByLabel("Input transfer", { exact: true })
     .selectOption("linear");

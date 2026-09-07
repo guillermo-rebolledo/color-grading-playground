@@ -1,4 +1,4 @@
-import { openLutExport } from "./fixtures";
+import { revealInspector } from "./fixtures";
 import { test, expect, type Download, type Page } from "@playwright/test";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -216,7 +216,9 @@ test("integrated acceptance: bundled sample, eleven node types, editing, viewer,
   await vibrance.press("Enter");
 
   // Output encoding covers a second transfer and gamut through the pipeline.
+  await revealInspector(page, "Colour pipeline");
   await page.getByLabel("Output transfer").selectOption("gamma24");
+  await revealInspector(page, "Colour pipeline");
   await page.getByLabel("Output primaries").selectOption("rec2020");
   await expect(page.getByRole("alert")).toHaveCount(0);
 
@@ -282,7 +284,7 @@ test("integrated acceptance: bundled sample, eleven node types, editing, viewer,
   expect(link.length).toBeLessThan(4000);
 
   // Measured export: the report and the downloaded artifact come from one grade.
-  await openLutExport(page);
+  await revealInspector(page, "Export LUT");
   await page.getByLabel("LUT title").fill("Release check");
   await page.getByLabel("LUT size").selectOption("33");
   await page
@@ -553,7 +555,7 @@ test("emits identity and graded artifacts with independent expectations for host
         )!.data.stops = 0.5;
       useGraph.getState().restore(graph);
     }, kind);
-    await openLutExport(page);
+    await revealInspector(page, "Export LUT");
     await page
       .getByLabel("LUT title")
       .fill(kind === "identity" ? "Identity" : "Release grade");
@@ -633,9 +635,8 @@ test.describe("production build", () => {
       .getByRole("button", { name: "Red flower", exact: true })
       .click();
     await expect(page.getByText("Preview 610 × 406")).toBeVisible();
-    // Close the gallery so the viewer has the same layout as it will after a
-    // reload; an element screenshot captures the canvas at its displayed size.
-    await page.getByRole("button", { name: "Browse samples" }).click();
+    // Successful sample selection closes the browser without resizing the stage.
+    await expect(page.getByRole("dialog")).toBeHidden();
     await page.locator('.react-flow__node[data-id="exposure"]').click();
     const stops = page.getByRole("spinbutton", { name: "Exposure in stops" });
     await stops.fill("-0.75");
@@ -670,7 +671,7 @@ test.describe("production build", () => {
     await expect(page.getByLabel("Scope status")).toContainText(
       "measured pixels",
     );
-    await openLutExport(page);
+    await revealInspector(page, "Export LUT");
     await page.getByLabel("LUT title").fill("Offline grade");
     const [download] = await Promise.all([
       page.waitForEvent("download"),

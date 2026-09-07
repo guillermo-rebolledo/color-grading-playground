@@ -99,8 +99,8 @@ async function reachEveryState(page: Page) {
   await openNeutralGraph(page);
   const samples = page.getByRole("button", { name: "Browse samples" });
   await samples.click();
-  await expect(samples).toHaveAttribute("aria-expanded", "true");
-  await samples.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(samples).toHaveAttribute("aria-expanded", "false");
 
   await page.getByLabel("Load precision chart").selectOption("slog3");

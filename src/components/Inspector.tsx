@@ -155,15 +155,20 @@ export function Inspector({
           </label>
         )}
         <EncodingAdvisories graph={graph} flow={flow} />
-        <Accordion
-          type="single"
-          collapsible
-          defaultValue="pipeline"
-          className="pipeline-section"
-        >
+        <Accordion type="single" collapsible className="pipeline-section">
           <AccordionItem value="pipeline">
-            <AccordionTrigger>Colour pipeline</AccordionTrigger>
-            <AccordionContent>
+            <AccordionTrigger
+              aria-label="Colour pipeline"
+              className="h-auto min-h-10 py-2"
+            >
+              <span>
+                Colour pipeline
+                <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
+                  Input: {encodingLabel(graph.colour.input)}
+                </span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent forceMount>
               {(["input", "working", "output"] as const).map((boundary) => (
                 <EncodingControl
                   key={boundary}
@@ -197,11 +202,32 @@ export function Inspector({
             capabilityError ? { reason: capabilityError } : latticeSupport
           }
         />
-      </div>
-      <div className="inspector-footer">
-        Build a grade, one connection at a time.
-        <br />
-        <span>Your edits are reversible.</span>
+        <details className="mt-3 border-0 border-t border-solid border-border pt-3 text-xs leading-relaxed text-muted-foreground">
+          <summary className="cursor-pointer py-2 text-[13px] text-foreground">
+            Getting started
+          </summary>
+          <ol className="space-y-3 pl-4">
+            <li>
+              Open an image or choose a sample. Samples set the input colour
+              settings for you.
+            </li>
+            <li>
+              Select a node in the graph and adjust its controls here. Start
+              with Exposure.
+            </li>
+            <li>
+              Use Compare in the viewer to judge your changes. Undo brings back
+              the previous adjustment.
+            </li>
+          </ol>
+          <p>
+            Build a grade, one connection at a time. Your edits are reversible.
+          </p>
+          <p>
+            Every adjustment depends only on a pixel’s colour—the kind of change
+            a 3D LUT can represent.
+          </p>
+        </details>
       </div>
     </aside>
   );
