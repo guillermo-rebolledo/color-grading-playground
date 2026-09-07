@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { openLutExport } from "./fixtures";
 
 /** Run an expression against the looks module and the engine, in the page. */
 async function evaluateLooks<T>(page: Page, body: string): Promise<T> {
@@ -460,4 +461,118 @@ test("a graded project with a look still fits a share link", async ({
   );
   // The fragment limit is 16 KiB; a look must not eat the user's budget.
   expect(length).toBeLessThan(8 * 1024);
+});
+
+test("look-only export matches the whole grade when there is no grade", async ({
+  page,
+}) => {
+  const [whole, only, graded, gradedOnly] = await evaluateLooks<string[]>(
+    page,
+    `(() => {
+      const canvas = document.createElement("canvas");
+      const gpu = new engine.GradingEngine(canvas);
+      try {
+        const lattice = (graph) =>
+          Array.from(gpu.renderLattice(graph, 17)).map((v) => v.toFixed(4)).join(",");
+        // Source -> Exposure(0 stops) -> Output is a no-op primary grade.
+        const neutral = looks.withLook(engine.createGraph(), looks.looks[0]);
+        // The same graph with a real primary grade in front of the look.
+        const exposure = neutral.nodes.find((n) => n.type === "exposure");
+        const graded = { ...neutral, nodes: neutral.nodes.map((n) =>
+          n.id === exposure.id ? { ...n, data: { ...n.data, stops: 1.5 } } : n) };
+        return [
+          lattice(neutral),
+          lattice(looks.lookOnlyGraph(neutral)),
+          lattice(graded),
+          lattice(looks.lookOnlyGraph(graded)),
+        ];
+      } finally {
+        gpu.dispose();
+      }
+    })()`,
+  );
+  expect(only).toBe(whole);
+  // With a primary grade present the two scopes must part company, and the
+  // look-only file must be the one that ignores it.
+  expect(gradedOnly).not.toBe(graded);
+  expect(gradedOnly).toBe(whole);
+});
+
+test("look-only export carries the user's edits, not the shipped look", async ({
+  page,
+}) => {
+  const [shipped, edited] = await evaluateLooks<[string, string]>(
+    page,
+    `(() => {
+      const canvas = document.createElement("canvas");
+      const gpu = new engine.GradingEngine(canvas);
+      try {
+        const lattice = (graph) =>
+          Array.from(gpu.renderLattice(graph, 17)).map((v) => v.toFixed(4)).join(",");
+        const applied = looks.withLook(engine.createGraph(), looks.looks[6]);
+        const inner = looks.lookState(applied).innerIds[2];
+        const changed = { ...applied, nodes: applied.nodes.map((n) =>
+          n.id === inner ? { ...n, data: { ...n.data, saturation: 0.3 } } : n) };
+        return [
+          lattice(looks.lookOnlyGraph(applied)),
+          lattice(looks.lookOnlyGraph(changed)),
+        ];
+      } finally {
+        gpu.dispose();
+      }
+    })()`,
+  );
+  expect(edited).not.toBe(shipped);
+});
+
+test("look-only export keeps the project's Input and Output tags", async ({
+  page,
+}) => {
+  const colour = await evaluateLooks<{
+    input: string;
+    output: string;
+    clamp: string;
+  }>(
+    page,
+    `(() => {
+      const applied = looks.withLook(engine.createGraph(), looks.looks[0]);
+      applied.colour.input = { transfer: "logc3", primaries: "arri-wide-gamut3" };
+      applied.colour.output = { transfer: "gamma24", primaries: "rec2020" };
+      const output = applied.nodes.find((n) => n.type === "output");
+      output.data.clamp = "unbounded";
+      const only = looks.lookOnlyGraph(applied);
+      return {
+        input: only.colour.input.transfer + "/" + only.colour.input.primaries,
+        output: only.colour.output.transfer + "/" + only.colour.output.primaries,
+        clamp: only.nodes.find((n) => n.type === "output").data.clamp,
+      };
+    })()`,
+  );
+  expect(colour.input).toBe("logc3/arri-wide-gamut3");
+  expect(colour.output).toBe("gamma24/rec2020");
+  expect(colour.clamp).toBe("unbounded");
+});
+
+test("the export scope control waits for a look", async ({ page }) => {
+  await openApp(page);
+  await openLutExport(page);
+  const scope = page.getByLabel("LUT scope");
+  await expect(scope).toBeDisabled();
+  await expect(scope).toHaveValue("grade");
+
+  await page.getByRole("button", { name: "Browse looks" }).click();
+  await page.getByRole("button", { name: "Apply Vivid Negative" }).click();
+  await openLutExport(page);
+  await expect(scope).toBeEnabled();
+  await scope.selectOption("look");
+  await expect(page.getByLabel("LUT title")).toHaveValue("Vivid Negative");
+  await expect(
+    page.getByText(/the look alone, without your primary grade/),
+  ).toBeVisible();
+
+  // Removing the look must not leave the panel exporting something gone.
+  await page.getByRole("button", { name: "Remove look" }).click();
+  await openLutExport(page);
+  await expect(scope).toHaveValue("grade");
+  await expect(scope).toBeDisabled();
 });

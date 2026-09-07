@@ -371,3 +371,60 @@ export function withLookReset(graph: GradingGraph): GradingGraph {
     }),
   };
 }
+
+/** The look on its own: Source, the sandwich, Blend, Output, with the project's
+ * encodings and Output range preserved.
+ *
+ * This is built from the graph's actual look nodes, not from the shipped
+ * definition, so a look the user has edited exports as they edited it. The
+ * primary grade is simply absent. Returns null when there is no intact look to
+ * export by itself. */
+export function lookOnlyGraph(graph: GradingGraph): GradingGraph | null {
+  const traced = traceLook(graph, taggedNodes(graph));
+  if (!traced) return null;
+  const output = graph.nodes.find((node) => node.type === "output")!;
+  const source: GradingNode = {
+    id: "source",
+    type: "source",
+    position: { x: 0, y: 0 },
+    data: {},
+  };
+  const chain = traced.chain.map((node, i) => ({
+    ...structuredClone(node),
+    position: { x: (i + 1) * columnWidth, y: rowOffset },
+    selected: false,
+  }));
+  const blend: GradingNode = {
+    ...structuredClone(traced.blend),
+    position: { x: (chain.length + 1) * columnWidth, y: 0 },
+    selected: false,
+  };
+  const tail: GradingNode = {
+    ...structuredClone(output),
+    position: { x: (chain.length + 2) * columnWidth, y: 0 },
+    selected: false,
+  };
+  const edge = (
+    source: string,
+    target: string,
+    targetHandle = "rgb",
+  ): GradingEdge => ({
+    id: `${source}-${target}-${targetHandle}`,
+    source,
+    target,
+    sourceHandle: "rgb",
+    targetHandle,
+  });
+  return {
+    version: 1,
+    colour: structuredClone(graph.colour),
+    nodes: [source, ...chain, blend, tail],
+    edges: [
+      edge(source.id, chain[0].id),
+      ...chain.slice(1).map((node, i) => edge(chain[i].id, node.id)),
+      edge(chain[chain.length - 1].id, blend.id, "b"),
+      edge(source.id, blend.id, "a"),
+      edge(blend.id, tail.id),
+    ],
+  };
+}
