@@ -31,7 +31,9 @@ test("measure, overlay, download the measured artifact, and invalidate changed s
     page.getByLabel("LUT error overlay", { exact: true }),
   ).toHaveCount(0);
   await expect(
-    page.getByText("Settings changed. Measure again."),
+    page.getByText(
+      "Image or grade settings changed. Measure LUT fidelity again.",
+    ),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Measure LUT fidelity", exact: true })

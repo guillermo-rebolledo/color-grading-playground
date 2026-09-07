@@ -471,9 +471,7 @@ test("the inspector exports a titled cube that shares the Output range and warns
     useGraph.getState().remove(["output"], []);
   });
   await expect(exportButton).toBeDisabled();
-  await expect(
-    page.getByText("Connect a valid graph to export."),
-  ).toBeVisible();
+  await expect(page.getByText("LUT export paused:")).toBeVisible();
 });
 
 test("export is disabled with a clear reason when float lattices are unsupported", async ({

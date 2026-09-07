@@ -1,3 +1,4 @@
+import { Icon } from "@/icons";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { DockPanel } from "@/components/DockPanel";
 import { StageDivider } from "@/components/StageDivider";
@@ -103,6 +104,7 @@ export function WorkspaceStage({
             id="dock-graph"
             className="graph-panel"
             title="Graph"
+            icon={<Icon.GitBranch className="shrink-0" />}
             label="Grading graph"
             collapsed={collapsed.graph}
             onToggle={layout.toggleGraph}
@@ -128,6 +130,7 @@ export function WorkspaceStage({
             id="dock-scopes"
             className="scopes"
             title="Scopes"
+            icon={<Icon.Activity className="shrink-0" />}
             label="Image scopes"
             meta={<span>Graded output</span>}
             collapsed={collapsed.scopes}

@@ -542,6 +542,7 @@ export default function App() {
               engine={engine.current}
               graph={graph}
               image={image}
+              editing={!!graphState.transaction}
               paused={
                 loading || !!capabilityError || !!graphError || !!renderError
               }

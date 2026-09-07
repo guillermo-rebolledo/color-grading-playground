@@ -347,10 +347,15 @@ export function GraphEditor() {
             />
             Mask: dashed
           </span>
-          <span>Double-click a node to solo</span>
-          <span>Drag ports to connect</span>
+          <span>Double-click a node to preview it alone; repeat to exit</span>
+          <span>Drag an output port to a matching input</span>
           <span>Shift-drag to box select</span>
         </div>
+        <p className="my-2">
+          Each input accepts one connection. To replace it, select the existing
+          connection and press Delete, then reconnect. RGB carries colour; a
+          mask controls where Blend applies B.
+        </p>
         <p className="my-2">Ctrl/Cmd+C/V/Z to copy, paste, undo</p>
       </details>
       <div className="flow-canvas relative min-h-[140px] flex-1">
@@ -464,7 +469,7 @@ export function GraphEditor() {
                 feedback: to
                   ? (connectionError(useGraph.getState().graph, edge) ??
                     "Connect matching RGB or mask ports.")
-                  : "Connection canceled. Drop on a matching input port.",
+                  : "Connection canceled. Drag from an output and release on a matching RGB or mask input.",
               });
             }
           }}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 export function DockPanel({
   id,
   title,
+  icon,
   label,
   meta,
   collapsed,
@@ -17,6 +18,7 @@ export function DockPanel({
 }: {
   id: string;
   title: string;
+  icon?: ReactNode;
   label: string;
   meta?: ReactNode;
   collapsed: boolean;
@@ -34,7 +36,10 @@ export function DockPanel({
       <div
         className={`dock-strip flex shrink-0 items-center gap-3 border-b border-border px-3 text-[11px] text-muted-foreground ${collapsed ? "h-[var(--strip-height)]" : "h-7"}`}
       >
-        <h2 className="text-[13px] font-medium text-foreground">{title}</h2>
+        <h2 className="flex items-center gap-1.5 text-[13px] font-medium text-foreground">
+          {icon}
+          {title}
+        </h2>
         {meta}
         <Button
           size="toolbar"
