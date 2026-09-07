@@ -26,6 +26,17 @@
 .selected-node {
   margin-bottom: 12px;
 }
+/* Look controls sit above the selected node's own parameters. A documented
+ * exception to the rail's no-reorder rule: additive only, never a reflow of
+ * what is below it. See docs/workspace-shell.md. */
+.look-section {
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+.look-section .node-type-badge {
+  border-color: var(--port-mask);
+}
 .selected-node-heading {
   display: flex;
   align-items: center;

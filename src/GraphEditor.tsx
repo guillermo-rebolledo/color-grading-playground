@@ -44,7 +44,11 @@ function GradeNode({
         "graph-node relative w-[185px] shrink-0 border border-solid bg-secondary",
         selected ? "border-primary bg-input" : "border-line-strong",
         solo && "outline-2 outline-offset-2 outline-primary",
+        // A look's nodes are ordinary nodes; the tint only says where they
+        // came from, so the user can tell the preset from their own grade.
+        data.look && "look-node",
       )}
+      data-look={data.look}
     >
       {type !== "source" &&
         (type === "blend" ? ["a", "b", "mask"] : ["rgb"]).map((port, i) => (
@@ -70,6 +74,9 @@ function GradeNode({
         ))}
       <div className="flex items-center gap-2 border-x-0 border-t-0 border-b border-solid border-border p-3">
         <h3 className="m-0 text-xs font-medium">{data.label ?? title}</h3>
+        {data.look && (
+          <span className="font-mono text-[10px] text-text-faint">LOOK</span>
+        )}
         <span className="ml-auto font-mono text-[10px] text-muted-foreground">
           {type === "qualifier" ? "MASK" : "RGB"}
         </span>
