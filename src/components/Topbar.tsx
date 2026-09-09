@@ -15,14 +15,18 @@ export function Topbar({
   fileInput,
   disabled,
   showSamples,
+  showLooks,
   onToggleSamples,
+  onToggleLooks,
   onOpenFile,
   onOpenChart,
 }: {
   fileInput: RefObject<HTMLInputElement | null>;
   disabled: boolean;
   showSamples: boolean;
+  showLooks: boolean;
   onToggleSamples: () => void;
+  onToggleLooks: () => void;
   onOpenFile: (file: File | undefined) => void;
   onOpenChart: (profile: keyof typeof logCharts) => void;
 }) {
@@ -50,6 +54,14 @@ export function Topbar({
       >
         <Icon.Images />
         Browse samples
+      </Button>
+      <Button
+        aria-label="Browse looks"
+        aria-expanded={showLooks}
+        onClick={onToggleLooks}
+      >
+        <Icon.Film />
+        Browse looks
       </Button>
       <span className="relative inline-flex items-center">
         <Icon.Ruler className="pointer-events-none absolute left-[9px]" />

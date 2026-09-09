@@ -1,4 +1,12 @@
 import { adjustmentDefaults } from "./adjustmentDefaults";
+import {
+  findLook,
+  lookSlotError,
+  lookState,
+  withLook,
+  withLookReset,
+  withoutLook,
+} from "./looks";
 import { create } from "zustand";
 import {
   GradingEngine,
@@ -32,6 +40,9 @@ type GraphState = {
   updateColour: (colour: ColourSettings) => void;
   copy: () => void;
   paste: () => void;
+  applyLook: (id: string) => void;
+  removeLook: () => void;
+  resetLook: () => void;
 };
 const sameContent = (a: GradingGraph, b: GradingGraph) =>
   JSON.stringify({
@@ -270,5 +281,42 @@ export const useGraph = create<GraphState>()((set, get) => ({
         })),
       },
     });
+  },
+  // Insert, swap, reset and remove are each a single history step: end() closes
+  // any open scrub, then one edit() appends one snapshot.
+  applyLook: (id) => {
+    get().end();
+    const { graph } = get();
+    const look = findLook(id);
+    if (!look) {
+      set({ feedback: "That look is no longer available." });
+      return;
+    }
+    const slot = lookSlotError(graph);
+    if (slot) {
+      set({ feedback: slot });
+      return;
+    }
+    const next = withLook(graph, look, lookState(graph)?.intensity ?? 1);
+    const error = GradingEngine.validate(next);
+    if (error) set({ feedback: error });
+    else get().edit(next);
+  },
+  removeLook: () => {
+    get().end();
+    const { graph } = get();
+    if (!lookState(graph)) return;
+    const next = withoutLook(graph);
+    const error = GradingEngine.validate(next, true);
+    if (error) set({ feedback: error });
+    else get().edit(next);
+  },
+  resetLook: () => {
+    get().end();
+    const { graph } = get();
+    const next = withLookReset(graph);
+    const error = GradingEngine.validate(next, true);
+    if (error) set({ feedback: error });
+    else get().edit(next);
   },
 }));

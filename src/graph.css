@@ -68,3 +68,10 @@
   max-height: 14px;
   fill: none;
 }
+
+/* A look's nodes are ordinary nodes. The tint is provenance, not state: it
+ * says "this came from a preset", and it survives editing them. */
+.graph-node.look-node {
+  border-left-width: 3px;
+  border-left-color: var(--port-mask);
+}

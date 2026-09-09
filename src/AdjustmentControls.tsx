@@ -6,7 +6,7 @@ import { useGraph } from "@/graphStore";
 
 import { adjustmentDefaults } from "@/adjustmentDefaults";
 
-function NumericControl({
+export function NumericControl({
   label,
   value,
   neutral,

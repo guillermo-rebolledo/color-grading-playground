@@ -7,6 +7,8 @@ import {
   type ProjectSource,
 } from "./projects";
 import { SamplePicker, SampleProvenance } from "./SamplePicker";
+import { LookPicker, LookSwapConfirm } from "./LookPicker";
+import { lookState, type LookDefinition } from "./looks";
 import { samples, type Sample } from "./samples";
 import { sampleLoadError, useOffline } from "./offline";
 import { useEffect, useRef, useState } from "react";
@@ -83,6 +85,18 @@ export default function App() {
     null,
   );
   const [showSamples, setShowSamples] = useState(false);
+  const [showLooks, setShowLooks] = useState(false);
+  const [pendingLook, setPendingLook] = useState<LookDefinition | null>(null);
+  const appliedLook = lookState(graph);
+  /** Swapping is silent unless the user has edited the look in place. */
+  function chooseLook(look: LookDefinition) {
+    if (appliedLook?.modified) {
+      setPendingLook(look);
+      return;
+    }
+    graphState.applyLook(look.id);
+    setShowLooks(false);
+  }
   const offline = useOffline();
   const supportedWidth = useSupportedWidth();
   const [loading, setLoading] = useState(false);
@@ -430,7 +444,9 @@ export default function App() {
           fileInput={fileInput}
           disabled={disabled}
           showSamples={showSamples}
+          showLooks={showLooks}
           onToggleSamples={() => setShowSamples(!showSamples)}
+          onToggleLooks={() => setShowLooks(!showLooks)}
           onOpenFile={(file) => void openFile(file)}
           onOpenChart={(profile) => openChart(profile)}
         />
@@ -446,6 +462,43 @@ export default function App() {
           onSave={() => void save()}
           onShare={share}
         />
+        <Sheet
+          open={showLooks}
+          onOpenChange={(open) => {
+            setShowLooks(open);
+            if (!open) setPendingLook(null);
+          }}
+        >
+          <SheetContent
+            side="top"
+            className="max-h-[80dvh] overflow-y-auto p-6"
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              document
+                .querySelector<HTMLButtonElement>('[aria-label="Browse looks"]')
+                ?.focus();
+            }}
+          >
+            <SheetTitle className="m-0 text-base">Choose a look</SheetTitle>
+            <SheetDescription className="m-0">
+              Film-inspired colour, applied at the end of your chain as nodes
+              you can edit.
+            </SheetDescription>
+            <LookPicker onSelect={chooseLook} />
+            {pendingLook && appliedLook && (
+              <LookSwapConfirm
+                pending={pendingLook}
+                current={appliedLook.label}
+                onCancel={() => setPendingLook(null)}
+                onConfirm={() => {
+                  graphState.applyLook(pendingLook.id);
+                  setPendingLook(null);
+                  setShowLooks(false);
+                }}
+              />
+            )}
+          </SheetContent>
+        </Sheet>
         <Sheet open={showSamples} onOpenChange={setShowSamples}>
           <SheetContent
             side="top"
@@ -555,6 +608,7 @@ export default function App() {
               capabilityError={capabilityError}
               latticeSupport={latticeSupport}
               onOverlay={setFidelityOverlay}
+              onBrowseLooks={() => setShowLooks(true)}
             />
           }
         />

@@ -41,6 +41,10 @@ export type GradingNode = {
   position: { x: number; y: number };
   data: {
     label?: string;
+    /** Provenance for a preset look. Descriptive only: the nodes are always
+     * the truth, and losing these fields never changes a rendered pixel. */
+    look?: string;
+    lookHash?: string;
     hue?: Band;
     sat?: Band;
     value?: Band;
@@ -144,6 +148,9 @@ export function inspectGraph(
   for (const node of graph.nodes) {
     if (node.data.label !== undefined && typeof node.data.label !== "string")
       throw new Error("Node labels must be text.");
+    for (const key of ["look", "lookHash"] as const)
+      if (node.data[key] !== undefined && typeof node.data[key] !== "string")
+        throw new Error("Look provenance must be text.");
     if (node.type === "qualifier") validateQualifier(node.data);
     if (
       node.type === "blend" &&

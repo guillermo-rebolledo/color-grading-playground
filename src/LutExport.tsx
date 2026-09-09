@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useGraph } from "@/graphStore";
+import { lookOnlyGraph, lookState } from "@/looks";
 import {
   GradingEngine,
   cubeFileBytes,
@@ -68,6 +69,13 @@ export function LutExport({
 }) {
   const graphState = useGraph();
   const { graph } = graphState;
+  const look = lookState(graph);
+  const [scope, setScope] = useState<"grade" | "look">("grade");
+  // Look-only exports the look as the user edited it, with the primary grade
+  // absent. The rows still map the project's Input tag to its Output tag, so
+  // there is one export semantic rather than two.
+  const lookOnly = scope === "look" ? lookOnlyGraph(graph) : null;
+  const exported = lookOnly ?? graph;
   const [title, setTitle] = useState("Grade");
   const [size, setSize] = useState<CubeSize>(defaultCubeSize);
   const [status, setStatus] = useState<{
@@ -84,16 +92,19 @@ export function LutExport({
     hasImage &&
     support &&
     "format" in support &&
-    engine()?.isFidelityCurrent(report, graph, { size, interpolation })
+    engine()?.isFidelityCurrent(report, exported, { size, interpolation })
       ? report
       : null;
   useEffect(() => {
     if (report && !validReport) setReport(null);
     onOverlay(showOverlay ? validReport : null);
   }, [report, validReport, showOverlay, onOverlay]);
+  useEffect(() => {
+    if (scope === "look" && !look?.intact) setScope("grade");
+  }, [scope, look?.intact]);
   const output = graph.nodes.find((n) => n.type === "output");
   const clamp = output?.data.clamp ?? "clamp";
-  const graphError = GradingEngine.validate(graph);
+  const graphError = GradingEngine.validate(exported);
   const reason =
     support && "reason" in support
       ? support.reason
@@ -111,7 +122,7 @@ export function LutExport({
         serializeCube({
           title,
           size,
-          samples: current.renderLattice(graph, size),
+          samples: current.renderLattice(exported, size),
         });
       const file = `${sanitizeCubeTitle(title).replace(/[^A-Za-z0-9._-]+/g, "-")}.cube`;
       const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
@@ -139,7 +150,9 @@ export function LutExport({
     setReport(null);
     setStatus(null);
     try {
-      setReport(current.measureFidelity(graph, { title, size, interpolation }));
+      setReport(
+        current.measureFidelity(exported, { title, size, interpolation }),
+      );
       setMeasured(true);
     } catch (cause) {
       setStatus({
@@ -164,6 +177,32 @@ export function LutExport({
             </span>
           </AccordionTrigger>
           <AccordionContent className="lut-content">
+            <label>
+              Scope
+              <select
+                aria-label="LUT scope"
+                value={scope}
+                disabled={!look?.intact}
+                title={
+                  look?.intact
+                    ? undefined
+                    : "Apply a look to export it on its own"
+                }
+                onChange={(event) => {
+                  const next = event.target.value === "look" ? "look" : "grade";
+                  setScope(next);
+                  setReport(null);
+                  setTitle(
+                    next === "look"
+                      ? (look?.definition?.name ?? "Look")
+                      : "Grade",
+                  );
+                }}
+              >
+                <option value="grade">Whole grade</option>
+                <option value="look">Look only</option>
+              </select>
+            </label>
             <label>
               Title
               <Input
@@ -199,11 +238,14 @@ export function LutExport({
               <OutputRangeSelect output={output} label="LUT output range" />
             </label>
             <p className="lut-summary">
-              Downloads a .cube 3D LUT of your grade, not a rendered image.
-              Apply it to matching input encoding in a compatible editor. Maps{" "}
-              {encodingLabel(graph.colour.input)} codes 0–1 to{" "}
-              {encodingLabel(graph.colour.output)}, using the preview's grading
-              program. Range is shared with the Output node:{" "}
+              Downloads a .cube 3D LUT of{" "}
+              {scope === "look"
+                ? "the look alone, without your primary grade"
+                : "your grade"}
+              , not a rendered image. Apply it to matching input encoding in a
+              compatible editor. Maps {encodingLabel(graph.colour.input)} codes
+              0–1 to {encodingLabel(graph.colour.output)}, using the preview's
+              grading program. Range is shared with the Output node:{" "}
               {clamp === "unbounded"
                 ? "out-of-range values are preserved."
                 : "values clamp to 0–1."}

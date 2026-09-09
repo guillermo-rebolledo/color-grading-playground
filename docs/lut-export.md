@@ -26,6 +26,22 @@ engine can preview is therefore exportable, and future nodes reuse this path.
 - 65³ files are about 7 MB; the panel warns before writing one. 33³ is
   sufficient for most grades.
 
+## Scope
+
+**Scope** selects what the file contains. **Whole grade** is the default and
+is unchanged. **Look only** is enabled when a
+[film-inspired look](film-looks.md) is applied: it evaluates
+`Source → CST → look nodes → CST → Blend → Output` with the primary grade
+absent, through this same lattice path, and exports the look **as edited**
+rather than as shipped.
+
+Both scopes obey the one rule above — rows map input-encoded 0–1 to
+output-encoded values, using the project's Input and Output tags — so there is
+one export semantic rather than two. Look-only copies the Output node's clamp
+policy, so the shared range control still governs it, and the title defaults to
+the look's family name. Measured fidelity applies to whichever scope is
+selected. A look-only export compiles one additional program.
+
 ## GPU evaluation
 
 The grading fragment shader has a `lattice` uniform. When it is zero the

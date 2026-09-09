@@ -11,13 +11,18 @@ uploaded images and grade data never leave the device, offline or online.
 which compiles [src/offline/sw.ts](../src/offline/sw.ts) to `dist/sw.js` and
 embeds a precache list. Two Cache Storage caches are used:
 
-| Cache                     | Contents                                                                                                     | Filled                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------- |
-| `cgp-app-<version>`       | `index.html`, hashed JS/CSS chunks including the scopes worker, `samples/inventory.json`, previews, licenses | During service worker install   |
-| `cgp-samples-<inventory>` | Full-size PNG16 samples (51 MiB for all nine)                                                                | On first open, or **Store all** |
+| Cache                     | Contents                                                                                                                                | Filled                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `cgp-app-<version>`       | `index.html`, hashed JS/CSS chunks including the scopes worker, `samples/inventory.json`, previews, licenses, and the whole of `looks/` | During service worker install   |
+| `cgp-samples-<inventory>` | Full-size PNG16 samples (51 MiB for all nine)                                                                                           | On first open, or **Store all** |
 
 `<version>` is a digest of every precached file, so any change to the shell
-produces a new cache. `<inventory>` is a digest of `inventory.json`, which
+produces a new cache. The look inventory and its thirteen previews are part of
+that digest, so **editing any look invalidates the application cache** and every
+client re-downloads the shell on its next visit. The thirteen previews are 932 KiB in total, in the
+same 240 px 8-bit format as the sample previews; look assets are never stored on
+demand the way full-size samples are, because there are no full-size look
+assets. `<inventory>` is a digest of `inventory.json`, which
 records each sample's SHA-256, so stored samples survive application updates
 and are discarded only when the sample set changes. Old caches are deleted
 when a new worker activates.

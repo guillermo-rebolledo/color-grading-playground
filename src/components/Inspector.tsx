@@ -11,6 +11,7 @@ import {
   type NodeType,
 } from "@/engine/GradingEngine";
 import { useGraph } from "@/graphStore";
+import { LookSection } from "@/components/LookSection";
 import { nodeTypeTitle, nodeTitle } from "@/nodeTitles";
 
 import { adjustmentDefaults } from "@/adjustmentDefaults";
@@ -45,12 +46,14 @@ export function Inspector({
   capabilityError,
   latticeSupport,
   onOverlay,
+  onBrowseLooks,
 }: {
   hasImage: boolean;
   engine: () => GradingEngine | null;
   capabilityError: string;
   latticeSupport: LatticeSupport | null;
   onOverlay: (report: FidelityResult | null) => void;
+  onBrowseLooks: () => void;
 }) {
   const graphState = useGraph();
   const { graph } = graphState;
@@ -86,6 +89,7 @@ export function Inspector({
         </span>
       </div>
       <div className="inspector-body">
+        <LookSection onSwap={onBrowseLooks} />
         <div className="selected-node">
           <div className="selected-node-heading">
             {selected && (

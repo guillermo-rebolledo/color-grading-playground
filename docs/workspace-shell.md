@@ -10,6 +10,15 @@ node graph are on screen together at every supported window size.
   or reorder when a different node type is selected, and its body scrolls
   inside the rail rather than moving the panel around it.
 
+  There is **one documented exception**. When the selected node belongs to a
+  [film-inspired look](film-looks.md), a Look section appears above that node's
+  own parameters, carrying the look's name and state, its intensity, and swap,
+  reset and remove. The exception is additive only: the section is added above,
+  and never reflows the node parameters below it. The rail stays 328px and the
+  stage still does not scroll at 1280px. The alternative was to hide the
+  control users touch most behind a sheet that covers the image they are
+  judging it against.
+
 ## Dividers
 
 Two dividers shape the stage. Both carry `role="separator"`, are in the tab
